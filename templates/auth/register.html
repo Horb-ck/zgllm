@@ -1,0 +1,267 @@
+{% extends "layout.html" %}
+
+{% block title %}注册 - 明月科创教育大模型
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set role_value = (form_data.get('role') if form_data is defined and form_data else 'student') %}
+<div class="auth-container">
+    <div class="auth-form">
+        <h1>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M12 3l7 4v4c0 5-3 8-7 10-4-2-7-5-7-10V7z"></path>
+                <path d="M12 7v12"></path>
+            </svg>
+            明月科创教育大模型
+        </h1>
+        <h2>注册新账号</h2>
+        
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label>身份</label>
+                <input type="hidden" id="role-input" name="role" value="{{ role_value }}">
+                <div class="identity-grid">
+                    <button type="button" class="identity-card active" data-role="student" aria-pressed="true">
+                        <div class="identity-dot" aria-hidden="true"></div>
+                        <svg class="identity-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path>
+                            <path d="M22 10v6"></path>
+                            <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
+                        </svg>
+                        <span class="identity-tag">学生</span>
+                        <span class="identity-hint">使用学号与校内邮箱</span>
+                    </button>
+                    <button type="button" class="identity-card" data-role="teacher" aria-pressed="false">
+                        <div class="identity-dot" aria-hidden="true"></div>
+                        <svg class="identity-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            <rect width="20" height="14" x="2" y="6" rx="2"></rect>
+                        </svg>
+                        <span class="identity-tag">教师</span>
+                        <span class="identity-hint">使用工号与校内邮箱</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label id="username-label" for="username">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M5 7h14M5 12h14M5 17h14"></path>
+                    </svg>
+                    学号
+                </label>
+                <input type="text" id="username" name="username" placeholder="请输入学号" value="{{ (form_data.get('username') if form_data is defined and form_data else '') }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M4 6h16v12H4z"></path>
+                        <path d="M22 6l-10 7L2 6"></path>
+                    </svg>
+                    邮箱
+                </label>
+                <div class="email-input-wrapper">
+                    <input type="email" id="email" name="email" autocomplete="off" placeholder="示例：yourid@stu.cqu.edu.cn" value="{{ (form_data.get('email') if form_data is defined and form_data else '') }}" required>
+                    <ul class="email-suggestions" id="email-suggestions" role="listbox" aria-label="邮箱补全选项"></ul>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="verification_code">验证码</label>
+                    <input type="text" id="verification_code" name="verification_code" placeholder="请输入邮件中的验证码" required>
+                </div>
+                <div class="form-group" style="align-self: flex-end;">
+                    <button type="button" class="btn btn-secondary" id="send-code-btn" style="width: 100%;">发送验证码</button>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+    
+                <div class="form-group">
+                    <label for="confirm_password">确认密码</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">注册</button>
+            </div>
+        </form>
+        
+        <div class="auth-links">
+            <p>已有账号？<a href="{{ url_for('login') }}">立即登录</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const roleCards = document.querySelectorAll('.identity-card');
+    const roleInput = document.getElementById('role-input');
+    const usernameLabel = document.getElementById('username-label');
+    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
+    const form = document.querySelector('.auth-form form');
+    const confirmInput = document.getElementById('confirm_password');
+    const passwordInput = document.getElementById('password');
+    const sendBtn = document.getElementById('send-code-btn');
+    const emailSuggestions = document.getElementById('email-suggestions');
+
+    const emailPatterns = {
+        student: /^[^@\s]+@stu\.cqu\.edu\.cn$/i,
+        teacher: /^[^@\s]+@cqu\.edu\.cn$/i
+    };
+
+    function updateFields(role) {
+        const isTeacher = role === 'teacher';
+        usernameLabel.textContent = isTeacher ? '工号' : '学号';
+        usernameInput.placeholder = isTeacher ? '请输入工号' : '请输入学号';
+        emailInput.placeholder = isTeacher ? 'yourid@cqu.edu.cn' : 'yourid@stu.cqu.edu.cn';
+        emailInput.setAttribute('pattern', isTeacher ? '^[^@\\s]+@cqu\\.edu\\.cn$' : '^[^@\\s]+@stu\\.cqu\\.edu\\.cn$');
+    }
+
+    function selectRole(role) {
+        roleInput.value = role;
+        roleCards.forEach(function (card) {
+            const active = card.dataset.role === role;
+            card.classList.toggle('active', active);
+            card.setAttribute('aria-pressed', active);
+        });
+        updateFields(role);
+    }
+
+    selectRole(roleInput.value || 'student');
+
+    roleCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+            selectRole(card.dataset.role);
+        });
+        card.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                selectRole(card.dataset.role);
+            }
+        });
+    });
+
+    form.addEventListener('submit', function (event) {
+        const role = roleInput.value || 'student';
+        const email = (emailInput.value || '').trim();
+
+        if (!emailPatterns[role].test(email)) {
+            event.preventDefault();
+            alert(role === 'teacher' ? '教师邮箱需使用 cqu.edu.cn 域名' : '学生邮箱需使用 stu.cqu.edu.cn 域名');
+            emailInput.focus();
+            return;
+        }
+
+        if (passwordInput.value !== confirmInput.value) {
+            event.preventDefault();
+            alert('两次输入的密码不一致，请重新输入。');
+            confirmInput.focus();
+        }
+    });
+
+    function renderSuggestions(base, suffixes) {
+        emailSuggestions.innerHTML = '';
+        const suggestions = suffixes.map(suffix => `${base}${suffix}`);
+        suggestions.forEach((item, idx) => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            li.setAttribute('role', 'option');
+            li.setAttribute('id', `email-suggestion-${idx}`);
+            li.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                emailInput.value = item;
+                emailSuggestions.classList.remove('show');
+            });
+            emailSuggestions.appendChild(li);
+        });
+        emailSuggestions.classList.toggle('show', suggestions.length > 0);
+    }
+
+    function handleEmailInput() {
+        const value = emailInput.value || '';
+        const role = roleInput.value || 'student';
+        const suffixes = role === 'teacher' ? ['@cqu.edu.cn'] : ['@stu.cqu.edu.cn'];
+        const [namePart] = value.split('@');
+        if (!namePart) {
+            emailSuggestions.classList.remove('show');
+            return;
+        }
+        renderSuggestions(namePart, suffixes);
+    }
+
+    emailInput.addEventListener('input', handleEmailInput);
+    emailInput.addEventListener('focus', handleEmailInput);
+    document.addEventListener('click', function (e) {
+        if (!emailSuggestions.contains(e.target) && e.target !== emailInput) {
+            emailSuggestions.classList.remove('show');
+        }
+    });
+
+    async function sendCode() {
+        const role = roleInput.value || 'student';
+        const email = (emailInput.value || '').trim();
+        const username = (usernameInput.value || '').trim();
+        if (!username || !email) {
+            alert('请先填写学号/工号和邮箱');
+            return;
+        }
+        if (!emailPatterns[role].test(email)) {
+            alert(role === 'teacher' ? '教师邮箱需使用 cqu.edu.cn 域名' : '学生邮箱需使用 stu.cqu.edu.cn 域名');
+            return;
+        }
+        sendBtn.disabled = true;
+        sendBtn.textContent = '发送中...';
+        try {
+            const resp = await fetch('{{ url_for("send_verification_code") }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({
+                    email: email,
+                    username: username,
+                    scene: 'register'
+                })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                alert('验证码已发送，请查收邮箱');
+            } else {
+                alert(data.error || '发送失败，请稍后再试');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('发送失败，请检查网络后重试');
+        } finally {
+            sendBtn.disabled = false;
+            sendBtn.textContent = '发送验证码';
+        }
+    }
+
+    sendBtn.addEventListener('click', sendCode);
+});
+</script>
+{% endblock %}

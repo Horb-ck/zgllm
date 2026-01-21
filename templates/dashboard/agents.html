@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+
+{% block title %}课程智能体 - 明月科创教育大模型{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+    <!-- 侧边导航栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            
+            <h2 class="hh">
+                <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
+                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div></h2>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">
+                <span>{{ username[0].upper() }}</span>
+            </div>
+            <div class="user-name">{{ username }}</div>
+            <div class="user-role">
+                {{ '教师' if role == 'teacher' else '学生' }}
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="{% if request.path == url_for('new_chat') %}active{% endif %}">
+                    <a href="{{ url_for('new_chat') }}">
+                        <span class="icon">💬</span>
+                        <span class="label">开启新对话</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_agents') %}active{% endif %}">
+                    <a href="{{ url_for('course_agents') }}">
+                        <span class="icon">🤖</span>
+                        <span class="label">课程广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_kd') %}active{% endif %}">
+                    <a href="{{ url_for('course_kd') }}">
+                        <span class="icon">🔍</span>
+                        <span class="label">智能体广场</span>
+                    </a>
+                </li>
+
+                <li class="{% if request.path == url_for('his') %}active{% endif %}">
+                    <a href="{{ url_for('his') }}">
+                        <span class="icon">📚</span>
+                        <span class="label">个人知识库</span>
+                    </a>
+                </li>
+ <!--  -->
+
+                <li class="{% if request.path == url_for('chat') %}active{% endif %}">
+                    <a href="{{ url_for('chat') }}">
+                        <span class="icon">🎓</span>
+                        <span class="label">学情分析</span>
+                    </a>
+                </li>
+
+ <!--  -->
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2" 
+               class="logout-btn" 
+               target="_blank">
+                <span class="icon">📝</span>
+                <span class="label">意见反馈</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <span class="icon">🚪</span>
+                <span class="label">退出登录</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1>课程广场</h1>
+            <p>探索各种专业领域的AI智能体，助力您的学习与研究</p>
+        </div>
+
+        {% if is_teacher %}
+            <h2 style="margin: 16px 0 8px;">我教授的课程</h2>
+            <div class="agents-grid">
+                {% if own_agents %}
+                    {% for agent in own_agents %}
+                    <div class="agent-card">
+                        <div class="agent-image">
+                            <img src="{{ agent.image_url }}" alt="{{ agent.name }}" class="ags">
+                        </div>
+                        <div class="agent-content">
+                            <h3>{{ agent.name }}</h3>
+                            <p>{{ agent.description }}</p>
+                            <div class="agent-actions">
+                                <a href="{{ url_for('view_agent', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>暂无授课课程</p>
+                {% endif %}
+            </div>
+
+            <h2 style="margin: 24px 0 8px;">其他课程</h2>
+            <div class="agents-grid">
+                {% for agent in other_agents %}
+                <div class="agent-card">
+                    <div class="agent-image">
+                        <img src="{{ agent.image_url }}" alt="{{ agent.name }}" class="ags">
+                    </div>
+                    <div class="agent-content">
+                        <h3>{{ agent.name }}</h3>
+                        <p>{{ agent.description }}</p>
+                        <div class="agent-actions">
+                            <a href="{{ url_for('view_agent', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {# 学生视角暂未区分已选/未选课程，先默认“已选课程 = 全部课程”，
+               仅做双区块的展示效果；后续接入后端区分后替换数据源。 #}
+
+            <h2 style="margin: 16px 0 8px;">已选课程</h2>
+            <div class="agents-grid">
+                {% if own_agents %}
+                    {% for agent in own_agents %}
+                    <div class="agent-card">
+                        <div class="agent-image">
+                            <img src="{{ agent.image_url }}" alt="{{ agent.name }}" class="ags">
+                        </div>
+                        <div class="agent-content">
+                            <h3>{{ agent.name }}</h3>
+                            <p>{{ agent.description }}</p>
+                            <div class="agent-actions">
+                                <a href="{{ url_for('view_agent', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>暂无授课课程</p>
+                {% endif %}
+            </div>
+
+            <h2 style="margin: 24px 0 8px;">其他课程</h2>
+            <div class="agents-grid">
+                {% for agent in other_agents %}
+                <div class="agent-card">
+                    <div class="agent-image">
+                        <img src="{{ agent.image_url }}" alt="{{ agent.name }}" class="ags">
+                    </div>
+                    <div class="agent-content">
+                        <h3>{{ agent.name }}</h3>
+                        <p>{{ agent.description }}</p>
+                        <div class="agent-actions">
+                            <a href="{{ url_for('view_agent', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,500 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1>课程与学习数据分析</h1>
+<div class="dashboard-container">
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>搜索课程（ID 或名称）：</h3>
+                <input type="text" id="courseSearchInput" placeholder="输入课程ID或名称" class="form-control mb-3">
+                <button onclick="searchCourse()" class="btn btn-primary">搜索课程</button>
+            
+                <!-- 搜索结果 -->
+                <ul id="courseResults" class="list-group mt-3"></ul>
+            
+                <!-- 显示选中课程的信息 -->
+                <div id="courseOverview" class="mt-4"></div>
+            </div>
+            <div class="col-md-6">
+              <h3>查询课程学生学习情况</h3>
+<label for="courseIdInput">请输入课程 ID：</label>
+<input type="text" id="courseIdInput" placeholder="例如：1">
+
+<!-- 新增筛选控件 -->
+<div style="margin-top: 10px;">
+  <label for="filterType">筛选条件：</label>
+  <select id="filterType">
+    <option value="all">全部学生</option>
+    <option value="completion_lt">完成率低于 (%)</option>
+    <option value="completion_gt">完成率高于 (%)</option>
+    <option value="knowledge_not_learned">未完成某个知识点</option>
+  </select>
+
+  <!-- 条件输入框 -->
+  <input type="text" id="filterValue" placeholder="输入数值" style="display:none;" />
+
+  <!-- 知识点下拉框 -->
+  <div id="knowledgeFilterContainer" style="display:none; position:relative;">
+    <input type="text" id="knowledgeSearch" placeholder="输入知识点名称或ID" />
+    <ul id="knowledgeSuggestions" class="suggestion-list"></ul>
+    <input type="hidden" id="selectedKnowledgeId" />
+  </div>
+</div>
+
+<button onclick="loadCourseStudentStatus()">查询</button>
+
+<div id="courseStudentStatus"></div>
+</div>
+            <div class="col-md-6">
+              <h3>查询课程知识点学习情况</h3>
+              <label for="courseIdKnowlegeInput">请输入课程 ID：</label>
+              <input type="text" id="courseIdKnowlegeInput" placeholder="例如：1">
+              <button onclick="loadCourseKnowledgeStatus()">查询</button>
+              <div id="courseKnowledgeStatus"></div>
+          </div>
+            <div class="col-md-6">
+                <h3>查看学生学习情况：</h3>
+                <input type="text" id="studentQueryInput" placeholder="输入学生ID或姓名" class="form-control mb-3">
+                <button onclick="loadStudentProgress()" class="btn btn-info">查询</button>
+                <div id="studentProgress"></div>
+            </div>
+
+            <div class="col-md-6 mt-5">
+                <h3>查看知识点 ID 或名称：</h3>
+                <input type="text" id="knowledgeIdInput" placeholder="输入知识点ID或名称" class="form-control mb-3">
+                <button onclick="loadKnowledgeStatus()" class="btn btn-success">查看知识点掌握情况</button>
+                <div id="knowledgeStatus"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script> 
+let selectedCourseData = null;
+let knowledgeList = []; // 缓存知识点数据
+
+document.getElementById('filterType').addEventListener('change', function () {
+  const val = this.value;
+
+  // 先隐藏所有输入框
+  document.getElementById('filterValue').style.display = 'none';
+  document.getElementById('knowledgeFilterContainer').style.display = 'none';
+
+  // 显示与当前筛选条件匹配的输入框
+  if (val === 'completion_lt' || val === 'completion_gt') {
+    document.getElementById('filterValue').style.display = 'inline-block';
+  } else if (val === 'knowledge_not_learned') {
+    document.getElementById('knowledgeFilterContainer').style.display = 'block';
+    loadKnowledgeList(); // 加载该课程的所有知识点
+  }
+});
+
+// 加载知识点数据
+function loadKnowledgeList(courseId) {
+  courseId = parseInt(document.getElementById('courseIdInput').value);
+  if (!courseId || isNaN(courseId)) return;
+
+  fetch(`/dashboard/study_situation/course/${courseId}/knowledges`)
+    .then(res => res.json())
+    .then(data => {
+      knowledgeList = data.knowledge_list;
+      initKnowledgeAutocomplete();
+    })
+    .catch(err => console.error("加载知识点失败", err));
+}
+
+// 初始化自动补全
+function initKnowledgeAutocomplete() {
+  const input = document.getElementById('knowledgeSearch');
+  const suggestions = document.getElementById('knowledgeSuggestions');
+
+  input.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    suggestions.innerHTML = '';
+
+    if (!query) return;
+
+    const matches = knowledgeList.filter(k =>
+      k.name.toLowerCase().includes(query) ||
+      k.knowledge_id.toString().includes(query)
+    );
+
+    matches.forEach(k => {
+      const li = document.createElement('li');
+      li.textContent = `${k.name} (ID: ${k.knowledge_id})`;
+      li.addEventListener('click', () => {
+        input.value = `${k.name} (ID: ${k.knowledge_id})`;
+        document.getElementById('selectedKnowledgeId').value = k.knowledge_id;
+        suggestions.innerHTML = '';
+      });
+      suggestions.appendChild(li);
+    });
+  });
+
+  // 点击外部关闭下拉框
+  document.addEventListener('click', function (e) {
+    if (!document.getElementById('knowledgeFilterContainer').contains(e.target)) {
+      suggestions.innerHTML = '';
+    }
+  });
+}
+/////////////////////////////////////////////////////////////////////////////
+function searchCourse() {
+    const query = document.getElementById('courseSearchInput').value.trim();
+    if (!query) {
+        alert("请输入课程编号或名称");
+        return;
+    }
+
+    fetch(`/dashboard/study_situation/course/search?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.count === 0 || !Array.isArray(data.courses)) {
+                document.getElementById('courseResults').innerHTML = `<li class="list-group-item">未找到相关课程</li>`;
+                document.getElementById('courseOverview').innerHTML = '';
+                return;
+            }
+
+            // 清空旧结果
+            const resultsList = document.getElementById('courseResults');
+            resultsList.innerHTML = '';
+
+            // 展示搜索结果
+            data.courses.forEach(courseData => {
+                const course = courseData.course;
+                const li = document.createElement('li');
+                li.className = 'list-group-item list-group-item-action';
+                li.innerText = `${course.course_name} (ID: ${course.course_id})`;
+                li.onclick = () => {
+                    selectedCourseData = courseData;
+                    displayCourseDetail(courseData);
+                };
+                resultsList.appendChild(li);
+            });
+
+            // 自动加载第一个课程详情
+            if (data.courses.length > 0) {
+                selectedCourseData = data.courses[0];
+                displayCourseDetail(selectedCourseData);
+            }
+
+        })
+        .catch(err => {
+            console.error("搜索失败:", err);
+            alert("搜索失败，请查看控制台日志。");
+        });
+}
+
+function displayCourseDetail(courseData) {
+    const course = courseData.course;
+    let html = `<h4>课程名称: ${course.course_name}</h4>`;
+    html += `<p>课程编号: ${course.course_id}</p>`;
+    html += `<p>教师姓名: ${course.teacher_name || '未知'}</p>`;
+    html += `<p>当前课程人数: ${courseData.total_students || 0}</p>`;
+    html += `<p>平均学习进度: ${(courseData.avg_knowledge_progress || 0).toFixed(2)}%</p>`;
+    html += `<p>知识点完成率: ${(courseData.knowledge_completion_rate || 0).toFixed(2)}%</p>`;
+
+    document.getElementById('courseOverview').innerHTML = html;
+}
+
+function loadCourseStudentStatus() {
+  const courseIdInput = document.getElementById('courseIdInput').value.trim();
+  if (!courseIdInput) {
+    alert("请输入课程 ID");
+    return;
+  }
+
+  const courseId = parseInt(courseIdInput);
+  if (isNaN(courseId)) {
+    alert("请输入有效的数字课程 ID");
+    return;
+  }
+
+  const filterType = document.getElementById('filterType').value;
+  let queryParams = {};
+
+  if (filterType === 'completion_lt') {
+    const value = parseFloat(document.getElementById('filterValue').value);
+    if (!value && value !== 0) {
+      alert("请输入有效的完成率数值");
+      return;
+    }
+    queryParams.completion_lt = value;
+  } else if (filterType === 'completion_gt') {
+    const value = parseFloat(document.getElementById('filterValue').value);
+    if (!value && value !== 0) {
+      alert("请输入有效的完成率数值");
+      return;
+    }
+    queryParams.completion_gt = value;
+  } else if (filterType === 'knowledge_not_learned') {
+    const selectedId = document.getElementById('selectedKnowledgeId').value;
+    if (!selectedId) {
+      alert("请选择一个知识点");
+      return;
+    }
+    queryParams.knowledge_not_learned = parseInt(selectedId);
+  }
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const url = `/dashboard/study_situation/course/${courseId}/students${queryString ? '?' + queryString : ''}`;
+
+  fetch(url)
+    .then(res => {
+      if (!res.ok) {
+        return res.json().then(data => {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }).catch(() => {
+          throw new Error(`网络响应失败 (HTTP ${res.status})`);
+        });
+      }
+      return res.json();
+    })
+    .then(data => {
+      let html = `<h4>课程 ID: ${data.course_id}</h4>`;
+      html += `<p>总知识点数: ${data.total_knowledge_count}</p>`;
+      html += `<table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>学生ID</th>
+                    <th>姓名</th>
+                    <th>已完成知识点</th>
+                    <th>完成率 (%)</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+      data.students.forEach(student => {
+        html += `<tr>
+                  <td>${student.student_id}</td>
+                  <td>${student.student_name}</td>
+                  <td>${student.completed_knowledge_count}</td>
+                  <td>${student.completion_rate.toFixed(2)}</td>
+                </tr>`;
+      });
+
+      html += `</tbody></table>`;
+
+      document.getElementById('courseStudentStatus').innerHTML = html;
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('courseStudentStatus').innerHTML = `
+        <div class="alert alert-danger">查询失败: ${err.message}</div>
+      `;
+    });
+}
+
+function loadCourseKnowledgeStatus() {
+  const courseIdKnowlegeInput = document.getElementById('courseIdKnowlegeInput').value.trim();
+  if (!courseIdKnowlegeInput) {
+    alert("请输入课程 ID");
+    return;
+  }
+  
+  const courseId = parseInt(courseIdKnowlegeInput);
+  if (isNaN(courseId)) {
+    alert("请输入有效的数字课程 ID");
+    return;
+  }
+  
+  fetch(`/dashboard/study_situation/course/${courseId}/knowledges`)
+    .then(res => {
+      if (!res.ok) {
+        return res.json().then(data => {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }).catch(() => {
+          throw new Error(`网络响应失败 (HTTP ${res.status})`);
+        });
+      }
+      return res.json();
+    })
+    .then(data => {
+      let html = `<h4>课程 ID: ${data.course_id}</h4>`;
+      html += `<p>总学生数: ${data.total_students}</p>`;
+      html += `<table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>知识点ID</th>
+                    <th>名称</th>
+                    <th>已完成人数</th>
+                    <th>完成率 (%)</th>
+                    <th>最近访问统计</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+  
+      data.knowledge_list.forEach(k => {
+        html += `<tr>
+                  <td>${k.knowledge_id}</td>
+                  <td>${k.name}</td>
+                  <td>${k.completed_students_count}</td>
+                  <td>${k.completion_rate.toFixed(2)}</td>
+                  <td>
+                    近一天: ${k.recent_visits.last_day}<br/>
+                    近一周: ${k.recent_visits.last_week}<br/>
+                    近一月: ${k.recent_visits.last_month}
+                  </td>
+                </tr>`;
+      });
+  
+      html += `</tbody></table>`;
+
+      document.getElementById('courseKnowledgeStatus').innerHTML = html;
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('courseKnowledgeStatus').innerHTML = `
+        <div class="alert alert-danger">查询失败: ${err.message}</div>
+      `;
+    });
+  }
+
+  
+function loadStudentProgress() {
+    const studentQuery = document.getElementById('studentQueryInput').value.trim();
+
+    if (!studentQuery) {
+        alert("请输入学生ID或姓名");
+        return;
+    }
+
+    const url = `/dashboard/study_situation/student/${encodeURIComponent(studentQuery)}?course_id=1`;
+
+    fetch(url)
+        .then(async (res) => {
+            // 检查是否是成功状态
+            if (!res.ok) {
+                // 尝试解析错误信息
+                let errorData;
+                try {
+                    errorData = await res.json(); // 尝试解析 JSON 错误信息
+                } catch (e) {
+                    errorData = { error: "无法解析服务器错误信息" };
+                }
+                throw new Error(errorData.error || `HTTP 错误: ${res.status}`);
+            }
+
+            // 如果成功，正常解析数据
+            return res.json();
+        })
+        .then(data => {
+            // 展示学生学习情况
+            const progressContainer = document.getElementById('studentProgress');
+            let html = '';
+
+            html += `<h4>学生姓名: ${data.student.student_name}</h4>`;
+            html += `<p>学号: ${data.student.student_id}</p>`;
+            html += `<p>课程名称: ${data.course.course_info.course_name}</p>`;
+            html += `<p>学习进度: ${data.course.progress_percentage}%</p>`;
+
+            html += `
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar"
+                         style="width: ${data.course.progress_percentage}%">
+                        ${data.course.progress_percentage}%
+                    </div>
+                </div>
+            `;
+
+            html += `<h5>已完成知识点:</h5><ul>`;
+            data.course.completed_knowledges.forEach(k =>
+                html += `<li>${k.knowledge_name}</li>`
+            );
+            html += `</ul>`;
+
+            html += `<h5>未完成知识点:</h5><ul>`;
+            data.course.uncompleted_knowledges.forEach(k =>
+                html += `<li>${k.knowledge_name}</li>`
+            );
+            html += `</ul>`;
+
+            progressContainer.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('studentProgress').innerHTML =
+                `<div class="alert alert-danger">${err.message}</div>`;
+        });
+}
+
+
+function loadKnowledgeStatus() {
+    const knowledgeQuery = document.getElementById('knowledgeIdInput').value.trim();
+    if (!knowledgeQuery) {
+      alert("请输入知识点 ID 或名称");
+      return;
+    }
+  
+    // 获取 course_id（可以写死，也可以让用户输入）
+    const courseId = 1; // 假设课程 ID 默认为 1
+  
+    fetch(`/dashboard/study_situation/knowledge/${encodeURIComponent(knowledgeQuery)}?course_id=${courseId}`)
+      .then(async (res) => {
+        // 检查是否是成功状态
+        if (!res.ok) {
+            // 尝试解析错误信息
+            let errorData;
+            try {
+                errorData = await res.json(); // 尝试解析 JSON 错误信息
+            } catch (e) {
+                errorData = { error: "无法解析服务器错误信息" };
+            }
+            throw new Error(errorData.error || `HTTP 错误: ${res.status}`);
+        }
+
+        // 如果成功，正常解析数据
+        return res.json();
+      })
+      .then(data => {
+        const knowledge = data.knowledge;
+        const total = data.total_students;
+        const completedCount = data.completed_students_count;
+        const uncompletedCount = data.uncompleted_students_count;
+  
+        let html = `<h4>知识点名称: ${knowledge.name}</h4>`;
+        html += `<p>知识点 ID: ${knowledge.knowledge_id}</p>`;
+        html += `<p>所属课程: ${knowledge.course_id}</p>`;
+        html += `<p>总人数: ${total}</p>`;
+        html += `<p>已完成人数: ${completedCount}</p>`;
+        html += `<p>未完成人数: ${uncompletedCount}</p>`;
+  
+        // 已完成学生名单
+        html += `<h5>已完成学生:</h5><ul>`;
+        data.completed_students.forEach(s => {
+          html += `<li>${s.student_name} (ID: ${s.student_id})</li>`;
+        });
+        html += `</ul>`;
+  
+        // 未完成学生名单
+        html += `<h5>未完成学生:</h5><ul>`;
+        data.uncompleted_students.forEach(s => {
+          html += `<li>${s.student_name} (ID: ${s.student_id})</li>`;
+        });
+        html += `</ul>`;
+  
+        // 访问记录统计
+        html += `<h5>最近访问记录:</h5>`;
+        html += `<ul>
+                  <li>近一天内访问人数: ${data.recent_visits.last_day}</li>
+                  <li>近一周内访问人数: ${data.recent_visits.last_week}</li>
+                  <li>近一个月内访问人数: ${data.recent_visits.last_month}</li>
+                </ul>`;
+  
+        document.getElementById('knowledgeStatus').innerHTML = html;
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('knowledgeStatus').innerHTML = `<div class="alert alert-danger">查询失败: ${err.message}</div>`;
+      });
+  }
+</script>
+
+<style>
+.container {
+  font-family: Arial, sans-serif;
+}
+</style>
+
+{% endblock %}
