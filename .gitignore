@@ -11,6 +11,7 @@ config.py
 
 # python 环境，只有在主服务器上才有
 elite/
+new_py/
 
 # 原有的
 # Byte-compiled / optimized / DLL files
