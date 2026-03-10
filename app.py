@@ -81,23 +81,23 @@ users = {
 }
 
 # 超级教师聊天页面
-new_chat_url="http://180.85.206.30:3000/chat/share?shareId=tDnGXv2xcnOmpGX2mvsuTPcp" # 默认
-agent1="http://180.85.206.30:3000/chat/share?shareId=ztwmryjyyn7a6zt6rtyl5pcg" # 不用
+new_chat_url="https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=tDnGXv2xcnOmpGX2mvsuTPcp" # 默认
+agent1="https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=ztwmryjyyn7a6zt6rtyl5pcg" # 不用
 
-DEFAULT_EMBED_URL = "http://180.85.206.30:3000/chat/share?shareId=cc1greng47slrl6ivb6ik03p"
+DEFAULT_EMBED_URL = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=cc1greng47slrl6ivb6ik03p"
 
-qea_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=zci1ditlgimgguu13dz5ra5n&studentUid="
-poac_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=my14ciwq8qa7moats2q4p28v&studentUid="
-pp_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=k53UaEbEHTWKQRLHzIjV5jFT&studentUid="
-syat_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=eajvaYCSBHZSXVN1q24sbYNR&studentUid="
-vsdf_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=kbcdnjU7cfTVFjGjTAkKz223&studentUid="
-aosaa_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=iZBNYVKb0zVZnnTZbq6gNnt6&studentUid="
-mraad_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=i8Oeda9zIrXfVUfqZXQ1qKuv&studentUid="
-la_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=fhw37s0q4ksu2mdt46yye54r&studentUid="
-rm_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=cFXQK1BlZq1zNkWSuGsxbu8J&studentUid="
-ptams_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=vqjCwyKQLzmNbxiJbNT8o3mi&studentUid="
-hohc_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=ed78T6IEQ5hanDkXVovkQtjZ&studentUid="
-hotd_agent_class_url = "http://180.85.206.30:3000/chat/share?shareId=zAwoWpdEmuQgdDG1kFJOnlq7&studentUid="
+qea_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=zci1ditlgimgguu13dz5ra5n&studentUid="
+poac_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=my14ciwq8qa7moats2q4p28v&studentUid="
+pp_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=k53UaEbEHTWKQRLHzIjV5jFT&studentUid="
+syat_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eajvaYCSBHZSXVN1q24sbYNR&studentUid="
+vsdf_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=kbcdnjU7cfTVFjGjTAkKz223&studentUid="
+aosaa_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=iZBNYVKb0zVZnnTZbq6gNnt6&studentUid="
+mraad_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=i8Oeda9zIrXfVUfqZXQ1qKuv&studentUid="
+la_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=fhw37s0q4ksu2mdt46yye54r&studentUid="
+rm_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=cFXQK1BlZq1zNkWSuGsxbu8J&studentUid="
+ptams_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=vqjCwyKQLzmNbxiJbNT8o3mi&studentUid="
+hohc_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=ed78T6IEQ5hanDkXVovkQtjZ&studentUid="
+hotd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=zAwoWpdEmuQgdDG1kFJOnlq7&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
