@@ -8,9 +8,8 @@ source /home/zgllm/workspace/elite_server/elite/bin/activate
 source /home/zgllm/workspace/elite_server/new_py/elite11/bin/activate
 
 - 运行python程序
-直接 ./run.sh
-
-python ./mcp_server.py
+调试模式运行 `python app.py`
+生产模式运行 `./run.sh`
    - -w ：表示工作进程数
    - -b ：访问地址和端口
    - main ：flask启动python文件名

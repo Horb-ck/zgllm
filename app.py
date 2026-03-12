@@ -193,11 +193,32 @@ agents = [
 
 agents_kd = [
     {
-        "id": 2,
-        "name": "编程助手",
-        "description": "专注于帮助解决编程问题的智能体，支持多种编程语言。",
-        "url": new_chat_url,
+        "id": 1,
+        "name": "Robomaster",
+        "description": "Robomaster 智能体，支持竞赛知识问答与训练策略辅助。",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
         "image_url": "/static/img/c1.png"
+    },
+    {
+        "id": 2,
+        "name": "Robocon-主赛",
+        "description": "Robocon 主赛智能体，聚焦赛题解析、方案设计与实战复盘。",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
+        "image_url": "/static/img/c2.png"
+    },
+    {
+        "id": 3,
+        "name": "Robocon-足式",
+        "description": "Robocon 足式智能体，提供足式机器人结构与控制相关支持。",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
+        "image_url": "/static/img/c3.png"
+    },
+    {
+        "id": 4,
+        "name": "Robotac",
+        "description": "Robotac 智能体，面向战术任务分析、系统联调与训练建议。",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
+        "image_url": "/static/img/c0.png"
     }
 ]
 

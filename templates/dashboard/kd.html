@@ -79,33 +79,25 @@
     <div class="main-content">
         <div class="page-header">
             <h1>智能体广场</h1>
-            <p>您的智能体广场 等待开发中ing</p>
+            <p>探索竞赛智能体，快速进入专属对话</p>
         </div>
-        
-    <!--<div class="main-content">
-        <div class="page-header">
-            <h1>智能体广场</h1>
-            <p>探索各种前沿的AI智能体，助力您的学习与研究</p>
-        </div>
-        
+
         <div class="agents-grid">
             {% for agent in agents %}
             <div class="agent-card">
                 <div class="agent-image">
-                    <img src="{{ agent.image_url }}" alt="{{ agent.name }}">
+                    <img src="{{ agent.image_url }}" alt="{{ agent.name }}" class="ags">
                 </div>
                 <div class="agent-content">
                     <h3>{{ agent.name }}</h3>
                     <p>{{ agent.description }}</p>
                     <div class="agent-actions">
-                        <a href="{{ url_for('view_kd', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>-->
-<!--                        <button class="btn btn-favorite" data-agent-id="{{ agent.id }}">-->
-<!--                            <span class="icon">☆</span> 收藏-->
-<!--                        </button>-->
-    <!--                </div>
+                        <a href="{{ url_for('view_kd', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>
+                    </div>
                 </div>
             </div>
-            {% endfor %}-->
+            {% endfor %}
+        </div>
 
     </div>
 </div>

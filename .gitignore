@@ -3,6 +3,11 @@
 .cursor/
 .idea/
 
+# 无视启动命令
+kill.sh
+restart.sh
+run.sh
+
 # KG模块等待重构
 KG/
 
