@@ -3,6 +3,9 @@
 .cursor/
 .idea/
 
+# 日志输出不要
+nohup.out
+
 # KG模块等待重构
 KG/
 
