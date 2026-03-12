@@ -1,0 +1,203 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if agent %}{{ agent.name }}{% else %}开启新对话{% endif %} - 明月科创教育大模型{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- 侧边导航栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="hh">
+                <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
+                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div></h2>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">
+                <span>{{ username[0].upper() }}</span>
+            </div>
+            <div class="user-name">{{ username }}</div>
+            <div class="user-role">
+                {{ '教师' if role == 'teacher' else '学生' }}
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="{% if request.path == url_for('new_chat') %}active{% endif %}">
+                    <a href="{{ url_for('new_chat') }}">
+                        <span class="icon">💬</span>
+                        <span class="label">开启新对话</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_agents') %}active{% endif %}">
+                    <a href="{{ url_for('course_agents') }}">
+                        <span class="icon">🤖</span>
+                        <span class="label">课程广场</span>
+                    </a>
+                </li>
+
+                <li class="{% if request.path == url_for('course_kd') %}active{% endif %}">
+                    <a href="{{ url_for('course_kd') }}">
+                        <span class="icon">🔍</span>
+                        <span class="label">智能体广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('his') %}active{% endif %}">
+                    <a href="{{ url_for('his') }}">
+                        <span class="icon">📚</span>
+                        <span class="label">个人知识库</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('chat') %}active{% endif %}">
+                    <a href="{{ url_for('chat') }}">
+                        <span class="icon">🎓</span>
+                        <span class="label">学情分析</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2" 
+               class="logout-btn" 
+               target="_blank">
+                <span class="icon">📝</span>
+                <span class="label">意见反馈</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <span class="icon">🚪</span>
+                <span class="label">退出登录</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-stack">
+            {% for category, message in messages %}
+            <div class="flash-banner {{ category or 'info' }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            {% if agent %}
+                <h1>{{ agent.name }}</h1>
+                <p>{{ agent.description }}</p>
+            {% else %}
+                <h1>开启新对话</h1>
+                <p>与明月科创教育大模型进行对话，探索AI的无限可能</p>
+            {% endif %}
+        </div>
+        
+        <iframe 
+            src="{{ embed_url }}" 
+            frameborder="0" 
+            allowfullscreen
+            loading="lazy"
+            allowfullscreen 
+            id="main-iframe"
+        ></iframe>
+
+    </div>
+    
+</div>
+
+<!-- 添加CSS样式 -->
+<style>
+.main-content {
+    flex: 1;
+    background-color: #fff;
+    overflow: auto;
+}
+
+.flash-stack {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px 0;
+}
+
+.flash-banner {
+    background: #e6ffed;
+    color: #0f5132;
+    border: 1px solid #a3e6b8;
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    animation: fade-in 180ms ease-out, fade-out 300ms ease-in 3s forwards;
+}
+
+.flash-banner.error {
+    background: #fff3f0;
+    color: #842029;
+    border-color: #f5c2c7;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-out {
+    to { opacity: 0; transform: translateY(-4px); }
+}
+    
+#main-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+.dual-container {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 150px); /* 调整高度，减去顶部空间 */
+    gap: 20px;
+}
+
+.kg-container {
+    flex: 1;
+    min-width: 45%;
+    height: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.embed-container {
+    flex: 1;
+    min-width: 45%;
+    height: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#kg-iframe, #chat-iframe {
+    width: 100%;
+    height: 100%;
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+    .dual-container {
+        height: auto;
+    }
+    
+    .kg-container, .embed-container {
+        width: 100%;
+        height: 600px;
+        margin-bottom: 20px;
+    }
+}
+</style>
+{% endblock %}

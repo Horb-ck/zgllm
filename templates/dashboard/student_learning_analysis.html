@@ -1,0 +1,2383 @@
+{% extends "layout.html" %}
+
+{% block title %}学情分析 - 学生版{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- 侧边导航栏保持不变 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="hh">
+                <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
+                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div>
+            </h2>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">
+                <span>{{ username[0].upper() }}</span>
+            </div>
+            <div class="user-name">{{ username }}</div>
+            <div class="user-role">学生</div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="{% if request.path == url_for('new_chat') %}active{% endif %}">
+                    <a href="{{ url_for('new_chat') }}">
+                        <span class="icon">💬</span>
+                        <span class="label">开启新对话</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_agents') %}active{% endif %}">
+                    <a href="{{ url_for('course_agents') }}">
+                        <span class="icon">🤖</span>
+                        <span class="label">课程广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_kd') %}active{% endif %}">
+                    <a href="{{ url_for('course_kd') }}">
+                        <span class="icon">🔍</span>
+                        <span class="label">智能体广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('his') %}active{% endif %}">
+                    <a href="{{ url_for('his') }}">
+                        <span class="icon">📚</span>
+                        <span class="label">个人知识库</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('chat') %}active{% endif %}">
+                    <a href="{{ url_for('chat') }}">
+                        <span class="icon">🎓</span>
+                        <span class="label">学情分析</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2" 
+               class="logout-btn" 
+               target="_blank">
+                <span class="icon">📝</span>
+                <span class="label">意见反馈</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <span class="icon">🚪</span>
+                <span class="label">退出登录</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 无课程提示区域（默认隐藏，通过JS控制显示） -->
+        <div id="noCourseWarning" class="no-course-warning" style="display: none;">
+            <div class="warning-content">
+                <h2>您当前未选修任何课程</h2>
+                <p>无需学情分析，请先在课程广场中选择并加入课程</p>
+                <a href="{{ url_for('course_agents') }}" class="goto-course-btn">
+                    <i class="fas fa-external-link-alt"></i>
+                    前往课程广场
+                </a>
+            </div>
+        </div>
+
+        <!-- 有课程时的完整页面内容（默认显示，通过JS控制隐藏） -->
+        <div id="coursePageContent">
+            <div class="page-header">
+                <div class="header-top">
+                    <div>
+                        <h1>学情分析 - 学生端</h1>
+                        <p>全面掌握学习情况，精准指导学习策略</p>
+                    </div>
+                    <!-- 课程选择下拉框 -->
+                    <div class="course-selector-container">
+                        <div class="course-selector">
+                            <button class="course-selector-btn" id="courseSelectorBtn">
+                                <span class="selected-course" id="selectedCourseName">选择课程...</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="course-dropdown" id="courseDropdown">
+                                <div class="course-dropdown-header">我的课程</div>
+                                <div class="course-list" id="courseList">
+                                    <div class="loading">加载课程中...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容网格布局 - 左右等高 -->
+            <div class="main-grid">
+                <!-- 左半区域：学习概览、已发布任务、成绩分析 -->
+                <div class="left-main-content">
+                    <!-- 学习概览（包含个人概览和单元进度） -->
+                    <div class="dashboard-card overview-progress-section">
+                        <div class="card-header">
+                            <h2>学习概览</h2>
+                            <span class="card-badge" id="overall-progress">82%</span>
+                        </div>
+                        <div class="card-content">
+                            <!-- 个人概览部分 - 减小高度 -->
+                            <div class="overview-section">
+                                <div class="overview-stats compact">
+                                    <div class="stat-card compact">
+                                        <div class="stat-icon assignments">
+                                            <i class="fas fa-tasks"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="assignment-completion-rate">85%</h3>
+                                            <p>作业完成率</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card compact">
+                                        <div class="stat-icon quizzes">
+                                            <i class="fas fa-question-circle"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="quiz-completion-rate">92%</h3>
+                                            <p>测验完成率</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card compact">
+                                        <div class="stat-icon modules">
+                                            <i class="fas fa-folder"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="module-completion-rate">78%</h3>
+                                            <p>单元完成率</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card compact">
+                                        <div class="stat-icon score">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="average-score">88.5</h3>
+                                            <p>平均成绩</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 简化版班级排名信息 - 减小高度 -->
+                                <div class="ranking-info-simple compact">
+                                    <div class="ranking-item">
+                                        <span class="ranking-label">班级排名:</span>
+                                        <span class="ranking-value" id="class-rank">5</span>
+                                    </div>
+                                    <div class="ranking-item">
+                                        <span class="ranking-label">班级人数:</span>
+                                        <span class="ranking-value" id="total-students">32</span>
+                                    </div>
+                                    <div class="ranking-item">
+                                        <span class="ranking-label">班级平均分:</span>
+                                        <span class="ranking-value" id="class-average">85.2</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 单元学习进度部分 - 增加高度 -->
+                            <div class="progress-section">
+                                <div class="section-header">
+                                    <h3 class="section-subtitle">单元学习进度</h3>
+                                    <span class="section-count" id="module-count">6个单元</span>
+                                </div>
+                                <div id="module-progress-list" class="progress-list scrollable-content">
+                                    <!-- 假数据：单元学习进度 -->
+                                    <div class="module-progress-item completed">
+                                        <div class="module-header">
+                                            <span class="module-name">第一章：Python基础</span>
+                                            <span class="module-status status-completed">已完成</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: 100%"></div>
+                                        </div>
+                                        <div class="progress-info">
+                                            <span>8 个项目</span>
+                                            <span>100% 完成</span>
+                                        </div>
+                                    </div>
+                                    <div class="module-progress-item in-progress">
+                                        <div class="module-header">
+                                            <span class="module-name">第二章：数据结构与算法</span>
+                                            <span class="module-status status-in-progress">进行中</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: 85%"></div>
+                                        </div>
+                                        <div class="progress-info">
+                                            <span>12 个项目</span>
+                                            <span>85% 完成</span>
+                                        </div>
+                                    </div>
+                                    <div class="module-progress-item in-progress">
+                                        <div class="module-header">
+                                            <span class="module-name">第三章：面向对象编程</span>
+                                            <span class="module-status status-in-progress">进行中</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: 60%"></div>
+                                        </div>
+                                        <div class="progress-info">
+                                            <span>10 个项目</span>
+                                            <span>60% 完成</span>
+                                        </div>
+                                    </div>
+                                    <div class="module-progress-item in-progress">
+                                        <div class="module-header">
+                                            <span class="module-name">第四章：Web开发基础</span>
+                                            <span class="module-status status-in-progress">进行中</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: 30%"></div>
+                                        </div>
+                                        <div class="progress-info">
+                                            <span>15 个项目</span>
+                                            <span>30% 完成</span>
+                                        </div>
+                                    </div>
+                                    <div class="module-progress-item">
+                                        <div class="module-header">
+                                            <span class="module-name">第五章：数据库操作</span>
+                                            <span class="module-status status-in-progress">未开始</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: 0%"></div>
+                                        </div>
+                                        <div class="progress-info">
+                                            <span>8 个项目</span>
+                                            <span>0% 完成</span>
+                                        </div>
+                                    </div>
+                                    <div class="module-progress-item locked">
+                                        <div class="module-header">
+                                            <span class="module-name">第六章：项目实战</span>
+                                            <span class="module-status status-locked">已锁定</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: 0%"></div>
+                                        </div>
+                                        <div class="progress-info">
+                                            <span>6 个项目</span>
+                                            <span>0% 完成</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 已发布任务（修改标题） -->
+                    <div class="dashboard-card tasks-section">
+                        <div class="card-header">
+                            <h2>已发布任务</h2>
+                            <span class="card-badge" id="published-tasks-count">11</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="tasks-tabs">
+                                <div class="tab-buttons">
+                                    <button class="tab-button active" data-tab="tasks-assignments">已发布作业</button>
+                                    <button class="tab-button" data-tab="tasks-quizzes">已发布测验</button>
+                                </div>
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="tasks-assignments-tab">
+                                        <div id="published-assignments-list" class="tasks-list scrollable-content">
+                                            <!-- 假数据：已发布作业 -->
+                                            <div class="task-item assignment">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>Python基础编程作业</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">100分</span>
+                                                            <span class="task-due">截止: 2024-01-20 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-pending">
+                                                            待完成
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item assignment">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>数据结构算法实现</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">100分</span>
+                                                            <span class="task-due">截止: 2024-01-18 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-overdue">
+                                                            已过期
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item assignment">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>面向对象设计项目</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">150分</span>
+                                                            <span class="task-due">截止: 2024-01-15 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-completed">
+                                                            已完成
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item assignment">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>Web开发实战作业</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">120分</span>
+                                                            <span class="task-due">截止: 2024-01-19 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-due-soon">
+                                                            即将截止
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item assignment">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>数据库设计报告</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">80分</span>
+                                                            <span class="task-due">截止: 2024-01-10 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-missing">
+                                                            截止且未提交
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item assignment">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>期末考试项目</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">200分</span>
+                                                            <span class="task-due">截止: 2024-01-25 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-pending">
+                                                            待完成
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="tasks-quizzes-tab">
+                                        <div id="published-quizzes-list" class="tasks-list scrollable-content">
+                                            <!-- 假数据：已发布测验 -->
+                                            <div class="task-item quiz">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>Python基础语法测验</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">50分</span>
+                                                            <span class="task-due">截止: 2024-01-19 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-pending">
+                                                            待完成
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item quiz">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>数据结构期中测验</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">100分</span>
+                                                            <span class="task-due">截止: 2024-01-17 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-completed">
+                                                            已完成
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item quiz">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>面向对象编程测验</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">80分</span>
+                                                            <span class="task-due">截止: 2024-01-15 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-overdue">
+                                                            已过期
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item quiz">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>Web开发基础测验</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">70分</span>
+                                                            <span class="task-due">截止: 2024-01-18 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-due-soon">
+                                                            即将截止
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="task-item quiz">
+                                                <div class="task-content">
+                                                    <div class="task-info">
+                                                        <h3>数据库操作测验</h3>
+                                                        <div class="task-details">
+                                                            <span class="task-points">90分</span>
+                                                            <span class="task-due">截止: 2024-01-22 23:59</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="task-status">
+                                                        <span class="status status-pending">
+                                                            待完成
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 成绩分析 -->
+                    <div class="dashboard-card scores-section">
+                        <div class="card-header">
+                            <h2>成绩分析</h2>
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="scores-tabs">
+                                <div class="tab-buttons">
+                                    <button class="tab-button active" data-tab="scores-assignments">作业成绩</button>
+                                    <button class="tab-button" data-tab="scores-quizzes">测验成绩</button>
+                                </div>
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="scores-assignments-tab">
+                                        <div id="assignment-scores-list" class="scores-list scrollable-content">
+                                            <!-- 假数据：作业成绩 -->
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>Python基础编程作业</h3>
+                                                        <p class="score-full">满分: 100分</p>
+                                                    </div>
+                                                    <div class="score-display score-excellent">
+                                                        95/100
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>数据结构算法实现</h3>
+                                                        <p class="score-full">满分: 100分</p>
+                                                    </div>
+                                                    <div class="score-display score-good">
+                                                        88/100
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>面向对象设计项目</h3>
+                                                        <p class="score-full">满分: 100分</p>
+                                                    </div>
+                                                    <div class="score-display score-excellent">
+                                                        92/100
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>Web开发实战作业</h3>
+                                                        <p class="score-full">满分: 100分</p>
+                                                    </div>
+                                                    <div class="score-display score-good">
+                                                        78/100
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>数据库设计报告</h3>
+                                                        <p class="score-full">满分: 100分</p>
+                                                    </div>
+                                                    <div class="score-display score-good">
+                                                        85/100
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="scores-quizzes-tab">
+                                        <div id="quiz-scores-list" class="scores-list scrollable-content">
+                                            <!-- 假数据：测验成绩 -->
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>Python基础语法测验</h3>
+                                                        <p class="score-full">满分: 50分</p>
+                                                    </div>
+                                                    <div class="score-display score-excellent">
+                                                        45/50
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>数据结构期中测验</h3>
+                                                        <p class="score-full">满分: 100分</p>
+                                                    </div>
+                                                    <div class="score-display score-good">
+                                                        85/100
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>面向对象编程测验</h3>
+                                                        <p class="score-full">满分: 80分</p>
+                                                    </div>
+                                                    <div class="score-display score-good">
+                                                        72/80
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <div class="score-content">
+                                                    <div class="score-info">
+                                                        <h3>Web开发基础测验</h3>
+                                                        <p class="score-full">满分: 70分</p>
+                                                    </div>
+                                                    <div class="score-display score-poor">
+                                                        63/70
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右半区域：AI助手 -->
+                <div class="right-side-content">
+                    <!-- AI助手（占满整个右半区域） -->
+                    <div class="dashboard-card ai-assistant-card">
+                        <div class="card-header">
+                            <h2>学习AI助手</h2>
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="ai-assistant-description">
+                                <p>与学习AI助手深度交流，获取个性化学习建议、答疑和学习规划指导</p>
+                            </div>
+                            <div class="ai-assistant-iframe-container">
+                                <!-- 使用动态URL，包含用户名 -->
+                                <iframe 
+                                    id="aiAssistantIframe"
+                                    src=""
+                                    frameborder="0"
+                                    allowfullscreen
+                                    loading="lazy"
+                                    class="ai-assistant-iframe"
+                                ></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 基础缩放控制 */
+html {
+    font-size: 14px; /* 基础字体大小 */
+}
+
+.dashboard-container {
+    width: 100%;
+    min-width: 320px; /* 最小宽度 */
+    overflow-x: hidden;
+}
+
+/* 无课程提示样式 */
+.no-course-warning {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 100px);
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 40px;
+    margin: 20px;
+    text-align: center;
+}
+
+.warning-content {
+    max-width: 500px;
+}
+
+.warning-content h2 {
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    font-size: 1.714rem; /* 24px */
+    font-weight: 600;
+}
+
+.warning-content p {
+    color: #7f8c8d;
+    font-size: 1rem; /* 16px */
+    line-height: 1.6;
+    margin: 0 0 30px 0;
+}
+
+.goto-course-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* 8px */
+    padding: 0.75rem 1.5rem; /* 12px 24px */
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+    font-size: 0.875rem; /* 14px */
+    border: none;
+    cursor: pointer;
+}
+
+.goto-course-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.goto-course-btn i {
+    font-size: 0.75rem; /* 12px */
+}
+
+/* 主内容区域样式调整 */
+#coursePageContent {
+    width: 100%;
+    height: 100%;
+}
+
+/* 主内容网格布局 - 左右等高，使用百分比和minmax实现自适应 */
+.main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* 左右平分，防止溢出 */
+    gap: 1.25rem; /* 20px */
+    height: calc(100vh - 140px);
+    min-height: 600px;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* 左半区域 - 重新分配高度，确保与右半区域等高 */
+.left-main-content {
+    display: grid;
+    grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); /* 学习概览:已发布任务:成绩分析 = 3:2:2 */
+    gap: 1.25rem; /* 20px */
+    overflow-y: auto;
+    padding-right: 0.5rem; /* 8px */
+    height: 100%;
+    min-width: 0; /* 防止网格项目溢出 */
+}
+
+/* 右半区域 - AI助手占满整个区域 */
+.right-side-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0; /* 防止网格项目溢出 */
+}
+
+/* 合并的学习概览区域 - 自适应高度 */
+.overview-progress-section {
+    height: auto;
+    min-height: 0; /* 允许缩小 */
+}
+
+.overview-progress-section .card-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0; /* 允许缩小 */
+}
+
+/* 个人概览部分 - 减小高度 */
+.overview-section {
+    flex-shrink: 0;
+    padding-bottom: 0.625rem; /* 10px */
+    border-bottom: 1px solid #ecf0f1;
+    margin-bottom: 0.625rem; /* 10px */
+}
+
+/* 概览统计样式 - 紧凑版本 */
+.overview-stats.compact {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 防止溢出 */
+    gap: 0.5rem; /* 8px */
+    height: auto;
+    margin-bottom: 0.625rem; /* 10px */
+}
+
+.stat-card.compact {
+    background: white;
+    border-radius: 0.375rem; /* 6px */
+    padding: 0.5rem 0.625rem; /* 8px 10px */
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    min-height: 2.8125rem; /* 45px */
+    height: auto;
+    overflow: hidden; /* 防止内容溢出 */
+}
+
+.stat-card.compact:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 1.75rem; /* 28px */
+    height: 1.75rem; /* 28px */
+    border-radius: 0.3125rem; /* 5px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem; /* 8px */
+    font-size: 0.75rem; /* 12px */
+    color: white;
+    flex-shrink: 0; /* 防止图标被压缩 */
+}
+
+.stat-icon.assignments { background: #2ecc71; }
+.stat-icon.quizzes { background: #9b59b6; }
+.stat-icon.modules { background: #3498db; }
+.stat-icon.score { background: #f39c12; }
+
+.stat-info {
+    min-width: 0; /* 允许文本换行 */
+    flex: 1;
+}
+
+.stat-info h3 {
+    margin: 0;
+    font-size: 0.875rem; /* 14px */
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-info p {
+    margin: 0.125rem 0 0; /* 2px */
+    color: #7f8c8d;
+    font-size: 0.625rem; /* 10px */
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 简化版班级排名信息 - 紧凑版本 */
+.ranking-info-simple.compact {
+    display: flex;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border-radius: 0.375rem; /* 6px */
+    padding: 0.5rem 0.75rem; /* 8px 12px */
+    margin-top: 0.3125rem; /* 5px */
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 0.5rem; /* 8px */
+}
+
+.ranking-info-simple.compact .ranking-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1875rem; /* 3px */
+    min-width: 60px; /* 最小宽度 */
+    flex: 1; /* 平均分配空间 */
+}
+
+.ranking-info-simple.compact .ranking-label {
+    font-size: 0.625rem; /* 10px */
+    color: #7f8c8d;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.ranking-info-simple.compact .ranking-value {
+    font-size: 0.75rem; /* 12px */
+    font-weight: 600;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+.ranking-info-simple.compact .ranking-value#class-rank {
+    color: #3498db;
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 700;
+}
+
+/* 单元学习进度部分 - 增加高度 */
+.progress-section {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 9.375rem; /* 150px */
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.625rem; /* 10px */
+    flex-shrink: 0;
+    min-height: 1.5rem; /* 24px */
+}
+
+.section-subtitle {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.section-count {
+    font-size: 0.6875rem; /* 11px */
+    color: #7f8c8d;
+    background: #f1f8ff;
+    padding: 0.1875rem 0.5rem; /* 3px 8px */
+    border-radius: 0.625rem; /* 10px */
+    border: 1px solid #dbeafe;
+    white-space: nowrap;
+    margin-left: 0.5rem; /* 8px */
+}
+
+/* 卡片样式调整 */
+.dashboard-card {
+    background: white;
+    border-radius: 0.75rem; /* 12px */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* 确保卡片占满分配的网格空间 */
+    min-height: 0; /* 允许缩小 */
+}
+
+/* 已发布任务卡片 */
+.tasks-section {
+    height: 100%;
+    min-height: 0;
+}
+
+/* 成绩分析卡片 */
+.scores-section {
+    height: 100%;
+    min-height: 0;
+}
+
+.ai-assistant-card {
+    height: 100%; /* 占满整个右半区域 */
+    min-height: 0;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem 1rem; /* 14px 16px */
+    border-bottom: 1px solid #ecf0f1;
+    background: #f8f9fa;
+    flex-shrink: 0;
+    min-height: 3rem; /* 48px */
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1rem; /* 16px */
+    color: #2c3e50;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.card-header i {
+    color: #3498db;
+    font-size: 1rem; /* 16px */
+    flex-shrink: 0;
+    margin-left: 0.5rem; /* 8px */
+}
+
+.card-badge {
+    background: #e74c3c;
+    color: white;
+    border-radius: 0.625rem; /* 10px */
+    padding: 0.25rem 0.625rem; /* 4px 10px */
+    font-size: 0.75rem; /* 12px */
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 0.5rem; /* 8px */
+}
+
+.card-content {
+    padding: 1rem; /* 16px */
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* 允许缩小 */
+}
+
+/* 任务标签页样式 */
+.tasks-tabs, .scores-tabs {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.tab-buttons {
+    display: flex;
+    border-bottom: 1px solid #ecf0f1;
+    margin-bottom: 0.75rem; /* 12px */
+    flex-shrink: 0;
+    overflow-x: auto; /* 标签过多时可横向滚动 */
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-buttons::-webkit-scrollbar {
+    height: 3px;
+}
+
+.tab-buttons::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.tab-buttons::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.tab-button {
+    padding: 0.5rem 1rem; /* 8px 16px */
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 0.8125rem; /* 13px */
+    color: #7f8c8d;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0; /* 防止按钮被压缩 */
+}
+
+.tab-button.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+    font-weight: 500;
+}
+
+.tab-button:hover:not(.active) {
+    color: #3498db;
+    background: #f8f9fa;
+}
+
+.tab-content {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.tab-pane {
+    display: none;
+    height: 100%;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.tasks-list, .scores-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem; /* 10px */
+    height: 100%;
+    min-height: 0;
+}
+
+/* 任务项样式 - 重构布局 */
+.task-item {
+    padding: 0.625rem; /* 10px */
+    border-radius: 0.5rem; /* 8px */
+    background: #f8f9fa;
+    transition: background-color 0.2s;
+    border-left: 4px solid #3498db;
+    min-height: 3.4375rem; /* 55px */
+    overflow: hidden; /* 防止内容溢出 */
+}
+
+.task-item:hover {
+    background: #e9ecef;
+}
+
+.task-item.quiz {
+    border-left-color: #9b59b6;
+}
+
+.task-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem; /* 8px */
+    width: 100%;
+    min-height: 0;
+}
+
+.task-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; /* 4px */
+    min-width: 0; /* 允许文本换行 */
+    overflow: hidden;
+}
+
+.task-info h3 {
+    margin: 0;
+    font-size: 0.8125rem; /* 13px */
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-details {
+    display: flex;
+    gap: 0.5rem; /* 8px */
+    font-size: 0.6875rem; /* 11px */
+    color: #7f8c8d;
+    flex-wrap: wrap; /* 允许换行 */
+    align-items: center;
+}
+
+.task-points, .task-due {
+    white-space: nowrap;
+}
+
+/* 任务状态样式 - 固定在右侧 */
+.task-status {
+    flex-shrink: 0; /* 防止状态标签被压缩 */
+    display: flex;
+    align-items: flex-start;
+}
+
+.status {
+    padding: 0.125rem 0.3125rem; /* 2px 5px */
+    border-radius: 0.25rem; /* 4px */
+    font-size: 0.5625rem; /* 9px */
+    font-weight: 500;
+    text-align: center;
+    min-width: 3.125rem; /* 50px */
+    max-width: 5rem; /* 80px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-overdue {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-missing {
+    background: #f5f5f5;
+    color: #6c757d;
+    border: 1px solid #e0e0e0;
+}
+
+.status-due-soon {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* 成绩项样式 */
+.score-item {
+    padding: 0.625rem; /* 10px */
+    border-radius: 0.5rem; /* 8px */
+    background: #f8f9fa;
+    transition: background-color 0.2s;
+    min-height: 3.4375rem; /* 55px */
+    overflow: hidden;
+}
+
+.score-item:hover {
+    background: #e9ecef;
+}
+
+.score-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem; /* 8px */
+    width: 100%;
+}
+
+.score-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1875rem; /* 3px */
+    min-width: 0;
+    overflow: hidden;
+}
+
+.score-info h3 {
+    margin: 0;
+    font-size: 0.8125rem; /* 13px */
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.score-full {
+    margin: 0;
+    font-size: 0.6875rem; /* 11px */
+    color: #7f8c8d;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.score-display {
+    font-weight: 600;
+    font-size: 0.875rem; /* 14px */
+    padding: 0.3125rem 0.625rem; /* 5px 10px */
+    border-radius: 0.3125rem; /* 5px */
+    background: #3498db;
+    color: white;
+    white-space: nowrap;
+    flex-shrink: 0; /* 防止被压缩 */
+}
+
+.score-excellent {
+    background: #2ecc71;
+}
+
+.score-good {
+    background: #f39c12;
+}
+
+.score-poor {
+    background: #e74c3c;
+}
+
+/* 单元进度样式 */
+.module-progress-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3125rem; /* 5px */
+    padding: 0.625rem; /* 10px */
+    background: #f8f9fa;
+    border-radius: 0.375rem; /* 6px */
+    border-left: 4px solid #3498db;
+    flex-shrink: 0;
+    min-height: 3.125rem; /* 50px */
+    overflow: hidden;
+}
+
+.module-progress-item.completed {
+    border-left-color: #2ecc71;
+}
+
+.module-progress-item.in-progress {
+    border-left-color: #f39c12;
+}
+
+.module-progress-item.locked {
+    border-left-color: #95a5a6;
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem; /* 8px */
+}
+
+.module-name {
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 500;
+    color: #2c3e50;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.module-status {
+    font-size: 0.625rem; /* 10px */
+    padding: 0.125rem 0.375rem; /* 2px 6px */
+    border-radius: 0.5rem; /* 8px */
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-completed {
+    background: #d5f4e6;
+    color: #27ae60;
+}
+
+.status-in-progress {
+    background: #fdebd0;
+    color: #f39c12;
+}
+
+.status-locked {
+    background: #ecf0f1;
+    color: #7f8c8d;
+}
+
+.progress-bar-container {
+    height: 0.3125rem; /* 5px */
+    background: #ecf0f1;
+    border-radius: 0.1875rem; /* 3px */
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    border-radius: 0.1875rem; /* 3px */
+    transition: width 0.3s ease;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.625rem; /* 10px */
+    color: #7f8c8d;
+    white-space: nowrap;
+}
+
+/* AI助手样式 */
+.ai-assistant-card .card-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.ai-assistant-description {
+    padding: 1.25rem 1.25rem 0 1.25rem; /* 20px 20px 0 20px */
+    text-align: center;
+    color: #5a6c7d;
+    font-size: 0.875rem; /* 14px */
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ai-assistant-iframe-container {
+    padding: 0 1.25rem 1.25rem 1.25rem; /* 0 20px 20px 20px */
+    flex: 1;
+    min-height: 25rem; /* 400px */
+    min-width: 0;
+    overflow: hidden;
+}
+
+.ai-assistant-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0.5rem; /* 8px */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    min-height: 300px;
+}
+
+/* 加载状态 */
+.loading {
+    text-align: center;
+    padding: 1.25rem; /* 20px */
+    color: #7f8c8d;
+    font-size: 0.875rem; /* 14px */
+}
+
+.empty-state {
+    text-align: center;
+    padding: 1.25rem; /* 20px */
+    color: #95a5a6;
+}
+
+.empty-state i {
+    font-size: 1.5rem; /* 24px */
+    margin-bottom: 0.5rem; /* 8px */
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 0.75rem; /* 12px */
+    margin: 0;
+}
+
+/* 滚动内容区域 */
+.scrollable-content {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 响应式设计 - 使用rem单位实现等比缩放 */
+@media (max-width: 1200px) {
+    html {
+        font-size: 13px;
+    }
+    
+    .main-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: auto;
+        gap: 1rem; /* 16px */
+    }
+    
+    .left-main-content {
+        grid-template-rows: auto;
+        height: auto;
+        gap: 1rem; /* 16px */
+        padding-right: 0;
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .no-course-warning {
+        height: calc(100vh - 80px);
+        padding: 1.5rem 1rem; /* 24px 16px */
+        margin: 1rem; /* 16px */
+    }
+    
+    .ai-assistant-iframe-container {
+        min-height: 20rem; /* 320px */
+    }
+    
+    .ranking-info-simple.compact {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 12px;
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: 1fr;
+        gap: 0.5rem; /* 8px */
+    }
+    
+    .ranking-info-simple.compact {
+        flex-direction: row;
+        gap: 0.5rem; /* 8px */
+        flex-wrap: wrap;
+    }
+    
+    .ranking-info-simple.compact .ranking-item {
+        min-width: 80px;
+        flex: 0 0 calc(50% - 0.5rem); /* 50%宽度减去间隙 */
+    }
+    
+    .warning-content h2 {
+        font-size: 1.5rem; /* 24px */
+    }
+    
+    .warning-content p {
+        font-size: 0.875rem; /* 14px */
+    }
+    
+    .main-grid {
+        gap: 0.75rem; /* 12px */
+    }
+    
+    .card-content {
+        padding: 0.75rem; /* 12px */
+    }
+    
+    .card-header {
+        padding: 0.75rem; /* 12px */
+    }
+    
+    .task-content, .score-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.375rem; /* 6px */
+    }
+    
+    .task-status {
+        align-self: flex-start;
+    }
+    
+    .task-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem; /* 4px */
+    }
+    
+    .score-display {
+        align-self: flex-start;
+    }
+}
+
+/* 小屏幕优化 */
+@media (max-width: 480px) {
+    html {
+        font-size: 11px;
+    }
+    
+    .page-header h1 {
+        margin: 0 0 5px 0;
+        font-size: 24px;
+    }
+    
+    .page-header p {
+        font-size: 0.75rem; /* 12px */
+    }
+    
+    .card-header {
+        padding: 0.625rem; /* 10px */
+    }
+    
+    .card-header h2 {
+        font-size: 0.875rem; /* 14px */
+    }
+    
+    .tab-button {
+        padding: 0.375rem 0.75rem; /* 6px 12px */
+        font-size: 0.75rem; /* 12px */
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ranking-info-simple.compact .ranking-item {
+        flex: 0 0 100%;
+    }
+    
+    .status {
+        font-size: 0.5rem; /* 8px */
+        min-width: 2.5rem; /* 40px */
+    }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 360px) {
+    html {
+        font-size: 10px;
+    }
+    
+    .main-grid {
+        gap: 0.5rem; /* 8px */
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: 1fr;
+    }
+    
+    .card-header h2 {
+        font-size: 0.75rem; /* 12px */
+    }
+    
+    .tab-button {
+        padding: 0.25rem 0.5rem; /* 4px 8px */
+        font-size: 0.625rem; /* 10px */
+    }
+}
+
+/* 滚动条样式 */
+.left-main-content::-webkit-scrollbar,
+.progress-list::-webkit-scrollbar,
+.tab-pane::-webkit-scrollbar,
+.scrollable-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.left-main-content::-webkit-scrollbar-track,
+.progress-list::-webkit-scrollbar-track,
+.tab-pane::-webkit-scrollbar-track,
+.scrollable-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.left-main-content::-webkit-scrollbar-thumb,
+.progress-list::-webkit-scrollbar-thumb,
+.tab-pane::-webkit-scrollbar-thumb,
+.scrollable-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+.left-main-content::-webkit-scrollbar-thumb:hover,
+.progress-list::-webkit-scrollbar-thumb:hover,
+.tab-pane::-webkit-scrollbar-thumb:hover,
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 页面头部样式调整 */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.625rem; /* 10px */
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 0.625rem; /* 10px */
+}
+
+.page-header h1 {
+    margin: 0 0 5px 0;
+    font-size: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.page-header p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 0.8125rem; /* 13px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 课程选择器样式 */
+.course-selector-container {
+    position: relative;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.course-selector {
+    position: relative;
+    width: 18.75rem; /* 300px */
+    max-width: 100%;
+}
+
+.course-selector-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.625rem 0.9375rem; /* 10px 15px */
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem; /* 8px */
+    font-size: 0.875rem; /* 14px */
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.course-selector-btn:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+}
+
+.selected-course {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    text-align: left;
+}
+
+.course-selector-btn i {
+    margin-left: 0.625rem; /* 10px */
+    font-size: 0.75rem; /* 12px */
+    color: #7f8c8d;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+}
+
+.course-selector-btn.active i {
+    transform: rotate(180deg);
+}
+
+.course-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.3125rem; /* 5px */
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem; /* 8px */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+    max-height: 25rem; /* 400px */
+    overflow-y: auto;
+}
+
+.course-dropdown.show {
+    display: block;
+}
+
+.course-dropdown-header {
+    padding: 0.75rem 0.9375rem; /* 12px 15px */
+    background: #f8f9fa;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 0.75rem; /* 12px */
+    font-weight: 600;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.course-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.course-item {
+    padding: 0.75rem 0.9375rem; /* 12px 15px */
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.course-item:last-child {
+    border-bottom: none;
+}
+
+.course-item:hover {
+    background: #f8f9fa;
+}
+
+.course-item.active {
+    background: #e3f2fd;
+    border-left: 3px solid #3498db;
+}
+
+.course-name {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 0.1875rem; /* 3px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.course-code {
+    font-size: 0.75rem; /* 12px */
+    color: #7f8c8d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.course-sis-id {
+    font-size: 0.6875rem; /* 11px */
+    color: #3498db;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.course-empty {
+    padding: 1.25rem; /* 20px */
+    text-align: center;
+    color: #95a5a6;
+    font-size: 0.875rem; /* 14px */
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .header-top {
+        flex-direction: column;
+        gap: 0.75rem; /* 12px */
+    }
+    
+    .course-selector {
+        width: 100%;
+    }
+}
+
+/* 滚动条样式 */
+.course-dropdown::-webkit-scrollbar {
+    width: 4px;
+}
+
+.course-dropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.course-dropdown::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+.course-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 页面缩放适应 */
+@media (min-width: 1400px) {
+    .main-grid {
+        height: calc(100vh - 160px);
+    }
+}
+
+@media (max-height: 800px) {
+    .main-grid {
+        height: calc(100vh - 120px);
+        min-height: 31.25rem; /* 500px */
+    }
+    
+    .ai-assistant-iframe-container {
+        min-height: 18.75rem; /* 300px */
+    }
+}
+
+/* 高DPI屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .dashboard-card {
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+}
+
+/* 防止内容溢出 */
+* {
+    box-sizing: border-box;
+}
+
+/* 强制换行处理 */
+.break-word {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* 弹性缩放容器 */
+.scalable-container {
+    transform-origin: top left;
+    transition: transform 0.3s ease;
+}
+
+/* 隐藏溢出内容 */
+.hide-overflow {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>
+
+<script>
+    // 当前选中的课程ID
+    let currentCourseId = null;
+    // 当前用户名
+    const CURRENT_USERNAME = '{{ username }}';
+    // AI助手基础URL
+    const FIXED_AI_ASSISTANT_URL = 'http://180.85.206.30:3000/chat/share?shareId=eJTdUHhzeIBYWb7Kdp6URitd';
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化标签页事件
+        initTabEvents();
+        // 设置AI助手URL
+        initializeAIAssistant();
+        // 初始加载数据
+        loadStudentData();
+        // 监听窗口大小变化
+        window.addEventListener('resize', handleResize);
+        // 初始调整一次
+        handleResize();
+    });
+
+    // 处理窗口大小变化
+    function handleResize() {
+        const width = window.innerWidth;
+        const container = document.querySelector('.dashboard-container');
+        
+        // 在较小屏幕上调整布局
+        if (width < 480) {
+            // 进一步缩小字体
+            document.documentElement.style.fontSize = '10px';
+        } else if (width < 768) {
+            document.documentElement.style.fontSize = '11px';
+        } else if (width < 1200) {
+            document.documentElement.style.fontSize = '12px';
+        } else {
+            document.documentElement.style.fontSize = '14px';
+        }
+        
+        // 调整任务项布局
+        adjustTaskItems();
+    }
+
+    // 调整任务项布局
+    function adjustTaskItems() {
+        const width = window.innerWidth;
+        const taskItems = document.querySelectorAll('.task-item');
+        
+        if (width < 768) {
+            // 小屏幕：垂直布局
+            taskItems.forEach(item => {
+                const content = item.querySelector('.task-content');
+                if (content) {
+                    content.style.flexDirection = 'column';
+                    content.style.alignItems = 'flex-start';
+                    content.style.gap = '0.375rem';
+                }
+                
+                const status = item.querySelector('.task-status');
+                if (status) {
+                    status.style.alignSelf = 'flex-start';
+                }
+            });
+        } else {
+            // 大屏幕：水平布局
+            taskItems.forEach(item => {
+                const content = item.querySelector('.task-content');
+                if (content) {
+                    content.style.flexDirection = 'row';
+                    content.style.alignItems = 'flex-start';
+                    content.style.gap = '0.5rem';
+                }
+                
+                const status = item.querySelector('.task-status');
+                if (status) {
+                    status.style.alignSelf = 'flex-start';
+                }
+            });
+        }
+    }
+
+    // 显示/隐藏无课程提示
+    function toggleNoCourseWarning(show) {
+        const noCourseWarning = document.getElementById('noCourseWarning');
+        const coursePageContent = document.getElementById('coursePageContent');
+        
+        if (show) {
+            noCourseWarning.style.display = 'flex';
+            coursePageContent.style.display = 'none';
+        } else {
+            noCourseWarning.style.display = 'none';
+            coursePageContent.style.display = 'block';
+            initCourseSelector();
+        }
+    }
+
+    // 初始化课程选择器
+    function initCourseSelector() {
+        const courseSelectorBtn = document.getElementById('courseSelectorBtn');
+        const courseDropdown = document.getElementById('courseDropdown');
+        
+        if (!courseSelectorBtn || !courseDropdown) return;
+        
+        if (courseSelectorBtn.dataset.initialized === 'true') return;
+        
+        courseSelectorBtn.dataset.initialized = 'true';
+        
+        courseSelectorBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            courseDropdown.classList.toggle('show');
+            courseSelectorBtn.classList.toggle('active');
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (!courseSelectorBtn.contains(e.target) && !courseDropdown.contains(e.target)) {
+                courseDropdown.classList.remove('show');
+                courseSelectorBtn.classList.remove('active');
+            }
+        });
+    }
+
+    // 初始化标签页事件
+    function initTabEvents() {
+        document.querySelectorAll('.tab-buttons').forEach(tabButtons => {
+            if (tabButtons.dataset.initialized === 'true') return;
+            
+            tabButtons.dataset.initialized = 'true';
+            
+            tabButtons.addEventListener('click', function(e) {
+                const tabButton = e.target.closest('.tab-button');
+                if (!tabButton) return;
+                
+                const tabName = tabButton.getAttribute('data-tab');
+                const tabsContainer = tabButtons.closest('[class*="-tabs"]');
+                
+                if (!tabsContainer) return;
+                
+                tabButtons.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                tabButton.classList.add('active');
+                
+                const tabContent = tabsContainer.querySelector('.tab-content');
+                if (!tabContent) return;
+                
+                tabContent.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('active');
+                });
+                
+                const tabPane = document.getElementById(tabName + '-tab');
+                if (tabPane) {
+                    tabPane.classList.add('active');
+                }
+            });
+        });
+    }
+
+    // 初始化AI助手链接
+function initializeAIAssistant() {
+    const iframe = document.getElementById('aiAssistantIframe');
+    const descElement = document.getElementById('ai-assistant-desc');
+    
+    if (!iframe) return;
+    
+    // 构建完整的URL，添加用户名参数
+    let fullUrl = FIXED_AI_ASSISTANT_URL;
+    if (CURRENT_USERNAME) {
+        fullUrl += `&studentUid=${encodeURIComponent(CURRENT_USERNAME)}`;
+    }
+    
+    // 更新iframe的src
+    iframe.src = fullUrl;
+}
+
+    // 更新当前选中的课程
+    async function updateCurrentCourse(courseId, courseName, sisCourseId, enrollmentTermId, workflowState) {
+        try {
+            const response = await fetch('/dashboard/study_situation/update_current_course', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    course_name: courseName,
+                    sis_course_id: sisCourseId,
+                    enrollment_term_id: enrollmentTermId,
+                    workflow_state: workflowState
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                currentCourseId = courseId;
+                return true;
+            } else {
+                console.error('更新当前课程失败:', result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('调用更新课程接口失败:', error);
+            return false;
+        }
+    }
+
+    // 加载学生数据
+    async function loadStudentData(courseId = null) {
+        try {
+            showLoading(true);
+            
+            let url = '/dashboard/study_situation/student/overview';
+            if (courseId) {
+                url += `?course_id=${courseId}`;
+            }
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                showError(data.error);
+            }
+            
+            const hasCourses = data.course_info && 
+                              data.course_info.student_courses && 
+                              data.course_info.student_courses.length > 0;
+            
+            if (!hasCourses) {
+                toggleNoCourseWarning(true);
+                showLoading(false);
+                return;
+            }
+            
+            toggleNoCourseWarning(false);
+            
+            // 更新课程选择器（真实数据）
+            updateCourseSelector(data.course_info || { student_courses: [] });
+            
+            // 如果后端返回了真实数据，则使用真实数据，否则使用假数据
+            if (hasRealData(data)) {
+                updateStudentDashboard(data);
+            } else {
+                // 页面加载时已经显示假数据，这里不需要额外操作
+                console.log('后端数据不足，继续显示假数据');
+            }
+            
+            showLoading(false);
+        } catch (error) {
+            console.error('加载学生数据失败:', error);
+            
+            // 尝试从后端获取课程信息
+            try {
+                const fallbackUrl = '/dashboard/study_situation/student/overview?course_id=0';
+                const fallbackResponse = await fetch(fallbackUrl);
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    
+                    const hasCourses = fallbackData.course_info && 
+                                      fallbackData.course_info.student_courses && 
+                                      fallbackData.course_info.student_courses.length > 0;
+                    
+                    if (!hasCourses) {
+                        toggleNoCourseWarning(true);
+                    } else {
+                        toggleNoCourseWarning(false);
+                        updateCourseSelector(fallbackData.course_info || { student_courses: [] });
+                        // 页面加载时已经显示假数据
+                    }
+                } else {
+                    toggleNoCourseWarning(true);
+                }
+            } catch (fallbackError) {
+                console.error('备用数据加载失败:', fallbackError);
+                toggleNoCourseWarning(true);
+            }
+            
+            showLoading(false);
+        }
+    }
+
+    // 检查是否有真实数据
+    function hasRealData(data) {
+        // 检查各个数据区域是否有真实数据
+        const hasRealAssignmentData = data.assignment_analysis && 
+            data.assignment_analysis.submission_stats && 
+            data.assignment_analysis.submission_stats.total_assignments > 0;
+        
+        const hasRealQuizData = data.quiz_analysis && 
+            data.quiz_analysis.quiz_stats && 
+            data.quiz_analysis.quiz_stats.total_quizzes > 0;
+        
+        const hasRealModuleData = data.module_analysis && 
+            data.module_analysis.progress_stats && 
+            data.module_analysis.progress_stats.total_modules > 0;
+        
+        return hasRealAssignmentData || hasRealQuizData || hasRealModuleData;
+    }
+
+    // 更新学生仪表板（使用真实数据）
+    function updateStudentDashboard(data) {
+        console.log('使用真实数据更新仪表板');
+        updateOverviewProgress(data);
+        updatePublishedTasks(data);
+        updateScoreAnalysis(data);
+    }
+
+    // 更新学习概览（真实数据）
+    function updateOverviewProgress(data) {
+        const assignmentStats = data.assignment_analysis?.submission_stats || {};
+        const quizStats = data.quiz_analysis?.quiz_stats || {};
+        const moduleStats = data.module_analysis?.progress_stats || {};
+        const ranking = data.ranking_analysis || {};
+        const overviewStats = data.overview_stats || {};
+        
+        // 如果有真实数据，则更新
+        if (assignmentStats.submission_rate !== undefined) {
+            document.getElementById('assignment-completion-rate').textContent = 
+                assignmentStats.submission_rate + '%';
+        }
+        
+        if (quizStats.completed_count && quizStats.total_quizzes) {
+            document.getElementById('quiz-completion-rate').textContent = 
+                Math.round((quizStats.completed_count / quizStats.total_quizzes) * 100) + '%';
+        }
+        
+        if (moduleStats.completion_rate !== undefined) {
+            document.getElementById('module-completion-rate').textContent = 
+                moduleStats.completion_rate + '%';
+        }
+        
+        if (data.assignment_analysis?.score_analysis?.average_score !== undefined) {
+            document.getElementById('average-score').textContent = 
+                data.assignment_analysis.score_analysis.average_score.toFixed(1);
+        }
+        
+        if (ranking.class_ranking !== undefined) {
+            document.getElementById('class-rank').textContent = ranking.class_ranking;
+        }
+        
+        if (ranking.total_students !== undefined) {
+            document.getElementById('total-students').textContent = ranking.total_students;
+        }
+        
+        if (ranking.average_class_score !== undefined) {
+            document.getElementById('class-average').textContent = 
+                parseFloat(ranking.average_class_score).toFixed(1);
+        }
+        
+        if (overviewStats.completion_rate !== undefined) {
+            document.getElementById('overall-progress').textContent = 
+                overviewStats.completion_rate + '%';
+        }
+        
+        // 更新单元进度列表
+        if (data.module_analysis) {
+            updateModuleProgressList(data);
+        }
+    }
+
+    // 更新已发布任务（真实数据）
+    function updatePublishedTasks(data) {
+        // 如果有真实数据，则更新
+        if (data.assignment_analysis || data.quiz_analysis) {
+            updatePublishedAssignments(data);
+            updatePublishedQuizzes(data);
+            
+            // 更新任务数量
+            const assignmentCount = data.assignment_analysis?.pending_assignments?.length || 0;
+            const quizCount = data.quiz_analysis?.pending_quizzes?.length || 0;
+            document.getElementById('published-tasks-count').textContent = assignmentCount + quizCount;
+        }
+    }
+
+    // 更新成绩分析（真实数据）
+    function updateScoreAnalysis(data) {
+        // 如果有真实数据，则更新
+        if (data.assignment_analysis?.graded_assignments?.length > 0) {
+            updateAssignmentScores(data);
+        }
+        if (data.quiz_analysis?.quiz_scores?.length > 0) {
+            updateQuizScores(data);
+        }
+    }
+
+    // 更新课程选择器
+    function updateCourseSelector(courseInfo) {
+        const courseList = document.getElementById('courseList');
+        const courses = courseInfo.student_courses || [];
+        const currentCourseId = courseInfo.current_course_id;
+        
+        if (courses.length === 0) {
+            courseList.innerHTML = `
+                <div class="course-empty">
+                    <i class="fas fa-folder-open"></i>
+                    <p>暂无课程信息</p>
+                </div>
+            `;
+            
+            document.getElementById('selectedCourseName').textContent = '选择课程...';
+            return;
+        }
+        
+        const currentCourse = courses.find(c => String(c.course_id) === String(currentCourseId)) || courses[0];
+        const currentCourseName = currentCourse.course_name || currentCourse.name || '未命名课程';
+        document.getElementById('selectedCourseName').textContent = currentCourseName;
+        
+        courseList.innerHTML = courses.map(course => {
+            const courseId = course.course_id;
+            const courseName = course.course_name || course.name || '未命名课程';
+            const sisCourseId = course.sis_course_id || '';
+            const enrollmentTermId = course.enrollment_term_id || '';
+            const workflowState = course.workflow_state || '';
+            const isActive = String(courseId) === String(currentCourseId);
+            
+            return `
+                <div class="course-item ${isActive ? 'active' : ''}" 
+                     data-course-id="${courseId}" 
+                     data-course-name="${courseName}"
+                     data-sis-course-id="${sisCourseId}"
+                     data-enrollment-term-id="${enrollmentTermId}"
+                     data-workflow-state="${workflowState}">
+                    <div class="course-name">${courseName}</div>
+                    <div class="course-code">课程ID: ${courseId}</div>
+                    ${sisCourseId ? `<div class="course-sis-id">教务编号: ${sisCourseId}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        document.querySelectorAll('.course-item').forEach(item => {
+            item.addEventListener('click', async function() {
+                const courseId = this.dataset.courseId;
+                const courseName = this.dataset.courseName;
+                const sisCourseId = this.dataset.sisCourseId;
+                const enrollmentTermId = this.dataset.enrollmentTermId;
+                const workflowState = this.dataset.workflowState;
+                
+                document.querySelectorAll('.course-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                document.getElementById('selectedCourseName').textContent = courseName;
+                
+                const courseDropdown = document.getElementById('courseDropdown');
+                const courseSelectorBtn = document.getElementById('courseSelectorBtn');
+                courseDropdown.classList.remove('show');
+                courseSelectorBtn.classList.remove('active');
+                
+                const updateSuccess = await updateCurrentCourse(
+                    courseId, 
+                    courseName, 
+                    sisCourseId, 
+                    enrollmentTermId, 
+                    workflowState
+                );
+                
+                if (updateSuccess) {
+                    loadStudentData(courseId);
+                    initializeAIAssistant()
+                }
+            });
+        });
+    }
+
+    // 显示/隐藏加载状态
+    function showLoading(isLoading) {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (!loadingOverlay && isLoading) {
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            `;
+            overlay.innerHTML = `
+                <div style="text-align: center;">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                    <p style="margin-top: 1rem; color: #666;">加载中...</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        } else if (loadingOverlay && !isLoading) {
+            loadingOverlay.remove();
+        }
+    }
+
+    // 日期格式化函数
+    function formatDate(dateString) {
+        if (!dateString) return '无';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
+    }
+
+    // 显示错误信息
+    function showError(message) {
+        console.warn('数据加载错误:', message);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,2002 @@
+<!-- 游客的知识图谱页面，去掉了大部分功能，仅保留生成知识图谱，推荐学习资源和知识图谱点击交互；无学习状态记录（学生端），无 -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Awesome-pyecharts</title>
+    <script type="text/javascript" src="/static/js/echarts.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-3.7.1.min.js"></script>
+
+<style>
+    /* 让 ECharts 画布填满视口并移除默认边距 */
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    .chart-container {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+    }
+
+    /* 对话框样式 */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.6);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .modal-content {
+        background-color: #ffffff;
+        margin: 10% auto;
+        padding: 25px;
+        border: none;
+        width: 60%;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(-20px);
+        animation: slideIn 0.3s forwards;
+    }
+    
+    @keyframes slideIn {
+        to { transform: translateY(0); }
+    }
+    
+    .close {
+        color: #666;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .close:hover,
+    .close:focus {
+        color: #000;
+        transform: rotate(90deg);
+    }
+
+    .modal-title {
+        margin-top: 0;
+        color: #333;
+        font-size: 24px;
+        border-bottom: 2px solid #4b8bf4;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .modal-body {
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    
+    .modal-body p {
+        margin: 12px 0;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        transition: background-color 0.2s;
+    }
+    
+    .modal-body p:hover {
+        background-color: #f0f7ff;
+    }
+    
+    .modal-body strong {
+        color: #4b8bf4;
+        margin-right: 5px;
+        display: inline-block;
+        min-width: 60px;
+    }
+
+    /* Styles for the new toggle button */
+    #search-toggle-btn {
+        background-color: #4b8bf4;
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px; /* Increased for better icon visibility */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        transition: background-color 0.3s ease;
+        line-height: 1; /* Ensure icon is centered */
+    }
+
+    #search-toggle-btn:hover {
+        background-color: #3a7ce0;
+    }
+
+    /* New container for the entire search widget (button + box) */
+    #search-widget-container {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1002;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* 【新增】课程选择器样式 */
+    #course-selector-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background-color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        height: 34px;
+        box-sizing: border-box;
+    }
+    #course-selector-container label {
+        font-weight: bold;
+        font-size: 14px;
+        color: #333;
+    }
+    #courseSelector {
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        background-color: #fff;
+    }
+
+
+    /* Base styles for the search box itself - modified for pop-out behavior */
+    #chart-search-box {
+        position: absolute; /* Positioned relative to search-widget-container */
+        top: calc(100% + 5px); /* Appears below the toggle button with a 5px gap */
+        right: 0; /* Aligns the right edge of search box with the right edge of widget container */
+        width: 350px; /* Adjusted width after moving buttons */
+        background-color: rgba(255,255,255,0.9);
+        padding: 8px;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* Slightly larger shadow for "pop-out" */
+        box-sizing: border-box;
+        z-index: 1001; 
+
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95); /* Start slightly up and scaled down */
+        visibility: hidden;
+        pointer-events: none; /* Not interactive when hidden */
+        /* Delay visibility change for smoother out-transition */
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0s linear 0.2s;
+    }
+
+    #chart-search-box.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1); /* Move to final position and scale */
+        visibility: visible;
+        pointer-events: auto; /* Interactive when visible */
+        transition-delay: 0s; /* Apply in-transition immediately */
+    }
+    
+    /* Styles for search input and results INSIDE #chart-search-box */
+    /* These styles are adapted from the old .search-input, .search-results etc. but targeted within #chart-search-box */
+    #chart-search-box #nodeSearchInput { /* Target input inside the new search box */
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 140px; /* This width is for the input field itself */
+        outline: none;
+        transition: all 0.3s;
+        height: 36px; /* From nn_output_enhanced1.html */
+        box-sizing: border-box; /* From nn_output_enhanced1.html */
+        vertical-align: middle; /* From nn_output_enhanced1.html */
+    }
+    
+    #chart-search-box #nodeSearchInput:focus {
+        border-color: #4b8bf4;
+        box-shadow: 0 0 0 2px rgba(75,139,244,0.2);
+    }
+    
+    #chart-search-box #nodeSearchBtn, #chart-search-box #refreshButton { /* Target buttons inside the new search box */
+        margin-left: 6px;
+        padding: 6px 8px;
+        background-color: #4b8bf4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        font-size: 13px;
+        height: 36px; /* From nn_output_enhanced1.html */
+        box-sizing: border-box; /* From nn_output_enhanced1.html */
+        vertical-align: middle; /* From nn_output_enhanced1.html */
+    }
+    
+    #chart-search-box #nodeSearchBtn:hover, #chart-search-box #refreshButton:hover {
+        background-color: #3a7ce0;
+    }
+
+    #search-widget-container > #saveGraphBtn {
+        margin-left: 6px;
+        padding: 8px 12px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        font-size: 14px;
+        height: 34px;
+        box-sizing: border-box;
+        vertical-align: middle;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+    #search-widget-container > #saveGraphBtn:hover {
+        background-color: #45a049;
+    }
+    #search-widget-container > #downloadGraphBtn {
+        margin-left: 0;
+        padding: 8px 12px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        font-size: 14px;
+        height: 34px;
+        box-sizing: border-box;
+        vertical-align: middle;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+    #search-widget-container > #downloadGraphBtn:hover {
+        background-color: #1976D2;
+    }
+           
+    #chart-search-box #searchResults { /* Target results display inside the new search box */
+        /* display: none; is handled by JS */
+        position: absolute; 
+        top: 45px; /* Relative to its parent #chart-search-box's input container, or #chart-search-box itself if that's the relative parent */
+        left: 0; 
+        right: 0; 
+        max-height: 300px; 
+        overflow-y: auto; 
+        background-color: white; 
+        border-radius: 5px; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
+        z-index: 1002; /* Above other elements in searchBox if needed */
+    }
+    
+    #chart-search-box .search-result-item { /* Target result items */
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    #chart-search-box .search-result-item:hover {
+        background-color: #f0f7ff;
+    }
+    
+    #chart-search-box .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    /* 调试模式状态显示 */
+    .debug-panel {
+        position: fixed;
+        left: 10px;
+        bottom: 10px;
+        background-color: rgba(0,0,0,0.8);
+        color: #fff;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        z-index: 1000;
+        max-width: 300px;
+        max-height: 200px;
+        overflow: auto;
+    }
+
+    #kgStatus {
+        padding: 8px;
+        margin-top: 15px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+    }
+
+    #resourcesContainer {
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+    }
+
+    /* Styles for History Modal */
+    .history-item {
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s;
+    }
+    .history-item:hover {
+        background-color: #f0f7ff;
+    }
+    .history-item:last-child {
+        border-bottom: none;
+    }
+    .history-item-info {
+        display: flex;
+        flex-direction: column;
+    }
+    .history-item-info .filename {
+        font-weight: bold;
+        color: #333;
+        font-size: 14px;
+    }
+    .history-item-info .timestamp {
+        font-family: monospace;
+        color: #666;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .history-item-info .remarks {
+        color: #777;
+        font-style: italic;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+</style>
+</head>
+<body>
+    <div id="4ed221bd03f84e8b9227cdd3d973b8bc" class="chart-container" style="width:100%; height:100vh; overflow:hidden;"></div>
+    
+    <!-- 【新增】为课程选择器准备一个静态的HTML容器，它将被JS动态填充和管理 -->
+    <div id="search-widget-container">
+        <!-- <div id="course-selector-container">
+            <label for="courseSelector">课程:</label>
+            <select id="courseSelector"></select>
+        </div> -->
+    </div>
+
+    <!-- ✨✨✨ 脚本逻辑修改区域 ✨✨✨ -->
+    <script>
+        // --- 统一配置区 ---
+        function getAppConfig() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseFromUrl = urlParams.get('course_name');
+            
+            const config = {
+                API_BASE_URL: '/kg',
+                className: courseFromUrl || 
+                           (window.PAGE_DATA && window.PAGE_DATA.courseName) ? window.PAGE_DATA.courseName : '线性代数'
+            };
+            console.log("AppConfig initialized with:", config);
+            return config;
+        }
+
+        const availableCourses = [
+            "定量工程设计方法", "自动控制原理", "程序设计实践", 
+            "软件系统架构技术", "车辆软件开发基础", "汽车操作系统及应用", 
+            "移动机器人应用与开发", "线性代数", "机器人数学基础", 
+            "概率论与数理统计", "人类文明史", "科技发展史"
+        ];
+
+        function initializeCourseSelector() {
+            const selector = document.getElementById('courseSelector');
+            if (!selector) return;
+
+            availableCourses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                selector.appendChild(option);
+            });
+
+            const currentConfig = getAppConfig();
+            selector.value = currentConfig.className;
+
+            // 3. 监听选择变化【逻辑修改】
+            selector.addEventListener('change', function() {
+                const selectedCourse = this.value;
+                console.log(`课程已切换至: ${selectedCourse}，将通过刷新页面来加载新的知识图谱。`);
+
+                // 创建新的URL，并设置 course_name 参数
+                const url = new URL(window.location);
+                url.searchParams.set('course_name', selectedCourse);
+                
+                // 通过导航到新URL来触发页面刷新，从而加载新课程的图谱。
+                // 这是一个简单而健壮的方法，可以确保所有状态都被重置，并加载正确的图谱。
+                window.location.href = url.href;
+            });
+        }
+
+
+        const chartDomId = '4ed221bd03f84e8b9227cdd3d973b8bc';
+        var chart_4ed221bd03f84e8b9227cdd3d973b8bc = echarts.init(
+            document.getElementById(chartDomId), 'light', {renderer: 'canvas'});
+        var option_4ed221bd03f84e8b9227cdd3d973b8bc = {
+            "animation": true,
+            "animationThreshold": 2000,
+            "animationDuration": 1000,
+            "animationEasing": "cubicOut",
+            "animationDelay": 0,
+            "animationDurationUpdate": 300,
+            "animationEasingUpdate": "cubicOut",
+            "animationDelayUpdate": 0,
+            "aria": {
+                "enabled": false
+            },
+            "series": [
+                {
+                    "type": "graph",
+                    "layout": "force",
+                    "symbolSize": 10,
+                    "circular": {
+                        "rotateLabel": false
+                    },
+                    "force": {
+                        "repulsion": 2500,
+                        "edgeLength": 50
+                    },
+                    "label": {
+                        "show": true,
+                        "margin": 8,
+                        "valueAnimation": false
+                    },
+                    "lineStyle": {
+                        "show": true,
+                        "width": 2,
+                        "opacity": 0.5,
+                        "curveness": 0,
+                        "type": "solid",
+                        "color": "#4b565b"
+                    },
+                    "roam": true,
+                    "draggable": true,
+                    "focusNodeAdjacency": true,
+                    "data": [],
+                    "categories": [],
+                    "edgeLabel": {
+                        "show": false,
+                        "margin": 8,
+                        "valueAnimation": false
+                    },
+                    "edgeSymbol": [
+                        "circle",
+                        "arrow"
+                    ],
+                    "edgeSymbolSize": [
+                        2,
+                        10
+                    ],
+                    "links": []
+                }
+            ],
+            "legend": [
+                {
+                    "data": [],
+                    "selected": {},
+                    "show": false,
+                    "padding": 5,
+                    "itemGap": 10,
+                    "itemWidth": 25,
+                    "itemHeight": 14,
+                    "backgroundColor": "transparent",
+                    "borderColor": "#ccc",
+                    "borderRadius": 0,
+                    "pageButtonItemGap": 5,
+                    "pageButtonPosition": "end",
+                    "pageFormatter": "{current}/{total}",
+                    "pageIconColor": "#2f4554",
+                    "pageIconInactiveColor": "#aaa",
+                    "pageIconSize": 15,
+                    "animationDurationUpdate": 800,
+                    "selector": false,
+                    "selectorPosition": "auto",
+                    "selectorItemGap": 7,
+                    "selectorButtonGap": 10
+                }
+            ],
+            "tooltip": {
+                "show": true,
+                "trigger": "item",
+                "triggerOn": "mousemove|click",
+                "axisPointer": {
+                    "type": "line"
+                },
+                "showContent": true,
+                "alwaysShowContent": false,
+                "showDelay": 0,
+                "hideDelay": 100,
+                "enterable": false,
+                "confine": false,
+                "appendToBody": false,
+                "transitionDuration": 0.4,
+                "formatter": "{b}",
+                "textStyle": {
+                    "fontSize": 14
+                },
+                "borderWidth": 0,
+                "padding": 5,
+                "order": "seriesAsc"
+            },
+            "title": [
+                {
+                    "show": false,
+                    "text": "\u5b9a\u91cf\u5de5\u7a0b\u8bbe\u8ba1\u77e5\u8bc6\u56fe\u8c31",
+                    "target": "blank",
+                    "subtarget": "blank",
+                    "padding": 5,
+                    "itemGap": 10,
+                    "textAlign": "auto",
+                    "textVerticalAlign": "auto",
+                    "triggerEvent": false
+                }
+            ],
+            "toolbox": {
+                "show": false,
+                "orient": "horizontal",
+                "itemSize": 15,
+                "itemGap": 10,
+                "left": "80%",
+                "feature": {
+                    "mark": {
+                        "show": true
+                    },
+                    "restore": {
+                        "show": true
+                    },
+                    "saveAsImage": {
+                        "show": true
+                    }
+                }
+            }
+        };
+        var rawData = { nodes: [], links: [], categories: [] };
+        var defaultGraph = { nodes: [], links: [], categories: [] };
+        var isGeneratedGraph = false;
+        var isDataDirty = false;
+        let historicalDataCache = null;
+
+        const historyStack = [];
+        let historyIndex = -1;
+
+        // 从服务器加载初始图谱数据并渲染
+        function loadAndRenderGraph() {
+            const AppConfig = getAppConfig();
+
+            const myChart = chart_4ed221bd03f84e8b9227cdd3d973b8bc;
+            const requestUrl = `${AppConfig.API_BASE_URL}/get_all_kg_jsons?class_name=${encodeURIComponent(AppConfig.className)}`;
+
+            console.log(`正在从 ${requestUrl} 加载数据...`);
+            myChart.showLoading();
+
+            fetch(requestUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                             throw new Error(`网络请求失败: ${response.status} ${response.statusText}. 响应内容: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(apiData => {
+                    console.log("从服务器收到的原始数据:", apiData);
+                    let graphData;
+
+                    if (apiData && Array.isArray(apiData.data) && apiData.data.length > 0 && apiData.data[0] && apiData.data[0].kg) {
+                        graphData = apiData.data[0].kg;
+                    } 
+                    else if (apiData && Array.isArray(apiData.files) && apiData.files.length > 0 && apiData.files[0] && apiData.files[0].kg) {
+                        graphData = apiData.files[0].kg;
+                    }
+                    else if (apiData && Array.isArray(apiData.nodes) && Array.isArray(apiData.links)) {
+                        graphData = apiData; 
+                    }
+                    else if (apiData && Array.isArray(apiData.data) && Array.isArray(apiData.links)) {
+                        graphData = { nodes: apiData.data, links: apiData.links, categories: apiData.categories };
+                    }
+                    else {
+                        console.warn('API没有返回此课程的数据，将显示空图谱。');
+                        graphData = { nodes: [], links: [], categories: [] };
+                    }
+                    
+                    if (graphData && !graphData.nodes && graphData.data) {
+                        graphData.nodes = graphData.data;
+                    }
+
+                    if (!graphData || !Array.isArray(graphData.nodes) || !Array.isArray(graphData.links)) {
+                        console.error("验证失败！最终的graphData对象:", graphData);
+                        throw new Error('解析后的图谱数据(graphData)无效，缺少nodes或links数组。');
+                    }
+
+                    rawData.nodes = graphData.nodes || [];
+                    rawData.links = graphData.links || [];
+
+                    if (graphData.categories && Array.isArray(graphData.categories)) {
+                        rawData.categories = graphData.categories;
+                    } else {
+                        rawData.categories = [...new Set(rawData.nodes.map(node => node.category).filter(Boolean))]
+                                             .map(name => ({ name }));
+                    }
+
+                    const className = AppConfig.className;
+                    option_4ed221bd03f84e8b9227cdd3d973b8bc.title[0].text = `${className} (教师版)`;
+                    option_4ed221bd03f84e8b9227cdd3d973b8bc.series[0].data = rawData.nodes;
+                    option_4ed221bd03f84e8b9227cdd3d973b8bc.series[0].links = rawData.links;
+                    option_4ed221bd03f84e8b9227cdd3d973b8bc.series[0].categories = rawData.categories;
+                    option_4ed221bd03f84e8b9227cdd3d973b8bc.legend[0].data = rawData.categories.map(c => c.name);
+
+                    myChart.setOption(option_4ed221bd03f84e8b9227cdd3d973b8bc, true);
+                    myChart.hideLoading();
+
+                    console.log(`成功加载并渲染课程 "${className}" 的知识图谱。`);
+                    // 缓存默认图用于返回
+                    defaultGraph = {
+                        nodes: JSON.parse(JSON.stringify(rawData.nodes)),
+                        links: JSON.parse(JSON.stringify(rawData.links)),
+                        categories: JSON.parse(JSON.stringify(rawData.categories))
+                    };
+                    isGeneratedGraph = false;
+                    var backBtn = document.getElementById('backToDefaultKG');
+                    if (backBtn) backBtn.style.display = 'none';
+                    pushStateToHistory();
+                })
+                .catch(error => {
+                    myChart.hideLoading();
+                    console.error('加载知识图谱数据时出错:', error);
+                    const chartDom = document.getElementById(chartDomId);
+                    if (chartDom) {
+                       chartDom.innerHTML = `<div style="text-align: center; padding: 50px; color: red;"><h2>加载失败</h2><p>${error.message}</p><p>请检查API服务器是否运行，或按F12在控制台查看详情。</p></div>`;
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCourseSelector();
+            loadAndRenderGraph();
+        });
+
+        window.addEventListener('resize', function(){
+            chart_4ed221bd03f84e8b9227cdd3d973b8bc.resize();
+        });
+    </script>
+
+<!-- 添加对话框结构 -->
+<div id="nodeModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modalTitle" class="modal-title"></h2>
+        <div id="modalBody" class="modal-body"></div>
+    </div>
+</div>
+
+<!-- 历史版本模态框 -->
+<div id="historyModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 class="modal-title">历史知识图谱版本</h2>
+        <div id="historyModalBody" class="modal-body">
+            <p>正在加载历史版本...</p>
+        </div>
+    </div>
+</div>
+
+
+<!-- 保存备注模态框 -->
+<div id="saveModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 class="modal-title">保存知识图谱</h2>
+        <div class="modal-body">
+            <p>请输入本次保存的备注信息（例如：完成了第一章内容的梳理），以便于后续版本追溯。</p>
+            <textarea id="saveRemarks" style="width: 98%; min-height: 100px; padding: 10px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc;" placeholder="请输入备注..."></textarea>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="cancelSaveBtn" style="padding: 8px 16px; margin-right: 10px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#d32f2f'" onmouseout="this.style.backgroundColor='#f44336'">取消</button>
+                <button id="confirmSaveBtn" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#45a049'" onmouseout="this.style.backgroundColor='#4CAF50'">确认保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 调试面板 -->
+<div id="debugPanel" class="debug-panel" style="display: none;"></div>
+
+<script>
+    console.log("API 请求的基础URL设置为: " + '/kg');
+
+    var myChart = null;          // 图表实例
+    var currentState = {         // 当前状态
+        mode: 'full',
+        focusedNode: null,
+        highlightedNode: null
+    };
+    var categoriesCache = [];    // 用于缓存分类数据
+    
+    var modal = document.getElementById("nodeModal");
+    var modalTitle = document.getElementById("modalTitle");
+    var modalBody = document.getElementById("modalBody");
+    var closeBtn = document.getElementsByClassName("close")[0];
+    var searchInput, searchBtn, searchResults, reset;
+    var debugPanel = document.getElementById("debugPanel");
+    
+    var isDebug = false;
+    
+    function debugLog(message) {
+        if (!isDebug) return;
+        var time = new Date().toLocaleTimeString();
+        var logItem = document.createElement('div');
+        logItem.innerHTML = `<span style="color:#aaa">[${time}]</span> ${message}`;
+        if (debugPanel) {
+            debugPanel.style.display = 'block';
+            debugPanel.appendChild(logItem);
+            debugPanel.scrollTop = debugPanel.scrollHeight;
+            while (debugPanel.children.length > 30) {
+                debugPanel.removeChild(debugPanel.children[0]);
+            }
+        }
+        console.log(`[DEBUG] ${message}`);
+    }
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'D' && e.ctrlKey && e.shiftKey) {
+            isDebug = !isDebug;
+            debugPanel.style.display = isDebug ? 'block' : 'none';
+            if (isDebug) {
+                debugLog('调试模式已启用');
+                debugLog(`当前状态: ${JSON.stringify(currentState)}`);
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            saveGraph();
+            return;
+        }
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        if (e.ctrlKey || e.metaKey) {
+            let handled = false;
+            if (e.key === 'z') {
+                undo();
+                handled = true;
+            } 
+            else if (e.key === 'y' || (e.key === 'Z' && e.shiftKey)) {
+                redo();
+                handled = true;
+            }
+            if (handled) {
+                e.preventDefault();
+            }
+        }
+    });
+    
+    document.querySelectorAll('.close').forEach(btn => {
+        btn.onclick = function() {
+            this.closest('.modal').style.display = 'none';
+        }
+    });
+    
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = "none";
+        }
+        if (searchResults && 
+            event.target !== searchInput && 
+            !event.target.matches('.search-button') &&
+            !searchResults.contains(event.target) &&
+            searchResults.style.display === 'block' &&
+            !document.getElementById('search-toggle-btn').contains(event.target) &&
+            !document.getElementById('chart-search-box').contains(event.target)
+            ) {
+        }
+    }
+    
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    const debouncedSearch = debounce(function() {
+        searchNodes();
+    }, 300);
+    
+    function createSearchBox() {
+        var chartContainer = document.querySelector('.chart-container[_echarts_instance_]');
+        if (!chartContainer) {
+            debugLog('无法找到图表容器，5秒后重试');
+            setTimeout(createSearchBox, 5000);
+            return;
+        }
+        
+        debugLog(`找到图表容器: ${chartContainer.id}`);
+        
+        if (getComputedStyle(chartContainer).position !== 'relative') {
+            chartContainer.style.position = 'relative';
+            debugLog('已将图表容器设置为相对定位');
+        }
+
+        var searchWidgetContainer = document.getElementById('search-widget-container');
+        searchWidgetContainer.style.display = 'flex';
+        searchWidgetContainer.style.flexDirection = 'row';
+        searchWidgetContainer.style.alignItems = 'center';
+        searchWidgetContainer.style.gap = '8px';
+        chartContainer.appendChild(searchWidgetContainer);
+
+        var topBtnRow = document.createElement('div');
+        topBtnRow.style.display = 'flex';
+        topBtnRow.style.alignItems = 'center';
+        topBtnRow.style.gap = '8px';
+        searchWidgetContainer.appendChild(topBtnRow);
+
+        var searchPopupWrapper = document.createElement('div');
+        searchPopupWrapper.style.position = 'relative';
+        topBtnRow.appendChild(searchPopupWrapper);
+
+        var searchToggleBtn = document.createElement('button');
+        searchToggleBtn.id = 'search-toggle-btn';
+        searchToggleBtn.textContent = '🔍';
+        searchToggleBtn.style.width = '32px';
+        searchToggleBtn.style.height = '32px';
+        searchToggleBtn.style.display = 'inline-flex';
+        searchToggleBtn.style.alignItems = 'center';
+        searchToggleBtn.style.justifyContent = 'center';
+        searchToggleBtn.style.borderRadius = '6px';
+        searchToggleBtn.style.border = 'none';
+        searchToggleBtn.style.background = '#4b8bf4';
+        searchToggleBtn.style.color = '#fff';
+        searchToggleBtn.style.cursor = 'pointer';
+        searchPopupWrapper.appendChild(searchToggleBtn);
+        
+        var searchBox = document.createElement('div');
+        searchBox.id = 'chart-search-box';
+        
+        var inputContainer = document.createElement('div');
+        inputContainer.style.display = 'flex';
+        
+        searchInput = document.createElement('input');
+        searchInput.id = 'nodeSearchInput';
+        searchInput.type = 'text';
+        searchInput.placeholder = '输入节点名称搜索';
+        
+        searchBtn = document.createElement('button');
+        searchBtn.id = 'nodeSearchBtn';
+        searchBtn.textContent = '搜索';
+        
+        reset = document.createElement('button');
+        reset.id = 'refreshButton';
+        reset.textContent = '刷新页面';
+        reset.setAttribute('onclick', 'location.reload()');
+        
+        searchResults = document.createElement('div');
+        searchResults.id = 'searchResults';
+        
+        inputContainer.appendChild(searchInput);
+        inputContainer.appendChild(searchBtn);
+        inputContainer.appendChild(reset);
+        searchBox.appendChild(inputContainer);
+        searchBox.appendChild(searchResults);
+        searchPopupWrapper.appendChild(searchBox);
+        
+        debugLog('搜索框已添加到图表容器的部件内');
+        
+        searchToggleBtn.addEventListener('click', function() {
+            if (searchBox.classList.contains('visible')) {
+                searchBox.classList.remove('visible');
+                searchToggleBtn.textContent = '🔍';
+            } else {
+                searchBox.classList.add('visible');
+                searchToggleBtn.textContent = '✕';
+            }
+            if (!searchBox.classList.contains('visible')) {
+                if (searchResults) {
+                    searchResults.style.display = 'none';
+                }
+            }
+        });
+        
+        searchBtn.onclick = function() {
+            searchNodes();
+        };
+        
+        searchInput.addEventListener('input', function() {
+            debouncedSearch();
+        });
+        
+        searchInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                var resultItems = document.querySelectorAll('#chart-search-box .search-result-item');
+                if (resultItems.length === 1 && !resultItems[0].textContent.includes('无匹配结果')) {
+                    var nodeName = resultItems[0].getAttribute('data-name');
+                    focusNode(nodeName);
+                    searchResults.style.display = "none";
+                }
+            }
+        });
+
+        searchInput.addEventListener('focus', function() {
+            if (this.value.trim() !== '' && searchBox.classList.contains('visible')) {
+                searchNodes();
+            }
+        });
+
+        searchInput.addEventListener('blur', function() {
+            setTimeout(function() {
+                if (!searchResults.matches(':hover')) {
+                }
+            }, 200);
+        });
+
+        // 返回默认图谱按钮，放在搜索按钮下方
+        var path = window.location.pathname || '';
+        var isStandaloneKG = /_kg_local_knowledge_/i.test(path) || (/\/KG\/static\/output\//i.test(path) && /kg_[^\/]+\.html$/i.test(path));
+        var backBtn = document.getElementById('backToDefaultKG');
+        if (!backBtn) {
+            backBtn = document.createElement('button');
+            backBtn.id = 'backToDefaultKG';
+            backBtn.textContent = '↩';
+            backBtn.title = '返回默认知识图谱';
+            backBtn.style.cssText = 'display:none; width:32px; height:32px; border:none; border-radius:6px; background:#4b8bf4; color:#fff; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2);';
+            backBtn.onclick = function() {
+                if (typeof restoreDefaultGraph === 'function') {
+                    restoreDefaultGraph();
+                } else if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = '/';
+                }
+            };
+        }
+        topBtnRow.appendChild(backBtn);
+        if (isStandaloneKG) {
+            backBtn.style.display = 'block';
+        }
+    }
+    
+    function searchNodes() {
+        if (!searchInput || !searchResults) return;
+        var searchTerm = searchInput.value.trim().toLowerCase();
+        if (searchTerm === "") {
+            searchResults.style.display = "none";
+            return;
+        }
+        
+        debugLog(`搜索节点: ${searchTerm}`);
+        
+        var matchedNodes = rawData.nodes.filter(function(node) {
+            return node.name.toLowerCase().includes(searchTerm) || 
+                  (node.des && node.des.toLowerCase().includes(searchTerm));
+        });
+        
+        if (matchedNodes.length > 0) {
+            var resultsHTML = "";
+            matchedNodes.forEach(function(node) {
+                resultsHTML += '<div class="search-result-item" data-name="' + node.name + '">' + 
+                               node.name + 
+                               (node.des ? ' <small>(' + node.des.substring(0, 30) + (node.des.length > 30 ? '...' : '') + ')</small>' : '') + 
+                               '</div>';
+            });
+            searchResults.innerHTML = resultsHTML;
+            searchResults.style.display = "block";
+            
+            var resultItems = document.querySelectorAll('#chart-search-box .search-result-item');
+            resultItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var nodeName = this.getAttribute('data-name');
+                    debugLog(`选择搜索结果: ${nodeName}`);
+                    focusNode(nodeName);
+                    searchResults.style.display = "none";
+                });
+            });
+        } else {
+            searchResults.innerHTML = '<div class="search-result-item">无匹配结果</div>';
+            searchResults.style.display = "block";
+        }
+    }
+    
+    function focusNode(nodeName) {
+        if (!myChart || !rawData.nodes.length) {
+            debugLog('图表或数据未初始化，无法聚焦节点');
+            return;
+        }
+        
+        debugLog(`准备聚焦节点: ${nodeName}`);
+        
+        if (currentState.mode === 'focus' && currentState.focusedNode === nodeName) {
+            debugLog('已经聚焦到此节点，恢复完整图谱');
+            restoreFullGraph();
+            return;
+        }
+        
+        try {
+            var targetNode = null;
+            var linkedNodeNames = [];
+            var option = myChart.getOption();
+            var currentNodes = option.series[0].data;
+            
+            for (var i = 0; i < currentNodes.length; i++) {
+                if (currentNodes[i].name === nodeName) {
+                    targetNode = currentNodes[i];
+                    break;
+                }
+            }
+            
+            if (!targetNode) {
+                for (var i = 0; i < rawData.nodes.length; i++) {
+                    if (rawData.nodes[i].name === nodeName) {
+                        targetNode = rawData.nodes[i];
+                        break;
+                    }
+                }
+            }
+            
+            if (!targetNode) {
+                debugLog(`未找到节点: ${nodeName}`);
+                return;
+            }
+            
+            for (var i = 0; i < rawData.links.length; i++) {
+                if (rawData.links[i].source === nodeName) {
+                    linkedNodeNames.push(rawData.links[i].target);
+                } else if (rawData.links[i].target === nodeName) {
+                    linkedNodeNames.push(rawData.links[i].source);
+                }
+            }
+            
+            debugLog(`找到 ${linkedNodeNames.length} 个相连节点`);
+            
+            var focusedNodes = [];
+            var focusedLinks = [];
+            
+            focusedNodes.push(JSON.parse(JSON.stringify(targetNode)));
+            
+            for (var i = 0; i < rawData.nodes.length; i++) {
+                if (linkedNodeNames.includes(rawData.nodes[i].name) || rawData.nodes[i].name === nodeName) {
+                    if (!focusedNodes.find(n => n.name === rawData.nodes[i].name)) {
+                         focusedNodes.push(JSON.parse(JSON.stringify(rawData.nodes[i])));
+                    }
+                }
+            }
+            
+            for (var i = 0; i < rawData.links.length; i++) {
+                if (rawData.links[i].source === nodeName || rawData.links[i].target === nodeName) {
+                    focusedLinks.push(JSON.parse(JSON.stringify(rawData.links[i])));
+                }
+            }
+            
+            option.series[0].data = focusedNodes;
+            option.series[0].links = focusedLinks;
+            
+            for (var i = 0; i < focusedNodes.length; i++) {
+                if (focusedNodes[i].name === nodeName) {
+                    focusedNodes[i].itemStyle = {
+                        color: '#ff5500',
+                        borderWidth: 5,
+                        borderColor: '#ff9500'
+                    };
+                    focusedNodes[i].symbolSize = Math.max(focusedNodes[i].symbolSize || 10, 60);
+                    break;
+                }
+            }
+            
+            myChart.setOption(option, {replaceMerge: ['series']});
+            currentState.mode = 'focus';
+            currentState.focusedNode = nodeName;
+            debugLog(`节点聚焦完成: ${nodeName}`);
+        } catch (error) {
+            debugLog(`聚焦节点失败: ${error.message}`);
+            console.error(error);
+            setTimeout(restoreFullGraph, 500);
+        }
+    }
+    
+    function restoreFullGraph() {
+        if (!myChart || !rawData.nodes.length) {
+            debugLog('图表或数据未初始化');
+            return;
+        }
+        debugLog('恢复完整图谱');
+        try {
+            var option = myChart.getOption();
+            var nodesCopy = JSON.parse(JSON.stringify(rawData.nodes));
+            var linksCopy = JSON.parse(JSON.stringify(rawData.links));
+            option.series[0].data = nodesCopy;
+            option.series[0].links = linksCopy;
+            myChart.setOption(option, {replaceMerge: ['series']});
+            currentState.mode = 'full';
+            currentState.focusedNode = null;
+            debugLog('已恢复完整图谱');
+        } catch (error) {
+            debugLog(`恢复图谱失败: ${error.message}`);
+            console.error(error);
+        }
+    }
+    
+    function showNodeDetails(nodeName) {
+        if (!nodeName || !modal || !modalTitle || !modalBody) return;
+        debugLog(`显示节点详情: ${nodeName}`);
+        var nodeData = rawData.nodes.find(node => node.name === nodeName);
+        
+        if (!nodeData) {
+            debugLog(`未找到节点详情: ${nodeName}`);
+            return;
+        }
+        
+        modalTitle.innerText = nodeData.name || "节点详情";
+        var content = "";
+        
+        if (nodeData.category !== undefined && typeof nodeData.category === 'string' && nodeData.category.trim() !== '') {
+            content += "<p><strong>分类：</strong>" + nodeData.category + "</p>";
+        } else if (typeof nodeData.category === 'number' && categoriesCache[nodeData.category] !== undefined) {
+             content += "<p><strong>分类：</strong>" + categoriesCache[nodeData.category].name + "</p>";
+        } else if (nodeData.category !== undefined) {
+            debugLog(`未知或无效的分类值: ${nodeData.category}, 类型: ${typeof nodeData.category}`);
+            content += "<p><strong>分类：</strong>未知分类</p>";
+        }
+        
+        if (nodeData.des) {
+            content += "<p><strong>描述：</strong>" + nodeData.des + "</p>";
+        }
+        
+        for (var key in nodeData) {
+            if (["name", "des", "category", "symbolSize", "x", "y", "fixed", "id", "index", "value", "label", "itemStyle"].indexOf(key) === -1) {
+                content += "<p><strong>" + key + "：</strong>" + nodeData[key] + "</p>";
+            }
+        }
+        
+        content += `<div style="margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 15px;">
+            <button id="generateKGBtn" style="padding: 8px 16px; background-color: #4b8bf4; color: white; 
+            border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">生成知识图谱</button>
+            <button id="recommendResourcesBtn" style="padding: 8px 16px; background-color: #4caf50; color: white; 
+            border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">推荐学习资源</button>
+        </div>
+        <div id="kgStatus" style="margin-top: 10px; font-size: 14px; display: none;"></div>
+        <div id="resourcesContainer" style="margin-top: 15px; display: none;">
+            <h3 style="font-size: 16px; margin-bottom: 10px;">推荐学习资源</h3>
+            <div id="resourcesList" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>`;
+        
+        modalBody.innerHTML = content || "<p>没有详细信息</p>";
+        modal.style.display = "block";
+        
+        var generateKGBtn = document.getElementById('generateKGBtn');
+        if (generateKGBtn) {
+            if (window.isGeneratedGraph) {
+                generateKGBtn.style.display = 'none';
+            } else {
+                generateKGBtn.onclick = function() {
+                    generateKnowledgeGraph(nodeData.name);
+                };
+            }
+        }
+        
+        var recommendResourcesBtn = document.getElementById('recommendResourcesBtn');
+        if (recommendResourcesBtn) {
+            recommendResourcesBtn.onclick = function() {
+                getRecommendedResources(nodeData.name);
+            };
+        }
+    }
+    
+    function generateKnowledgeGraph(keyword) {
+        if (isGeneratedGraph) {
+            debugLog('当前已展示生成的知识图谱，忽略重复生成');
+            return;
+        }
+        if (!keyword) return;
+        var statusEl = document.getElementById('kgStatus');
+        if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.textContent = `正在为 "${keyword}" 生成知识图谱，请稍候...`;
+        }
+        const AppConfig = getAppConfig();
+        const apiUrl = AppConfig.API_BASE_URL + '/generate_kg';
+        debugLog(`开始为 "${keyword}" 生成知识图谱，使用URL: ${apiUrl}`);
+        
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                keyword: keyword,
+                display_mode: 'current_page',
+                source_file: window.location.pathname.split('/').pop()
+            })
+        })
+        .then(response => {
+            debugLog(`收到服务器响应: 状态${response.status}`);
+            if (!response.ok) {
+                throw new Error(`网络请求失败，状态码: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            debugLog(`解析响应数据: ${JSON.stringify(data).substring(0, 100)}...`);
+            if (data.display_mode === 'current_page' && data.nodes && data.links) {
+                updateChartWithNewData(data.nodes, data.links, keyword);
+                isGeneratedGraph = true;
+                var backBtn = document.getElementById('backToDefaultKG');
+                if (backBtn) backBtn.style.display = 'block';
+                ['historyGraphBtn','saveGraphBtn','downloadGraphBtn'].forEach(function(id){
+                    var btn = document.getElementById(id);
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.style.pointerEvents = 'none';
+                        btn.style.opacity = '0.5';
+                    }
+                });
+                if (statusEl) {
+                    statusEl.textContent = `知识图谱已更新！`;
+                    setTimeout(function() { modal.style.display = "none"; }, 1500);
+                }
+            } else if (data.html_path) {
+                if (statusEl) {
+                    statusEl.textContent = `知识图谱生成成功！`;
+                    setTimeout(function() {
+                        statusEl.innerHTML = `知识图谱生成成功！<a href="${data.html_path}" target="_blank" 
+                            style="margin-left: 10px; color: #4b8bf4; text-decoration: underline;">点击查看</a>`;
+                    }, 1000);
+                }
+            } else {
+                 throw new Error('服务器响应数据格式不正确');
+            }
+            debugLog(`知识图谱处理完成`);
+        })
+        .catch(error => {
+            debugLog(`知识图谱生成失败: ${error.message}`);
+            console.error('知识图谱生成错误:', error);
+            if (statusEl) {
+                statusEl.textContent = `生成失败: ${error.message}`;
+                statusEl.style.color = 'red';
+            }
+        });
+    }
+    
+    function updateChartWithNewData(newNodes, newLinks, centerNodeName) {
+        if (!myChart) {
+            debugLog('图表实例不存在，无法更新');
+            return;
+        }
+        debugLog(`使用新数据更新图表，中心节点: ${centerNodeName}`);
+        try {
+            var processedNodes = newNodes.map(node => {
+                if (node.name === centerNodeName) {
+                    node.symbolSize = Math.max(node.symbolSize || 10, 70);
+                    node.category = typeof node.category === 'string' ? node.category : (categoriesCache[0] ? categoriesCache[0].name : 0);
+                } else {
+                    node.symbolSize = node.symbolSize || 50;
+                }
+                if (typeof node.category === 'number' && categoriesCache[node.category]){
+                    node.category = categoriesCache[node.category].name;
+                }
+                return node;
+            });
+
+            var option = myChart.getOption();
+            option.series[0].data = processedNodes;
+            option.series[0].links = newLinks;
+
+            myChart.setOption(option, {replaceMerge: ['series', 'legend']});
+            
+            rawData.nodes = JSON.parse(JSON.stringify(processedNodes));
+            rawData.links = JSON.parse(JSON.stringify(newLinks));
+            rawData.categories = option.series[0].categories || rawData.categories;
+            
+            currentState.mode = 'full';
+            currentState.focusedNode = null;
+            debugLog(`图表更新成功，共 ${processedNodes.length} 个节点，${newLinks.length} 个连接`);
+        } catch (error) {
+            debugLog(`更新图表失败: ${error.message}`);
+            console.error('更新图表错误:', error);
+        }
+    }
+
+    function toggleBackButton(show) {
+        var backBtn = document.getElementById('backToDefaultKG');
+        if (backBtn) {
+            backBtn.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    function restoreDefaultGraph() {
+        try {
+            if (defaultGraph.nodes && defaultGraph.nodes.length > 0) {
+                updateChartWithNewData(
+                    JSON.parse(JSON.stringify(defaultGraph.nodes)),
+                    JSON.parse(JSON.stringify(defaultGraph.links)),
+                    defaultGraph.nodes[0] ? defaultGraph.nodes[0].name : ''
+                );
+            } else {
+                location.reload();
+            }
+        } finally {
+            isGeneratedGraph = false;
+            toggleBackButton(false);
+            ['historyGraphBtn','saveGraphBtn','downloadGraphBtn'].forEach(function(id){
+                var btn = document.getElementById(id);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                }
+            });
+        }
+    }
+
+    // --- 教师版功能函数 START ---
+    
+    function pushStateToHistory() {
+        if (historyIndex < historyStack.length - 1) {
+            historyStack.splice(historyIndex + 1);
+        }
+        historyStack.push(JSON.parse(JSON.stringify(rawData)));
+        const maxHistorySize = 50;
+        if (historyStack.length > maxHistorySize) {
+            historyStack.shift();
+        }
+        historyIndex = historyStack.length - 1;
+        debugLog(`新状态已推入历史记录。总数: ${historyStack.length}, 当前索引: ${historyIndex}`);
+    }
+
+    function undo() {
+        if (historyIndex > 0) {
+            historyIndex--;
+            const stateToRestore = JSON.parse(JSON.stringify(historyStack[historyIndex]));
+            rawData.nodes = stateToRestore.nodes;
+            rawData.links = stateToRestore.links;
+            rawData.categories = stateToRestore.categories;
+            isDataDirty = true;
+            refreshChart();
+            debugLog(`撤销成功，恢复到历史索引: ${historyIndex}`);
+        } else {
+            debugLog("无法撤销：已在历史记录的开端。");
+        }
+    }
+
+    function redo() {
+        if (historyIndex < historyStack.length - 1) {
+            historyIndex++;
+            const stateToRestore = JSON.parse(JSON.stringify(historyStack[historyIndex]));
+            rawData.nodes = stateToRestore.nodes;
+            rawData.links = stateToRestore.links;
+            rawData.categories = stateToRestore.categories;
+            isDataDirty = true;
+            refreshChart();
+            debugLog(`重做成功，前进到历史索引: ${historyIndex}`);
+        } else {
+            debugLog("无法重做：已在历史记录的末端。");
+        }
+    }
+    
+    function refreshChart() {
+        if (!myChart) return;
+        myChart.setOption({
+            series: [{
+                data: rawData.nodes,
+                links: rawData.links
+            }]
+        });
+        debugLog('图表已用最新的 rawData 刷新');
+    }
+
+
+    function saveGraph() {
+        if (!rawData || rawData.nodes.length === 0) {
+            alert('没有图谱数据可供保存。');
+            return;
+        }
+
+        const saveModal = document.getElementById('saveModal');
+        const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+        const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+        const remarksTextarea = document.getElementById('saveRemarks');
+        
+        if (!saveModal || !confirmSaveBtn || !cancelSaveBtn || !remarksTextarea) {
+            console.error("无法找到保存模态框的必要元素。");
+            alert("发生错误，无法打开保存对话框。");
+            return;
+        }
+        
+        remarksTextarea.value = '';
+        saveModal.style.display = 'block';
+
+        confirmSaveBtn.onclick = function() {
+            const remarks = remarksTextarea.value.trim();
+            saveModal.style.display = 'none';
+            performSave(remarks);
+        };
+
+        cancelSaveBtn.onclick = function() {
+            saveModal.style.display = 'none';
+        };
+    }
+
+    function performSave(remarks) {
+        const AppConfig = getAppConfig();
+        const now = new Date();
+        const timestamp = now.getFullYear().toString() +
+                          (now.getMonth() + 1).toString().padStart(2, '0') +
+                          now.getDate().toString().padStart(2, '0') +
+                          now.getHours().toString().padStart(2, '0') +
+                          now.getMinutes().toString().padStart(2, '0') +
+                          now.getSeconds().toString().padStart(2, '0');
+        const fileName = `${AppConfig.className}_${timestamp}.json`;
+
+        const payload = {
+            class_name: AppConfig.className,
+            file_name: fileName,
+            remarks: remarks,
+            data: rawData.nodes,
+            links: rawData.links,
+            categories: rawData.categories
+        };
+        
+        const apiUrl = AppConfig.API_BASE_URL + '/save_kg_json';
+        debugLog(`准备保存图谱到服务器: ${apiUrl}`);
+        debugLog(`保存文件名: ${fileName}`);
+        debugLog(`备注: ${remarks}`);
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { 
+                    throw new Error(`服务器保存失败, 状态码: ${response.status}. 响应: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            debugLog('服务器响应: ' + JSON.stringify(data));
+            alert(`图谱已成功保存到服务器！\n文件名: ${fileName}`);
+            isDataDirty = false;
+            debugLog('脏数据标记已重置。');
+        })
+        .catch(error => {
+            debugLog(`保存到服务器失败: ${error.message}`);
+            console.error('保存图谱错误:', error);
+            alert(`无法连接或保存到服务器: ${error.message}`);
+        });
+    }
+
+    function deleteNodeAndLinks(nodeName) {
+        if (!confirm(`确定要删除节点 "${nodeName}" 及其所有连接吗？此操作无法撤销。`)) {
+            return;
+        }
+        
+        const initialNodeCount = rawData.nodes.length;
+        const initialLinkCount = rawData.links.length;
+
+        rawData.nodes = rawData.nodes.filter(node => node.name !== nodeName);
+        
+        rawData.links = rawData.links.filter(link => link.source !== nodeName && link.target !== nodeName);
+        
+        isDataDirty = true;
+        debugLog(`节点 "${nodeName}" 已删除。移除了 ${initialNodeCount - rawData.nodes.length} 个节点和 ${initialLinkCount - rawData.links.length} 个连接。脏数据标记已设置。`);
+        
+        pushStateToHistory();
+
+        if (currentState.mode === 'focus' && currentState.focusedNode === nodeName) {
+            restoreFullGraph();
+        } else {
+            refreshChart();
+        }
+    }
+
+    function showAddChildModal(parentNodeName) {
+        const parentNode = rawData.nodes.find(n => n.name === parentNodeName);
+        if (!parentNode) return;
+
+        modalTitle.textContent = `为 "${parentNodeName}" 添加子节点`;
+        
+        let formHtml = `<form id="addNodeForm">
+            <p><strong>新节点名称:</strong> <input type="text" id="newNodeName" required style="width: 90%; padding: 5px;"></p>
+            <p><strong>新节点描述:</strong> <textarea id="newNodeDes" style="width: 90%; padding: 5px; min-height: 60px;"></textarea></p>
+            <p><strong>分类:</strong> 
+                <select id="newNodeCategory" style="padding: 5px;">
+                    ${categoriesCache.map((cat, index) => `<option value="${index}">${cat.name}</option>`).join('')}
+                </select>
+            </p>
+            <div style="text-align: right;">
+                <button type="button" id="cancelAddBtn" style="padding: 8px 12px; margin-right: 10px;">取消</button>
+                <button type="submit" id="saveAddBtn" style="padding: 8px 12px;">创建</button>
+            </div>
+        </form>`;
+
+        modalBody.innerHTML = formHtml;
+        modal.style.display = "block";
+
+        document.getElementById('cancelAddBtn').onclick = () => { modal.style.display = "none"; };
+        document.getElementById('addNodeForm').onsubmit = () => {
+            const newName = document.getElementById('newNodeName').value.trim();
+            if (!newName) {
+                alert('节点名称不能为空！');
+                return false;
+            }
+            if (rawData.nodes.some(n => n.name === newName)) {
+                alert(`节点名称 "${newName}" 已存在，请使用其他名称。`);
+                return false;
+            }
+
+            const newNode = {
+                name: newName,
+                des: document.getElementById('newNodeDes').value.trim(),
+                category: parseInt(document.getElementById('newNodeCategory').value, 10),
+                symbolSize: 40
+            };
+            const newLink = {
+                source: parentNodeName,
+                target: newName
+            };
+
+            rawData.nodes.push(newNode);
+            rawData.links.push(newLink);
+
+            isDataDirty = true;
+            debugLog(`已添加新节点 "${newName}" 并连接到 "${parentNodeName}"。脏数据标记已设置。`);
+            
+            pushStateToHistory();
+
+            modal.style.display = "none";
+            refreshChart();
+            return false;
+        };
+    }
+
+    function showEditNodeModal(nodeName) {
+        const node = rawData.nodes.find(n => n.name === nodeName);
+        if (!node) return;
+
+        modalTitle.textContent = `修改节点: ${node.name}`;
+
+        let formHtml = `<form id="editNodeForm">
+            <p><strong>名称 (ID):</strong> ${node.name} (不可修改)</p>
+            <p><strong>描述:</strong> <textarea id="editNodeDes" style="width: 90%; padding: 5px; min-height: 60px;">${node.des || ''}</textarea></p>
+            <p><strong>分类:</strong> 
+                <select id="editNodeCategory" style="padding: 5px;">
+                    ${categoriesCache.map((cat, index) => `<option value="${index}" ${node.category === index ? 'selected' : ''}>${cat.name}</option>`).join('')}
+                </select>
+            </p>
+            <div style="text-align: right;">
+                <button type="button" id="cancelEditBtn" style="padding: 8px 12px; margin-right: 10px;">取消</button>
+                <button type="submit" id="saveEditBtn" style="padding: 8px 12px;">保存</button>
+            </div>
+        </form>`;
+        
+        modalBody.innerHTML = formHtml;
+        modal.style.display = 'block';
+
+        document.getElementById('cancelEditBtn').onclick = () => { modal.style.display = "none"; };
+        document.getElementById('editNodeForm').onsubmit = () => {
+            const nodeIndex = rawData.nodes.findIndex(n => n.name === nodeName);
+            if (nodeIndex === -1) return false;
+
+            rawData.nodes[nodeIndex].des = document.getElementById('editNodeDes').value.trim();
+            rawData.nodes[nodeIndex].category = parseInt(document.getElementById('editNodeCategory').value, 10);
+            
+            isDataDirty = true;
+            debugLog(`节点 "${nodeName}" 信息已更新。脏数据标记已设置。`);
+            
+            pushStateToHistory();
+
+            modal.style.display = "none";
+            refreshChart();
+            return false;
+        };
+    }
+
+    function renderHistoryList(filesData) {
+        const AppConfig = getAppConfig();
+        const historyBody = document.getElementById('historyModalBody');
+        if (!filesData || filesData.length === 0) {
+            historyBody.innerHTML = '<p>没有找到历史版本。</p>';
+            return;
+        }
+        
+        filesData.sort((a, b) => {
+            const fileNameA = a.kg ? a.kg.file_name : null;
+            const fileNameB = b.kg ? b.kg.file_name : null;
+            
+            const tsRegex = /(\d{14})\.json$/;
+            const tsA = fileNameA ? fileNameA.match(tsRegex) : null;
+            const tsB = fileNameB ? fileNameB.match(tsRegex) : null;
+
+            if (tsA && tsB) {
+                return tsB[1].localeCompare(tsA[1]);
+            }
+            if (tsA) return -1;
+            if (tsB) return 1;
+            return 0;
+        });
+
+        let html = '';
+        filesData.forEach((fileItem, index) => {
+            const fileName = (fileItem.kg && fileItem.kg.file_name) ? fileItem.kg.file_name : '(未命名版本)';
+            const remarks = (fileItem.kg && fileItem.kg.remarks) ? fileItem.kg.remarks : '';
+            
+            const match = fileName.match(/^(.*?)_?(\d{14})\.json$/);
+            
+            let displayName = '未命名版本';
+            let formattedTime = '无有效时间戳';
+
+            if (match && match[2]) {
+                displayName = match[1].replace(/_$/, '') || AppConfig.className;
+                
+                const ts = match[2];
+                try {
+                    const year = parseInt(ts.substr(0, 4), 10);
+                    const month = parseInt(ts.substr(4, 2), 10) - 1;
+                    const day = parseInt(ts.substr(6, 2), 10);
+                    const hour = parseInt(ts.substr(8, 2), 10);
+                    const minute = parseInt(ts.substr(10, 2), 10);
+                    const second = parseInt(ts.substr(12, 2), 10);
+                    
+                    const date = new Date(year, month, day, hour, minute, second);
+                    
+                    formattedTime = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+
+                } catch (e) {
+                    console.error("解析日期失败:", ts, e);
+                    formattedTime = '时间戳格式无效';
+                }
+
+            } else {
+                displayName = fileName.replace(/\.json$/, '');
+            }
+
+            html += `<div class="history-item" data-index="${index}" onclick="loadHistoricalGraph(this.dataset.index)">
+                        <div class="history-item-info">
+                            <span class="filename">${displayName}</span>
+                            <span class="timestamp">${formattedTime}</span>
+                            ${remarks ? `<span class="remarks">备注：${remarks}</span>` : ''}
+                        </div>
+                        <button class="menu-item" style="padding: 5px 10px;">加载</button>
+                     </div>`;
+        });
+        historyBody.innerHTML = html;
+    }
+
+    function loadHistoricalGraph(indexString) {
+        if (isDataDirty && !confirm('您有未保存的更改，加载历史版本将会覆盖这些更改。确定要继续吗？')) {
+            return;
+        }
+
+        const index = parseInt(indexString, 10);
+
+        if (isNaN(index)) {
+            alert('无效的历史版本索引。');
+            debugLog(`加载历史版本失败：无效的索引 "${indexString}"`);
+            return;
+        }
+
+        if (!historicalDataCache) {
+            alert('历史数据缓存不存在或已失效，请重新打开“历史图谱”列表。');
+            debugLog('加载历史版本失败：historicalDataCache 为空');
+            return;
+        }
+
+        const historyItem = historicalDataCache[index];
+        const fileNameForDisplay = (historyItem && historyItem.kg && historyItem.kg.file_name) ? historyItem.kg.file_name : `索引为 ${index} 的未命名版本`;
+
+        if (!historyItem || !historyItem.kg) {
+            alert(`在缓存中未找到索引为 "${index}" 的有效图谱数据。`);
+            debugLog(`加载历史版本失败：在缓存中未找到索引 ${index} 或其 kg 数据为空`);
+            return;
+        }
+        
+        myChart.showLoading();
+
+        setTimeout(() => {
+            try {
+                const graphData = historyItem.kg;
+
+                rawData.nodes = graphData.data || [];
+                rawData.links = graphData.links || [];
+                rawData.categories = graphData.categories || [];
+                
+                option_4ed221bd03f84e8b9227cdd3d973b8bc.series[0].data = rawData.nodes;
+                option_4ed221bd03f84e8b9227cdd3d973b8bc.series[0].links = rawData.links;
+                option_4ed221bd03f84e8b9227cdd3d973b8bc.series[0].categories = rawData.categories;
+                option_4ed221bd03f84e8b9227cdd3d973b8bc.legend[0].data = rawData.categories.map(c => c.name);
+
+                myChart.setOption(option_4ed221bd03f84e8b9227cdd3d973b8bc, true);
+                
+                isDataDirty = false;
+                pushStateToHistory();
+
+                document.getElementById('historyModal').style.display = 'none';
+                myChart.hideLoading();
+                alert(`已成功加载历史版本: ${fileNameForDisplay}`);
+                debugLog(`成功加载并渲染历史版本: ${fileNameForDisplay}`);
+            } catch (error) {
+                myChart.hideLoading();
+                debugLog(`渲染历史版本失败: ${error.message}`);
+                alert(`渲染历史版本失败: ${error.message}`);
+                console.error("渲染历史图谱时出错：", error);
+            }
+        }, 100); 
+    }
+
+    // --- 教师版功能函数 END ---
+
+    window.onbeforeunload = function(e) {
+        if (isDataDirty) {
+            const confirmationMessage = '您有未保存的更改，确定要离开吗？';
+            (e || window.event).returnValue = confirmationMessage;
+            return confirmationMessage;
+        }
+    };
+   
+    var contextMenu = document.getElementById('contextMenu');
+    var currentRightClickedNode = null;
+    
+    function initContextMenu() {
+        var chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            console.log("已找到图表容器，绑定右键菜单事件");
+        } else {
+            console.error('警告: 未找到图表容器元素');
+            debugLog('警告: 未找到图表容器元素');
+        }
+        
+        document.addEventListener('click', function() {
+            if (contextMenu) {
+                contextMenu.style.display = 'none';
+            }
+        });
+        
+        var menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach(function(item) {
+            item.addEventListener('click', function() {
+                const action = this.getAttribute('data-action');
+                if (currentRightClickedNode) {
+                    switch(action) {
+                        case 'add':
+                            showAddChildModal(currentRightClickedNode);
+                            break;
+                        case 'edit':
+                            showEditNodeModal(currentRightClickedNode);
+                            break;
+                        case 'delete':
+                            deleteNodeAndLinks(currentRightClickedNode);
+                            break;
+                    }
+                }
+                contextMenu.style.display = 'none';
+            });
+            
+            item.addEventListener('mouseover', function() {
+                this.style.backgroundColor = '#f0f0f0';
+            });
+            
+            item.addEventListener('mouseout', function() {
+                this.style.backgroundColor = 'transparent';
+            });
+        });
+        
+        debugLog('右键菜单初始化完成');
+        console.log('右键菜单初始化完成');
+    }
+       
+    document.addEventListener('DOMContentLoaded', function() {
+        debugLog('DOM加载完成，初始化图表交互');
+        
+        initContextMenu();
+        
+        setTimeout(function() {
+            var chartElements = document.querySelectorAll('[_echarts_instance_]');
+            if (chartElements.length > 0) {
+                var chartDom = chartElements[0];
+                myChart = echarts.getInstanceByDom(chartDom);
+                
+                var chartContainer = chartDom.parentNode;
+                if (chartContainer && getComputedStyle(chartContainer).position === 'static'){
+                    chartContainer.style.position = 'relative';
+                }
+                createSearchBox();
+                
+                if (myChart) {
+                    debugLog('成功获取图表实例');
+                    var option = myChart.getOption();
+                    
+                    if (option.legend && option.legend[0] && option.legend[0].data) {
+                        categoriesCache = option.legend[0].data.map(cat => typeof cat === 'string' ? {name: cat} : cat);
+                        debugLog(`已缓存${categoriesCache.length}个分类(来自legend): ${categoriesCache.map(c=>c.name).join(', ')}`);
+                    } else if (option.series && option.series[0] && option.series[0].categories) {
+                        categoriesCache = option.series[0].categories;
+                        debugLog(`已缓存${categoriesCache.length}个分类(来自series): ${categoriesCache.map(c=>c.name).join(', ')}`);
+                    }
+                    
+                    if (rawData.categories && rawData.categories.length > 0) {
+                        categoriesCache = rawData.categories;
+                        debugLog(`已缓存${categoriesCache.length}个分类: ${categoriesCache.map(c=>c.name).join(', ')}`);
+                    } else {
+                         debugLog('警告: 未从 rawData 中找到分类信息。');
+                    }
+                    
+                    var clickTimer = null;
+                    var clickDelay = 300;
+                    
+                    myChart.off('click');
+                    myChart.on('click', function(params) {
+                        if (params.dataType === 'node') {
+                            var nodeName = params.data.name;
+                            if (clickTimer) {
+                                clearTimeout(clickTimer);
+                                clickTimer = null;
+                                return;
+                            }
+                            clickTimer = setTimeout(function() {
+                                clickTimer = null;
+                                debugLog(`单击节点: ${nodeName}`);
+                                showNodeDetails(nodeName);
+                            }, clickDelay);
+                        }
+                    });
+                    
+                    myChart.off('dblclick');
+                    myChart.on('dblclick', function(params) {
+                        if (params.dataType === 'node') {
+                            var nodeName = params.data.name;
+                            if (clickTimer) {
+                                clearTimeout(clickTimer);
+                                clickTimer = null;
+                            }
+                            debugLog(`双击节点: ${nodeName}`);
+                            if (currentState.mode === 'focus' && currentState.focusedNode === nodeName) {
+                                restoreFullGraph();
+                            } else {
+                                focusNode(nodeName);
+                            }
+                        }
+                    });
+                    
+                    myChart.off('contextmenu');
+                    myChart.on('contextmenu', function(params) {
+                        if (isGeneratedGraph) {
+                            params.event.event.preventDefault();
+                            return;
+                        }
+                        params.event.event.preventDefault();
+
+                        console.log(`图表contextmenu事件触发:`, params);
+                        if (params.dataType === 'node') {
+                            var nodeName = params.data.name;
+                            currentRightClickedNode = nodeName;
+                            console.log(`右键点击节点: ${currentRightClickedNode}, 事件坐标: (${params.event.offsetX}, ${params.event.offsetY})`);
+                            debugLog(`右键点击节点: ${currentRightClickedNode}`);
+                            
+                            var chartContainer = document.querySelector('.chart-container');
+                            var rect = chartContainer.getBoundingClientRect();
+                            
+                            var menuX = rect.left + params.event.offsetX;
+                            var menuY = rect.top + params.event.offsetY;
+                            
+                            contextMenu.style.left = menuX + 'px';
+                            contextMenu.style.top = menuY + 'px';
+                            contextMenu.style.display = 'block';
+                            console.log(`右键菜单已显示在位置 (${menuX}, ${menuY})`);
+                                                       
+                        }
+                    });
+                    
+                    debugLog('交互事件绑定完成');
+                    console.log('交互事件绑定完成');
+                    
+
+                } else {
+                    debugLog('ERROR: 未能获取图表实例');
+                }
+            } else {
+                debugLog('ERROR: 未找到图表元素，500ms后重试');
+            }
+        }, 500);
+
+        // 若是生成后的知识图谱页面，禁用特定按钮并显示返回按钮
+        (function() {
+            var path = window.location.pathname || '';
+            
+            var isStandaloneKG = /_kg_local_knowledge_/i.test(path) || (/\/KG\/static\/output\//i.test(path) && /kg_[^\/]+\.html$/i.test(path));
+            if (!isStandaloneKG) return;
+
+            // 禁用右键菜单
+            window.addEventListener('contextmenu', function(e){ e.preventDefault(); }, true);
+
+            // 禁用历史/保存/下载按钮
+            ['historyGraphBtn','saveGraphBtn','downloadGraphBtn'].forEach(function(id){
+                var btn = document.getElementById(id);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.style.pointerEvents = 'none';
+                    btn.style.opacity = '0.5';
+                    btn.title = '生成页面禁用';
+                }
+            });
+
+            // 显示返回按钮
+            var backBtn = document.getElementById('backToDefaultKG');
+            if (backBtn) backBtn.style.display = 'block';
+        })();
+    });
+
+    
+    function getRecommendedResources(keyword) {
+        if (!keyword) return;
+        
+        var resourcesContainer = document.getElementById('resourcesContainer');
+        var resourcesList = document.getElementById('resourcesList');
+        
+        if (resourcesContainer && resourcesList) {
+            const AppConfig = getAppConfig();
+            resourcesContainer.style.display = 'block';
+            resourcesList.innerHTML = '<p style="text-align: center;">正在获取推荐资源...</p>';
+            const apiUrl = AppConfig.API_BASE_URL + '/search/' + encodeURIComponent(keyword);
+            debugLog(`开始为 "${keyword}" 获取推荐学习资源，使用URL: ${apiUrl}`);
+            
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`网络请求失败，状态码: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    debugLog(`解析响应数据 (资源): ${JSON.stringify(data).substring(0, 100)}...`);
+                    if (data.result && data.result.length > 0) {
+                        var html = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                        data.result.forEach(function(resource, index) {
+                            html += `<li style="padding: 8px 10px; margin-bottom: 8px; border-radius: 4px; background-color: #f5f5f5;">
+                                        <a href="${resource.url}" target="_blank" style="color: #4b8bf4; text-decoration: none; font-weight: bold;">
+                                            ${index + 1}. ${resource.name}
+                                        </a>
+                                    </li>`;
+                        });
+                        html += '</ul>';
+                        resourcesList.innerHTML = html;
+                    } else {
+                        resourcesList.innerHTML = '<p style="text-align: center;">没有找到相关学习资源</p>';
+                    }
+                })
+                .catch(error => {
+                    debugLog(`获取推荐资源失败: ${error.message}`);
+                    resourcesList.innerHTML = `<p style="text-align: center; color: red;">获取失败: ${error.message}</p>`;
+                });
+        }
+    }
+</script>
+</body>
+</html>

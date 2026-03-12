@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Awesome-pyecharts</title>
+    <script type="text/javascript" src="/static/js/echarts.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-3.7.1.min.js"></script>
+
+<style>
+    /* 确保画布撑满可视区域，消除默认边距 */
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    .chart-container {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+    }
+
+    /* CSS样式部分保持不变，此处省略以节省空间 */
+    /* 对话框样式 */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.6);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .modal-content {
+        background-color: #ffffff;
+        margin: 10% auto;
+        padding: 25px;
+        border: none;
+        width: 60%;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(-20px);
+        animation: slideIn 0.3s forwards;
+    }
+    
+    @keyframes slideIn {
+        to { transform: translateY(0); }
+    }
+    
+    .close {
+        color: #666;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .close:hover,
+    .close:focus {
+        color: #000;
+        transform: rotate(90deg);
+    }
+
+    .modal-title {
+        margin-top: 0;
+        color: #333;
+        font-size: 24px;
+        border-bottom: 2px solid #4b8bf4;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .modal-body {
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    
+    .modal-body p {
+        margin: 12px 0;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        transition: background-color 0.2s;
+    }
+    
+    .modal-body p:hover {
+        background-color: #f0f7ff;
+    }
+    
+    .modal-body strong {
+        color: #4b8bf4;
+        margin-right: 5px;
+        display: inline-block;
+        min-width: 60px;
+    }
+
+    /* Styles for the new toggle button */
+    #search-toggle-btn {
+        background-color: #4b8bf4;
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px; /* Increased for better icon visibility */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        transition: background-color 0.3s ease;
+        line-height: 1; /* Ensure icon is centered */
+    }
+
+    #search-toggle-btn:hover {
+        background-color: #3a7ce0;
+    }
+
+    /* New container for the entire search widget (button + box) */
+    #search-widget-container {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1002;
+    }
+
+    /* Base styles for the search box itself - modified for pop-out behavior */
+    #chart-search-box {
+        position: absolute; /* Positioned relative to search-widget-container */
+        top: calc(100% + 5px); /* Appears below the toggle button with a 5px gap */
+        right: 0; /* Aligns the right edge of search box with the right edge of widget container */
+        width: 356px; /* From previous calculation in nn_output_enhanced1.html development */
+        background-color: rgba(255,255,255,0.9);
+        padding: 8px;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* Slightly larger shadow for "pop-out" */
+        box-sizing: border-box;
+        z-index: 1001; 
+
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95); /* Start slightly up and scaled down */
+        visibility: hidden;
+        pointer-events: none; /* Not interactive when hidden */
+        /* Delay visibility change for smoother out-transition */
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0s linear 0.2s;
+    }
+
+    #chart-search-box.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1); /* Move to final position and scale */
+        visibility: visible;
+        pointer-events: auto; /* Interactive when visible */
+        transition-delay: 0s; /* Apply in-transition immediately */
+    }
+    
+    /* Styles for search input and results INSIDE #chart-search-box */
+    /* These styles are adapted from the old .search-input, .search-results etc. but targeted within #chart-search-box */
+    #chart-search-box #nodeSearchInput { /* Target input inside the new search box */
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 180px; /* This width is for the input field itself */
+        outline: none;
+        transition: all 0.3s;
+        height: 36px; /* From nn_output_enhanced1.html */
+        box-sizing: border-box; /* From nn_output_enhanced1.html */
+        vertical-align: middle; /* From nn_output_enhanced1.html */
+    }
+    
+    #chart-search-box #nodeSearchInput:focus {
+        border-color: #4b8bf4;
+        box-shadow: 0 0 0 2px rgba(75,139,244,0.2);
+    }
+    
+    #chart-search-box #nodeSearchBtn, #chart-search-box #refreshButton { /* Target buttons inside the new search box */
+        margin-left: 6px;
+        padding: 6px 12px;
+        background-color: #4b8bf4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        font-size: 13px;
+        height: 36px; /* From nn_output_enhanced1.html */
+        box-sizing: border-box; /* From nn_output_enhanced1.html */
+        vertical-align: middle; /* From nn_output_enhanced1.html */
+    }
+    
+    #chart-search-box #nodeSearchBtn:hover, #chart-search-box #refreshButton:hover {
+        background-color: #3a7ce0;
+    }
+        
+    #chart-search-box #searchResults { /* Target results display inside the new search box */
+        /* display: none; is handled by JS */
+        position: absolute; 
+        top: 45px; /* Relative to its parent #chart-search-box's input container, or #chart-search-box itself if that's the relative parent */
+        left: 0; 
+        right: 0; 
+        max-height: 300px; 
+        overflow-y: auto; 
+        background-color: white; 
+        border-radius: 5px; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
+        z-index: 1002; /* Above other elements in searchBox if needed */
+    }
+    
+    #chart-search-box .search-result-item { /* Target result items */
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    #chart-search-box .search-result-item:hover {
+        background-color: #f0f7ff;
+    }
+    
+    #chart-search-box .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    /* 调试模式状态显示 */
+    .debug-panel {
+        position: fixed;
+        left: 10px;
+        bottom: 10px;
+        background-color: rgba(0,0,0,0.8);
+        color: #fff;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        z-index: 1000;
+        max-width: 300px;
+        max-height: 200px;
+        overflow: auto;
+    }
+
+    #kgStatus {
+        padding: 8px;
+        margin-top: 15px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+    }
+
+    #resourcesContainer {
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+    }
+</style>
+</head>
+<body>
+    <div id="4ed221bd03f84e8b9227cdd3d973b8bc" class="chart-container" style="width:100%; height:100vh; overflow:hidden;"></div>
+
+<!-- 添加对话框结构 -->
+<div id="nodeModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modalTitle" class="modal-title"></h2>
+        <div id="modalBody" class="modal-body"></div>
+    </div>
+</div>
+
+<!-- 调试面板 -->
+<div id="debugPanel" class="debug-panel" style="display: none;"></div>
+<!-- 添加右键菜单 -->
+<div id="contextMenu" style="display: none; position: absolute; z-index: 1000; background-color: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); padding: 5px 0;">
+    <div style="font-weight: bold; padding: 5px 15px; border-bottom: 1px solid #eee;">修改学习状态</div>
+    <div class="menu-item" data-status="not_started" style="padding: 8px 15px; cursor: pointer; color: #888;">未开始</div>
+    <div class="menu-item" data-status="in_progress" style="padding: 8px 15px; cursor: pointer; color: #ff9900;">学习中</div>
+    <div class="menu-item" data-status="completed" style="padding: 8px 15px; cursor: pointer; color: #4caf50;">已完成</div>
+    <div class="menu-item" data-status="review_needed" style="padding: 8px 15px; cursor: pointer; color: #f44336;">需复习</div>
+</div>
+
+<script src="/static/js/student_kg.js"> </script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+{
+    "nodes": [
+        {
+            "name": "多电子体系",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "第一性原理计算",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "熵",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "宏观低速条件",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "基本物理定律",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "牛顿运动定律",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "统计物理",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "工程设计",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "第一性原理",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "密度泛函理论",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "自发过程",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "多尺度建模",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "热力学第二定律",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "波函数演化",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "经典力学",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "概率分布",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "材料特性",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "能量转换效率",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "热力学量",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "新材料研发",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "薛定谔方程",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "微观粒子行为",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "量子力学",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "技术进步",
+            "symbolSize": 50,
+            "category": 1
+        },
+        {
+            "name": "系统无序度",
+            "symbolSize": 50,
+            "category": 1
+        }
+    ],
+    "links": [
+        {
+            "source": "第一性原理计算",
+            "target": "密度泛函理论",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "多尺度建模",
+            "name": "关联"
+        },
+        {
+            "source": "多电子体系",
+            "target": "材料特性",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "微观粒子行为",
+            "name": "关联"
+        },
+        {
+            "source": "统计物理",
+            "target": "热力学量",
+            "name": null
+        },
+        {
+            "source": "牛顿运动定律",
+            "target": "宏观低速条件",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "熵",
+            "name": "关联"
+        },
+        {
+            "source": "薛定谔方程",
+            "target": "波函数演化",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "量子力学",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "统计物理",
+            "name": "关联"
+        },
+        {
+            "source": "概率分布",
+            "target": "统计物理",
+            "name": null
+        },
+        {
+            "source": "量子力学",
+            "target": "微观粒子行为",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "概率分布",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "薛定谔方程",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "自发过程",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "多电子体系",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "材料特性",
+            "name": "关联"
+        },
+        {
+            "source": "新材料研发",
+            "target": "技术进步",
+            "name": null
+        },
+        {
+            "source": "自发过程",
+            "target": "热力学第二定律",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "热力学量",
+            "name": "关联"
+        },
+        {
+            "source": "波函数演化",
+            "target": "概率分布",
+            "name": null
+        },
+        {
+            "source": "多尺度建模",
+            "target": "第一性原理计算",
+            "name": null
+        },
+        {
+            "source": "微观粒子行为",
+            "target": "经典力学",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "第一性原理计算",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "热力学第二定律",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "新材料研发",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "系统无序度",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "密度泛函理论",
+            "name": "关联"
+        },
+        {
+            "source": "熵",
+            "target": "系统无序度",
+            "name": null
+        },
+        {
+            "source": "薛定谔方程",
+            "target": "量子力学",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "宏观低速条件",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "基本物理定律",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "经典力学",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "能量转换效率",
+            "name": "关联"
+        },
+        {
+            "source": "工程设计",
+            "target": "多尺度建模",
+            "name": null
+        },
+        {
+            "source": "能量转换效率",
+            "target": "工程设计",
+            "name": null
+        },
+        {
+            "source": "系统无序度",
+            "target": "自发过程",
+            "name": null
+        },
+        {
+            "source": "材料特性",
+            "target": "新材料研发",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "技术进步",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "牛顿运动定律",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "工程设计",
+            "name": "关联"
+        },
+        {
+            "source": "第一性原理",
+            "target": "基本物理定律",
+            "name": null
+        },
+        {
+            "source": "密度泛函理论",
+            "target": "多电子体系",
+            "name": null
+        },
+        {
+            "source": "经典力学",
+            "target": "牛顿运动定律",
+            "name": null
+        },
+        {
+            "source": "第一性原理",
+            "target": "波函数演化",
+            "name": "关联"
+        },
+        {
+            "source": "热力学第二定律",
+            "target": "能量转换效率",
+            "name": null
+        },
+        {
+            "source": "基本物理定律",
+            "target": "经典力学",
+            "name": null
+        },
+        {
+            "source": "热力学量",
+            "target": "熵",
+            "name": null
+        }
+    ]
+}

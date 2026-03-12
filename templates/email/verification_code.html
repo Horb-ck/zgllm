@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<body style="margin:0;padding:0;background:#f5f2f8;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f2f8;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:16px;box-shadow:0 12px 35px rgba(108,40,135,0.15);overflow:hidden;">
+          <tr>
+            <td style="padding:20px 24px;background:#6C2887;color:#ffffff;font-size:20px;font-weight:700;letter-spacing:0.5px;">
+              明月科创教育大模型
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 24px 12px;color:#333333;font-size:16px;">
+              {{ '老师' if role == 'teacher' else '同学' }} {{ account }}，您好：
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 24px 8px;color:#555555;font-size:14px;line-height:1.7;">
+              您正在进行{{ '注册' if scene == 'register' else '密码重置' }}验证。请在 {{ ttl }} 分钟内完成输入。
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:12px 24px 24px;">
+              <div style="background:linear-gradient(135deg,#6C2887 0%,#8c55a7 100%);color:#ffffff;font-size:28px;font-weight:700;letter-spacing:6px;padding:16px 20px;border-radius:12px;font-family:'Fira Code','Consolas','Menlo',monospace;">
+                {{ code }}
+              </div>
+              <div style="margin-top:10px;color:#777777;font-size:12px;">验证码仅用于本次{{ '注册' if scene == 'register' else '重置' }}，请勿泄露。</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 24px 24px;color:#999999;font-size:12px;line-height:1.6;">
+              如果这不是您的操作，请忽略本邮件。感谢您使用明月科创教育大模型。
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

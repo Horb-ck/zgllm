@@ -1,0 +1,3195 @@
+{% extends "layout.html" %}
+
+{% block title %}学情分析 - 教师版{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- 侧边导航栏保持不变 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="hh">
+                <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
+                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div>
+            </h2>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">
+                <span>{{ username[0].upper() }}</span>
+            </div>
+            <div class="user-name">{{ username }}</div>
+            <div class="user-role">教师</div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="{% if request.path == url_for('new_chat') %}active{% endif %}">
+                    <a href="{{ url_for('new_chat') }}">
+                        <span class="icon">💬</span>
+                        <span class="label">开启新对话</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_agents') %}active{% endif %}">
+                    <a href="{{ url_for('course_agents') }}">
+                        <span class="icon">🤖</span>
+                        <span class="label">课程广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_kd') %}active{% endif %}">
+                    <a href="{{ url_for('course_kd') }}">
+                        <span class="icon">🔍</span>
+                        <span class="label">智能体广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('his') %}active{% endif %}">
+                    <a href="{{ url_for('his') }}">
+                        <span class="icon">📚</span>
+                        <span class="label">个人知识库</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('chat') %}active{% endif %}">
+                    <a href="{{ url_for('chat') }}">
+                        <span class="icon">🎓</span>
+                        <span class="label">学情分析</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2" 
+               class="logout-btn" 
+               target="_blank">
+                <span class="icon">📝</span>
+                <span class="label">意见反馈</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <span class="icon">🚪</span>
+                <span class="label">退出登录</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 无课程提示区域（默认隐藏，通过JS控制显示） -->
+        <div id="noCourseWarning" class="no-course-warning" style="display: none;">
+            <div class="warning-content">
+                <h2>您当前未教授任何课程</h2>
+                <p>无需学情分析，可在课程广场中了解各门课程</p>
+                <a href="{{ url_for('course_agents') }}" class="goto-course-btn">
+                    <i class="fas fa-external-link-alt"></i>
+                    前往课程广场
+                </a>
+            </div>
+        </div>
+
+        <!-- 有课程时的完整页面内容（默认显示，通过JS控制隐藏） -->
+        <div id="coursePageContent">
+            <div class="page-header">
+                <div class="header-top">
+                    <div>
+                        <h1>学情分析 - 教师端</h1>
+                        <p>全面掌握班级学习情况，精准指导教学决策</p>
+                    </div>
+                    <!-- 课程选择下拉框 -->
+                    <div class="course-selector-container">
+                        <div class="course-selector">
+                            <button class="course-selector-btn" id="courseSelectorBtn">
+                                <span class="selected-course" id="selectedCourseName">选择课程...</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="course-dropdown" id="courseDropdown">
+                                <div class="course-dropdown-header">我的课程</div>
+                                <div class="course-list" id="courseList">
+                                    <div class="loading">加载课程中...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容网格布局 - 左右平分 -->
+            <div class="main-grid">
+                <!-- 左半区域：所有数据内容 -->
+                <div class="left-main-content">
+                    <!-- 合并的班级概览与单元进度分析 -->
+                    <div class="dashboard-card combined-section">
+                        <div class="card-header">
+                            <h2>班级概览与单元进度</h2>
+                        </div>
+                        <div class="card-content scrollable-combined">
+                            <!-- 概览统计部分 - 紧凑布局 -->
+                            <div class="overview-section">
+                                <div class="overview-stats compact">
+                                    <div class="stat-card">
+                                        <div class="stat-icon students">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="total-students">--</h3>
+                                            <p>班级总人数</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon assignments">
+                                            <i class="fas fa-tasks"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="total-assignments">--</h3>
+                                            <p>已发布作业</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon quizzes">
+                                            <i class="fas fa-question-circle"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="total-quizzes">--</h3>
+                                            <p>测验数量</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon completion">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="avg-submission-rate">--%</h3>
+                                            <p>平均提交率</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 单元进度部分 - 增加展示区域 -->
+                            <div class="module-section">
+                                <div class="section-header-with-dropdown">
+                                    <h3 class="section-subtitle">单元进度</h3>
+                                    <div class="module-dropdown-container">
+                                        <button class="module-dropdown-btn" id="moduleDropdownBtn">
+                                            <span id="moduleViewMode">筛选状态</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="module-dropdown" id="moduleDropdown">
+                                            <div class="dropdown-item" data-filter="completed">已完成</div>
+                                            <div class="dropdown-item" data-filter="in-progress">进行中</div>
+                                            <div class="dropdown-item" data-filter="locked">已锁定</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="module-progress-list" class="progress-list">
+                                    <div class="loading">加载中...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 需要关注的学生 -->
+                    <div class="dashboard-card students-section">
+                        <div class="card-header">
+                            <h2>需要关注的学生</h2>
+                            <div class="header-controls">
+                                <span class="card-badge" id="attention-count">--</span>
+                                <div class="student-dropdown-container">
+                                    <button class="student-dropdown-btn" id="studentDropdownBtn">
+                                        <span id="studentSortMode">按成绩排序</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="student-dropdown" id="studentDropdown">
+                                        <div class="dropdown-item active" data-sort="score">按成绩排序</div>
+                                        <div class="dropdown-item" data-sort="id">按学号排序</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-content scrollable-content">
+                            <div id="students-need-attention" class="student-list">
+                                <div class="loading">加载中...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 已发布的活动 -->
+                    <div class="dashboard-card activities-section">
+                        <div class="card-header">
+                            <h2>已发布的活动</h2>
+                            <div class="header-controls">
+                                <span class="card-badge" id="published-count">--</span>
+                                <div class="activity-dropdown-container">
+                                    <button class="activity-dropdown-btn" id="activityDropdownBtn">
+                                        <span id="activitySortMode">按时间排序</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="activity-dropdown" id="activityDropdown">
+                                        <div class="dropdown-item active" data-sort="time">按时间排序</div>
+                                        <div class="dropdown-item" data-sort="name">按名称排序</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="activities-tabs">
+                                <div class="tab-buttons">
+                                    <button class="tab-button active" data-tab="assignments">作业</button>
+                                    <button class="tab-button" data-tab="quizzes">测验</button>
+                                </div>
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="assignments-tab">
+                                        <div id="published-assignments" class="activities-list">
+                                            <div class="loading">加载中...</div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="quizzes-tab">
+                                        <div id="published-quizzes" class="activities-list">
+                                            <div class="loading">加载中...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右半区域：AI助手 - 平分宽度 -->
+                <div class="right-ai-assistant">
+                    <div class="dashboard-card ai-assistant-card">
+                        <div class="card-header">
+                            <h2>学情AI助手</h2>
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="ai-assistant-description">
+                                <p id="ai-assistant-desc">与学情AI助手深度交流，获取个性化教学建议和学习分析</p>
+                            </div>
+                            <div class="ai-assistant-iframe-container">
+                                <iframe 
+                                    id="aiAssistantIframe"
+                                    src=""
+                                    frameborder="0"
+                                    allowfullscreen
+                                    loading="lazy"
+                                    class="ai-assistant-iframe"
+                                ></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 无课程提示样式 */
+.no-course-warning {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 100px);
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 40px;
+    margin: 20px;
+    text-align: center;
+}
+
+.warning-content {
+    max-width: 500px;
+}
+
+.warning-content h2 {
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.warning-content p {
+    color: #7f8c8d;
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0 0 30px 0;
+}
+
+.goto-course-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+}
+
+.goto-course-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.goto-course-btn i {
+    font-size: 12px;
+}
+
+/* 主内容区域样式调整 */
+#coursePageContent {
+    width: 100%;
+    height: 100%;
+}
+
+/* 页面头部样式调整 */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.page-header h1 {
+    margin: 0 0 5px 0;
+    font-size: 24px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+/* 课程选择器样式 */
+.course-selector-container {
+    position: relative;
+    min-width: 300px;
+}
+
+.course-selector {
+    position: relative;
+    width: 100%;
+}
+
+.course-selector-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.course-selector-btn:hover {
+    border-color: #3498db;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+.selected-course {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    text-align: left;
+}
+
+.course-selector-btn i {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #7f8c8d;
+    transition: transform 0.3s;
+}
+
+.course-selector-btn.active i {
+    transform: rotate(180deg);
+}
+
+.course-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 8px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.course-dropdown.show {
+    display: block;
+}
+
+.course-dropdown-header {
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.course-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.course-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.course-item:last-child {
+    border-bottom: none;
+}
+
+.course-item:hover {
+    background: #f8f9fa;
+}
+
+.course-item.active {
+    background: #e8f4fd;
+    border-left: 4px solid #3498db;
+    padding-left: 12px;
+}
+
+.course-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.course-id {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 2px;
+}
+
+.course-sis-id {
+    font-size: 11px;
+    color: #95a5a6;
+    font-style: italic;
+}
+
+.course-empty {
+    padding: 30px 20px;
+    text-align: center;
+    color: #95a5a6;
+    font-size: 14px;
+}
+
+/* 主内容网格布局 - 左右平分 - 修改为弹性缩放 */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 左右平分 */
+    gap: 20px;
+    height: calc(100vh - 140px);
+    min-height: 600px;
+    max-height: 1200px;
+    width: 100%;
+    /* 添加缩放属性 */
+    transition: all 0.3s ease;
+    resize: vertical;
+    overflow: auto;
+}
+
+/* 调整左侧三个区域的高度比例 - 修改为弹性布局 */
+.left-main-content {
+    display: grid;
+    grid-template-rows: 1fr 180px 1fr; /* 班级概览区域变大，学生区域缩小 */
+    gap: 20px;
+    overflow-y: auto;
+    padding-right: 8px;
+    max-height: 100%;
+    height: 100%;
+    /* 添加缩放属性 */
+    transition: all 0.3s ease;
+}
+
+.right-ai-assistant {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+    height: 100%;
+    /* 添加缩放属性 */
+    transition: all 0.3s ease;
+}
+
+/* 合并区域样式 - 修复滚动问题并添加弹性缩放 */
+.combined-section {
+    min-height: 380px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    /* 添加缩放属性 */
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.combined-section .card-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 16px; /* 减少间距 */
+    /* 确保内容可缩放 */
+    overflow: hidden;
+}
+
+.scrollable-combined {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* 添加缩放支持 */
+    resize: vertical;
+    min-height: 200px;
+}
+
+/* 概览统计样式 - 紧凑布局 */
+.overview-section {
+    flex-shrink: 0;
+    margin-bottom: 0; /* 移除底部边距 */
+    padding-bottom: 8px; /* 改为内边距 */
+    border-bottom: 1px solid #f0f2f5;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.overview-stats.compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px; /* 大幅减少间距 */
+    height: auto;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+    border-radius: 8px;
+    padding: 10px; /* 进一步减少内边距 */
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    border: 1px solid #f1f5f9;
+    min-height: 48px; /* 减小最小高度 */
+    height: auto;
+    /* 添加缩放支持 */
+    transform-origin: center;
+}
+
+.stat-card:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+}
+
+.stat-icon {
+    width: 32px; /* 减小图标尺寸 */
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px; /* 减少右边距 */
+    font-size: 12px; /* 减小图标大小 */
+    color: white;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.stat-icon.students { background: linear-gradient(135deg, #3498db, #2980b9); }
+.stat-icon.assignments { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.stat-icon.quizzes { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+.stat-icon.completion { background: linear-gradient(135deg, #f39c12, #e67e22); }
+
+.stat-info h3 {
+    margin: 0;
+    font-size: 14px; /* 减小字体大小 */
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.2;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.stat-info p {
+    margin: 2px 0 0;
+    color: #7f8c8d;
+    font-size: 10px; /* 减小字体大小 */
+    line-height: 1.2;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* 单元进度部分样式 - 提高高度占比并添加弹性缩放 */
+.module-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    margin-top: 8px; /* 减少顶部边距 */
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    resize: vertical;
+    min-height: 180px;
+}
+
+.section-header-with-dropdown {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px; /* 减少底部边距 */
+    padding-bottom: 6px; /* 减少内边距 */
+    border-bottom: 1px solid #ecf0f1;
+    flex-shrink: 0; /* 防止被压缩 */
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.section-subtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.module-dropdown-container {
+    position: relative;
+}
+
+.module-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px; /* 减小内边距 */
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.module-dropdown-btn:hover {
+    background: #e9ecef;
+    border-color: #3498db;
+}
+
+.module-dropdown-btn i {
+    font-size: 10px;
+    color: #7f8c8d;
+    transition: transform 0.3s;
+}
+
+.module-dropdown-btn.active i {
+    transform: rotate(180deg);
+}
+
+.module-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: none;
+    min-width: 90px;
+}
+
+.module-dropdown.show {
+    display: block;
+}
+
+/* 确保进度列表始终可滚动并支持缩放 */
+.progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 减少间距 */
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 4px;
+    min-height: 220px; /* 增加最小高度 */
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    resize: vertical;
+}
+
+/* 添加最小高度，确保即使内容少也有滚动区域 */
+.progress-list:has(.empty-state) {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.module-progress-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px; /* 减小内边距 */
+    background: #ffffff;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    min-height: 56px; /* 减小最小高度 */
+    /* 添加缩放支持 */
+    transform-origin: top;
+}
+
+.module-progress-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.12);
+    transform: scale(1.01);
+}
+
+.module-progress-item.completed {
+    border-left-color: #2ecc71;
+}
+
+.module-progress-item.in-progress {
+    border-left-color: #f39c12;
+}
+
+.module-progress-item.locked {
+    border-left-color: #95a5a6;
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.module-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.module-status {
+    font-size: 10px;
+    padding: 3px 6px; /* 减小内边距 */
+    border-radius: 8px;
+    font-weight: 500;
+    margin-left: 6px;
+    flex-shrink: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.status-completed {
+    background: #d5f4e6;
+    color: #27ae60;
+}
+
+.status-in-progress {
+    background: #fdebd0;
+    color: #f39c12;
+}
+
+.status-locked {
+    background: #ecf0f1;
+    color: #7f8c8d;
+}
+
+.progress-bar-container {
+    height: 5px; /* 减小高度 */
+    background: #ecf0f1;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 3px 0; /* 减少边距 */
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px; /* 减小字体 */
+    color: #7f8c8d;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* 卡片样式调整 - 添加弹性缩放 */
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f1f5f9;
+    height: 100%;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+/* 调整学生区域高度 - 添加弹性 */
+.students-section {
+    min-height: 180px;
+    height: 180px;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.activities-section {
+    min-height: 280px;
+    flex: 1;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* 卡片头部样式调整 */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px; /* 减小内边距 */
+    border-bottom: 1px solid #ecf0f1;
+    background: linear-gradient(to right, #f8f9fa, #ffffff);
+    flex-shrink: 0;
+    min-height: 48px; /* 减小最小高度 */
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.card-header i {
+    color: #3498db;
+    font-size: 16px;
+}
+
+/* 头部控制区域 */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 减少间距 */
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.card-badge {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border-radius: 12px;
+    padding: 3px 8px; /* 减小内边距 */
+    font-size: 11px; /* 减小字体 */
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* 下拉框容器样式 */
+.student-dropdown-container,
+.activity-dropdown-container {
+    position: relative;
+}
+
+.student-dropdown-btn,
+.activity-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px; /* 减小内边距 */
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 11px; /* 减小字体 */
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.student-dropdown-btn:hover,
+.activity-dropdown-btn:hover {
+    background: #e9ecef;
+    border-color: #3498db;
+}
+
+.student-dropdown-btn i,
+.activity-dropdown-btn i {
+    font-size: 9px; /* 减小图标 */
+    color: #7f8c8d;
+    transition: transform 0.3s;
+}
+
+.student-dropdown-btn.active i,
+.activity-dropdown-btn.active i {
+    transform: rotate(180deg);
+}
+
+.student-dropdown,
+.activity-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: none;
+    min-width: 110px; /* 调整宽度 */
+}
+
+.student-dropdown.show,
+.activity-dropdown.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 7px 10px; /* 减小内边距 */
+    font-size: 11px; /* 减小字体 */
+    color: #2c3e50;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.dropdown-item.active {
+    background: #e8f4fd;
+    color: #3498db;
+    font-weight: 500;
+}
+
+.card-content {
+    padding: 16px 20px; /* 调整内边距 */
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* 需要关注的学生样式调整 */
+.scrollable-content {
+    overflow-y: auto;
+    height: 100%;
+    min-height: 0;
+    padding: 2px 0; /* 添加微小内边距 */
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.student-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 减少间距 */
+    height: 100%;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    padding: 10px; /* 减小内边距 */
+    border-radius: 8px;
+    background: linear-gradient(to right, #f8f9fa, #ffffff);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s;
+    min-height: 52px; /* 减小最小高度 */
+    /* 添加缩放支持 */
+    transform-origin: top;
+}
+
+.student-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.1);
+    transform: translateX(1px) scale(1.01);
+}
+
+.student-avatar {
+    width: 32px; /* 减小尺寸 */
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 10px; /* 减少边距 */
+    font-size: 12px; /* 减小字体 */
+    flex-shrink: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.student-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.student-info h3 {
+    margin: 0 0 2px;
+    font-size: 13px;
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.student-info p {
+    margin: 0;
+    font-size: 11px;
+    color: #7f8c8d;
+    line-height: 1.2;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.student-score {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 5px 8px; /* 减小内边距 */
+    border-radius: 5px;
+    font-size: 11px; /* 减小字体 */
+    font-weight: 600;
+    flex-shrink: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* AI助手卡片特殊样式 */
+.ai-assistant-card {
+    height: 100%;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.ai-assistant-card .card-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.ai-assistant-description {
+    padding: 16px 20px 12px 20px; /* 调整内边距 */
+    text-align: center;
+    color: #5a6c7d;
+    font-size: 14px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.ai-assistant-iframe-container {
+    padding: 16px; /* 调整内边距 */
+    flex: 1;
+    min-height: 400px;
+    height: 100%;
+    min-width: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.ai-assistant-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background: white;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* 活动标签页样式调整 */
+.activities-tabs {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.tab-buttons {
+    display: flex;
+    border-bottom: 1px solid #ecf0f1;
+    margin-bottom: 12px; /* 减少边距 */
+    flex-shrink: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.tab-button {
+    padding: 8px 16px; /* 减小内边距 */
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 13px; /* 减小字体 */
+    color: #7f8c8d;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.tab-button.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+    font-weight: 600;
+}
+
+.tab-button:hover:not(.active) {
+    color: #3498db;
+    background: #f8f9fa;
+}
+
+.tab-content {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+    resize: vertical;
+    min-height: 150px;
+}
+
+.tab-pane {
+    display: none;
+    height: 100%;
+    overflow-y: auto;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 减少间距 */
+    height: 100%;
+    min-height: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* 活动项样式调整 */
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 14px; /* 减小内边距 */
+    border-radius: 8px;
+    background: #ffffff;
+    transition: all 0.3s;
+    border-left: 4px solid #3498db;
+    border: 1px solid #e9ecef;
+    min-height: 80px; /* 减小最小高度 */
+    /* 添加缩放支持 */
+    transform-origin: top;
+}
+
+.activity-item:hover {
+    background: #f8fafc;
+    border-color: #3498db;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.1);
+    transform: scale(1.01);
+}
+
+.activity-item.quiz {
+    border-left-color: #9b59b6;
+}
+
+.activity-item.expired {
+    border-left-color: #e74c3c;
+}
+
+.activity-item.upcoming {
+    border-left-color: #f39c12;
+}
+
+.activity-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* 减少间距 */
+    min-width: 0;
+}
+
+.activity-info h3 {
+    margin: 0;
+    font-size: 13px; /* 减小字体 */
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.activity-info p {
+    margin: 0;
+    font-size: 11px; /* 减小字体 */
+    color: #7f8c8d;
+    line-height: 1.3;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.activity-meta {
+    display: flex;
+    gap: 6px; /* 减少间距 */
+    font-size: 10px; /* 减小字体 */
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 3px;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.submission-count {
+    color: #7f8c8d;
+    background: #f1f5f9;
+    padding: 2px 5px; /* 减小内边距 */
+    border-radius: 3px;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.status {
+    padding: 2px 6px; /* 减小内边距 */
+    border-radius: 3px;
+    font-size: 9px; /* 减小字体 */
+    font-weight: 600;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-completed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-upcoming {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.unsubmitted-list {
+    margin-top: 8px; /* 减小边距 */
+    padding-top: 8px;
+    border-top: 1px dashed #e0e0e0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.unsubmitted-title {
+    font-size: 10px; /* 减小字体 */
+    color: #e74c3c;
+    font-weight: 500;
+    margin-bottom: 3px;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.unsubmitted-names {
+    font-size: 9px; /* 减小字体 */
+    color: #7f8c8d;
+    line-height: 1.3;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+/* 加载状态 */
+.loading {
+    text-align: center;
+    padding: 30px 20px; /* 减小内边距 */
+    color: #7f8c8d;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 160px; /* 减小最小高度 */
+}
+
+.loading-spinner {
+    width: 24px; /* 减小尺寸 */
+    height: 24px;
+    border: 2px solid #f1f5f9;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px; /* 减小边距 */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 30px 20px; /* 减小内边距 */
+    color: #95a5a6;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px; /* 减小最小高度 */
+}
+
+.empty-state i {
+    font-size: 32px; /* 减小尺寸 */
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 13px; /* 减小字体 */
+    margin: 0;
+}
+
+/* 响应式设计 - 修改为整体等比缩放 */
+@media (max-width: 1400px) {
+    .main-grid {
+        gap: 16px;
+        transform: scale(0.95);
+        transform-origin: top center;
+    }
+    
+    .course-selector-container {
+        min-width: 280px;
+    }
+    
+    .page-header h1 {
+        font-size: 22px;
+    }
+    
+    .page-header p {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .course-selector-container {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .main-grid {
+        transform: scale(0.9);
+        transform-origin: top center;
+        gap: 14px;
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .card-header h2 {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 992px) {
+    /* 在较小屏幕上改为垂直布局，整体缩小 */
+    .main-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        height: auto;
+        min-height: auto;
+        max-height: none;
+        gap: 20px;
+        transform: scale(0.85);
+        transform-origin: top center;
+    }
+    
+    .left-main-content {
+        grid-template-rows: auto 160px auto;
+        max-height: none;
+        height: auto;
+        gap: 16px;
+    }
+    
+    .right-ai-assistant {
+        height: 500px;
+        min-height: 500px;
+    }
+    
+    .no-course-warning {
+        height: calc(100vh - 120px);
+        padding: 30px 20px;
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .progress-list {
+        min-height: 180px;
+    }
+    
+    .students-section {
+        min-height: 160px;
+        height: 160px;
+    }
+    
+    .activities-section {
+        min-height: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-grid {
+        transform: scale(0.8);
+        transform-origin: top center;
+        gap: 12px;
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .header-controls {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+    
+    .card-header {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+    
+    .card-header h2 {
+        flex: 1;
+        min-width: 100%;
+        font-size: 14px;
+    }
+    
+    .section-header-with-dropdown {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .module-dropdown-container {
+        align-self: flex-end;
+    }
+    
+    .warning-content h2 {
+        font-size: 20px;
+    }
+    
+    .warning-content p {
+        font-size: 14px;
+    }
+    
+    .students-section {
+        height: auto;
+        min-height: 150px;
+    }
+    
+    .progress-list {
+        min-height: 150px;
+    }
+    
+    .ai-assistant-iframe-container {
+        min-height: 350px;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-grid {
+        transform: scale(0.75);
+        transform-origin: top center;
+        gap: 10px;
+    }
+    
+    .header-top {
+        margin-bottom: 15px;
+    }
+    
+    .page-header h1 {
+        font-size: 20px;
+    }
+    
+    .page-header p {
+        font-size: 13px;
+    }
+    
+    .dashboard-card {
+        border-radius: 10px;
+    }
+    
+    .no-course-warning {
+        height: calc(100vh - 100px);
+        margin: 10px;
+        padding: 20px;
+    }
+    
+    .left-main-content {
+        gap: 12px;
+    }
+    
+    .card-content {
+        padding: 14px 16px;
+    }
+    
+    .progress-list {
+        min-height: 120px;
+    }
+    
+    .overview-stats.compact {
+        grid-template-columns: 1fr;
+    }
+    
+    .ai-assistant-iframe-container {
+        min-height: 300px;
+        padding: 12px;
+    }
+}
+
+/* 高缩放比例下的优化 */
+@media (min-resolution: 144dpi) {
+    .dashboard-card {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    .stat-card {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+}
+
+/* 滚动条样式优化 */
+.scrollable-combined::-webkit-scrollbar,
+.scrollable-content::-webkit-scrollbar,
+.tab-pane::-webkit-scrollbar,
+.progress-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollable-combined::-webkit-scrollbar-track,
+.scrollable-content::-webkit-scrollbar-track,
+.tab-pane::-webkit-scrollbar-track,
+.progress-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.scrollable-combined::-webkit-scrollbar-thumb,
+.scrollable-content::-webkit-scrollbar-thumb,
+.tab-pane::-webkit-scrollbar-thumb,
+.progress-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.scrollable-combined::-webkit-scrollbar-thumb:hover,
+.scrollable-content::-webkit-scrollbar-thumb:hover,
+.tab-pane::-webkit-scrollbar-thumb:hover,
+.progress-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* 确保所有容器正确填充高度 */
+.dashboard-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.main-content {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.page-header {
+    flex-shrink: 0;
+    /* 添加缩放支持 */
+    transition: all 0.3s ease;
+}
+
+.main-grid {
+    flex: 1;
+    min-height: 0;
+}
+
+/* 修复模块进度滚动问题 */
+.combined-section {
+    position: relative;
+}
+
+.module-section {
+    position: relative;
+    flex: 1;
+}
+
+.progress-list {
+    position: relative;
+}
+
+/* 页面缩放动画 */
+.scale-down {
+    animation: scaleDown 0.3s ease forwards;
+}
+
+@keyframes scaleDown {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(0.95);
+    }
+}
+
+.scale-up {
+    animation: scaleUp 0.3s ease forwards;
+}
+
+@keyframes scaleUp {
+    from {
+        transform: scale(0.95);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/* 添加页面缩放提示 */
+.scale-hint {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #3498db;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.scale-hint.show {
+    opacity: 1;
+}
+</style>
+
+<script>
+// 定义固定链接和用户名（从模板传递）
+const FIXED_AI_ASSISTANT_URL = "http://180.85.206.30:3000/chat/share?shareId=eXdNT9oSlB5U6MDNrYCCFK0T";
+const CURRENT_USERNAME = "{{ username }}";
+
+// 全局变量
+let currentCourseData = null;
+let mockData = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化AI助手链接
+    initializeAIAssistant();
+    
+    // 初始化事件监听器
+    initEventListeners();
+    
+    // 从后端加载课程数据
+    loadCourseData();
+});
+
+// 从后端加载课程数据
+async function loadCourseData() {
+    try {
+        showLoading(true);
+        
+        const response = await fetch('/dashboard/study_situation/comprehensive/overview');
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('加载课程数据失败:', data.error);
+            showNoCoursesWarning();
+            return;
+        }
+        
+        // 存储课程数据
+        currentCourseData = data;
+        
+        // 检查是否有课程
+        const courses = data.course_info?.user_course || [];
+        if (courses.length === 0) {
+            showNoCoursesWarning();
+            return;
+        }
+        
+        // 有课程，显示课程页面
+        toggleNoCourseWarning(false);
+        
+        // 更新课程选择器
+        updateCourseSelector(data.course_info);
+        
+        // 生成假数据并更新仪表板
+        generateMockData(data);
+        updateDashboardData(mockData);
+        
+        showLoading(false);
+        
+    } catch (error) {
+        console.error('加载课程数据失败:', error);
+        showNoCoursesWarning();
+    }
+}
+
+// 显示无课程警告
+function showNoCoursesWarning() {
+    toggleNoCourseWarning(true);
+    showLoading(false);
+}
+
+// 显示/隐藏无课程提示
+function toggleNoCourseWarning(show) {
+    const noCourseWarning = document.getElementById('noCourseWarning');
+    const coursePageContent = document.getElementById('coursePageContent');
+    
+    if (show) {
+        noCourseWarning.style.display = 'flex';
+        coursePageContent.style.display = 'none';
+    } else {
+        noCourseWarning.style.display = 'none';
+        coursePageContent.style.display = 'block';
+    }
+}
+
+// 根据真实数据生成假数据 - 完善所有数据
+function generateMockData(realData) {
+    const courseInfo = realData.course_info || {};
+    const courseOverview = realData.course_overview || {};
+    const assignmentAnalysis = realData.assignment_analysis || {};
+    const quizAnalysis = realData.quiz_analysis || {};
+    const studentPerformance = realData.student_performance || {};
+    const moduleAnalysis = realData.module_analysis || {};
+    
+    // 学生姓名生成器
+    const studentNames = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十', 
+                         '郑十一', '王十二', '李十三', '张十四', '刘十五', '陈十六', '杨十七', '黄十八'];
+    
+    // 生成需要关注的学生数据
+    const needAttentionStudents = [];
+    const needAttentionCount = 8; // 固定生成8个需要关注的学生
+    
+    for (let i = 0; i < needAttentionCount; i++) {
+        const score = Math.floor(Math.random() * 30) + 30; // 30-60分
+        needAttentionStudents.push({
+            name: studentNames[i % studentNames.length],
+            student_id: `202301${String(i+1).padStart(3, '0')}`,
+            average_score: score,
+            score: score
+        });
+    }
+    
+    // 生成模块进度数据
+    const moduleProgress = [];
+    const totalModules = 9; // 固定9个模块
+    
+    for (let i = 0; i < totalModules; i++) {
+        let state, completionRate;
+        
+        if (i < 2) {
+            state = 'completed';
+            completionRate = 100;
+        } else if (i < 5) {
+            state = 'in-progress';
+            completionRate = Math.floor(Math.random() * 50) + 10; // 10-60%
+        } else {
+            state = 'locked';
+            completionRate = 0;
+        }
+        
+        moduleProgress.push({
+            id: `M${String(i+1).padStart(3, '0')}`,
+            module_name: `第${i+1}章：课程内容模块${i+1}`,
+            items_count: Math.floor(Math.random() * 15) + 8, // 8-23个项目
+            completion_rate: completionRate,
+            state: state
+        });
+    }
+    
+    // 生成作业数据
+    const assignments = [];
+    const assignmentCount = 6; // 生成6个作业
+    
+    const assignmentNames = [
+        '编程基础练习',
+        '数据结构作业',
+        '算法设计实践',
+        '数据库系统项目',
+        '网络编程实验',
+        '软件工程报告'
+    ];
+    
+    for (let i = 0; i < assignmentCount; i++) {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + (i * 7)); // 每周一个作业
+        const isExpired = i < 2; // 前两个作业已过期
+        const submissionRate = Math.floor(Math.random() * 30) + 70; // 70-100%
+        const unsubmittedCount = Math.floor(Math.random() * 5) + 1; // 1-5人未提交
+        
+        assignments.push({
+            id: `A${String(i+1).padStart(3, '0')}`,
+            name: assignmentNames[i % assignmentNames.length],
+            due_at: dueDate.toISOString(),
+            points_possible: 100,
+            submission_analysis: {
+                total_students: 42,
+                not_submitted_count: isExpired ? unsubmittedCount : 0,
+                submission_rate: submissionRate,
+                has_ungraded_submissions: i < 4, // 前4个作业有待评分
+                submitted_count: 42 - unsubmittedCount
+            }
+        });
+    }
+    
+    // 生成测验数据
+    const quizzes = [];
+    const quizCount = 4; // 生成4个测验
+    
+    const quizNames = [
+        '期中测验：算法与数据结构',
+        '网络基础知识测试',
+        '数据库系统小测',
+        '期末综合测验'
+    ];
+    
+    for (let i = 0; i < quizCount; i++) {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + (i * 14)); // 每两周一个测验
+        const avgScore = Math.floor(Math.random() * 30) + 60; // 60-90分
+        
+        quizzes.push({
+            id: `Q${String(i+1).padStart(3, '0')}`,
+            quiz_title: quizNames[i % quizNames.length],
+            due_at: dueDate.toISOString(),
+            points_possible: 100,
+            submission_analysis: {
+                average_score: avgScore,
+                max_score: avgScore + 10,
+                min_score: avgScore - 20
+            },
+            quiz_reports_available: i > 0 // 除第一个外都有报告
+        });
+    }
+    
+    // 创建完整的假数据
+    mockData = {
+        course_info: courseInfo,
+        course_overview: {
+            total_students: 42,
+            total_assignments: assignmentCount,
+            total_quizzes: quizCount,
+            active_students: 38
+        },
+        assignment_analysis: {
+            total_assignments: assignmentCount,
+            published_assignments: assignmentCount,
+            graded_assignments: 2, // 2个已评分
+            submission_stats: {
+                total_submitted: 240,
+                total_graded: 120,
+                average_submission_rate: 85.7
+            },
+            assignment_categories: {
+                individual: assignments,
+                group: [],
+                late_submissions: 3,
+                upcoming_deadlines: assignments.slice(2, 4) // 第3、4个作业即将截止
+            },
+            ungraded_analysis: {
+                total_ungraded_submissions: 120,
+                assignments_with_ungraded: assignments.slice(0, 4),
+                count_assignments_with_ungraded: 4
+            }
+        },
+        quiz_analysis: {
+            total_quizzes: quizCount,
+            published_quizzes: quizCount,
+            quiz_types: {
+                practice_quiz: 2,
+                graded_survey: 1,
+                assignment: 1
+            },
+            quiz_analysis: quizzes,
+            completion_stats: {
+                completed_quizzes: 2,
+                incomplete_quizzes: 1,
+                expired_quizzes: 1,
+                not_started_quizzes: 0
+            },
+            score_analysis: {
+                average_score_all_quizzes: 78.5,
+                highest_score: 95,
+                lowest_score: 55,
+                score_distribution: {"A": 1, "B": 2, "C": 1, "D": 0, "F": 0}
+            }
+        },
+        student_performance: {
+            need_attention: needAttentionStudents,
+            score_distribution: {"A": 10, "B": 15, "C": 12, "D": 3, "F": 2},
+            average_score: 78.5,
+            submission_rate: 92.3,
+            top_performers: [
+                {
+                    name: '优秀学生1',
+                    student_id: '202301050',
+                    score: 96
+                },
+                {
+                    name: '优秀学生2',
+                    student_id: '202301012',
+                    score: 94
+                }
+            ]
+        },
+        module_analysis: {
+            total_modules: totalModules,
+            published_modules: 5,
+            locked_modules: 4,
+            completed_modules: 2,
+            in_progress_modules: 3,
+            total_items: 128,
+            module_progress: moduleProgress,
+            average_completion_rate: 45.6
+        }
+    };
+}
+
+// 初始化AI助手链接
+function initializeAIAssistant() {
+    const iframe = document.getElementById('aiAssistantIframe');
+    const descElement = document.getElementById('ai-assistant-desc');
+    
+    if (!iframe) return;
+    
+    // 构建完整的URL，添加用户名参数
+    let fullUrl = FIXED_AI_ASSISTANT_URL;
+    if (CURRENT_USERNAME) {
+        fullUrl += `&studentUid=${encodeURIComponent(CURRENT_USERNAME)}`;
+    }
+    
+    // 更新iframe的src
+    iframe.src = fullUrl;
+}
+
+// 初始化事件监听器
+function initEventListeners() {
+    // 初始化课程选择器
+    initCourseSelector();
+    
+    // 初始化标签页事件
+    initTabEvents();
+    
+    // 初始化各个模块的下拉框
+    initModuleDropdown();
+    initStudentDropdown();
+    initActivityDropdown();
+    
+    // 窗口大小变化时整体缩放
+    window.addEventListener('resize', handleResizeWithScaling);
+    
+}
+
+// 窗口大小变化处理 - 整体缩放
+let resizeTimer;
+function handleResizeWithScaling() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        const mainGrid = document.querySelector('.main-grid');
+        const windowWidth = window.innerWidth;
+        
+        // 根据窗口宽度调整缩放比例
+        let scale = 1;
+        if (windowWidth <= 1400 && windowWidth > 1200) {
+            scale = 0.95;
+        } else if (windowWidth <= 1200 && windowWidth > 992) {
+            scale = 0.9;
+        } else if (windowWidth <= 992 && windowWidth > 768) {
+            scale = 0.85;
+        } else if (windowWidth <= 768 && windowWidth > 576) {
+            scale = 0.8;
+        } else if (windowWidth <= 576) {
+            scale = 0.75;
+        }
+        
+        // 应用缩放
+        mainGrid.style.transform = `scale(${scale})`;
+        mainGrid.style.transformOrigin = 'top center';
+        
+        // 显示缩放提示
+        showScaleHint(scale);
+    }, 150);
+}
+
+// 显示缩放提示
+function showScaleHint(scale) {
+    const hint = document.createElement('div');
+    hint.className = 'scale-hint';
+    hint.textContent = `页面已缩放至 ${Math.round(scale * 100)}%`;
+    hint.id = 'scaleHint';
+    
+    // 移除旧的提示
+    const oldHint = document.getElementById('scaleHint');
+    if (oldHint) {
+        oldHint.remove();
+    }
+    
+    document.body.appendChild(hint);
+    
+    // 显示提示
+    setTimeout(() => {
+        hint.classList.add('show');
+    }, 10);
+    
+    // 2秒后隐藏提示
+    setTimeout(() => {
+        hint.classList.remove('show');
+        setTimeout(() => {
+            if (hint.parentNode) {
+                hint.remove();
+            }
+        }, 300);
+    }, 2000);
+}
+
+
+// 初始化单元模块下拉框
+function initModuleDropdown() {
+    const moduleDropdownBtn = document.getElementById('moduleDropdownBtn');
+    const moduleDropdown = document.getElementById('moduleDropdown');
+    
+    if (!moduleDropdownBtn || !moduleDropdown) return;
+    
+    // 切换下拉框显示/隐藏
+    moduleDropdownBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        moduleDropdown.classList.toggle('show');
+        moduleDropdownBtn.classList.toggle('active');
+    });
+    
+    // 点击页面其他区域关闭下拉框
+    document.addEventListener('click', function(e) {
+        if (!moduleDropdownBtn.contains(e.target) && !moduleDropdown.contains(e.target)) {
+            moduleDropdown.classList.remove('show');
+            moduleDropdownBtn.classList.remove('active');
+        }
+    });
+    
+    // 下拉项选择
+    moduleDropdown.addEventListener('click', function(e) {
+        const dropdownItem = e.target.closest('.dropdown-item');
+        if (dropdownItem) {
+            const filter = dropdownItem.dataset.filter;
+            const modeText = dropdownItem.textContent;
+            
+            // 更新显示文本
+            document.getElementById('moduleViewMode').textContent = modeText;
+            
+            // 更新选中状态
+            moduleDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            dropdownItem.classList.add('active');
+            
+            // 关闭下拉框
+            moduleDropdown.classList.remove('show');
+            moduleDropdownBtn.classList.remove('active');
+            
+            // 根据筛选条件过滤模块数据
+            filterModuleProgress(filter);
+        }
+    });
+}
+
+// 初始化学生模块下拉框
+function initStudentDropdown() {
+    const studentDropdownBtn = document.getElementById('studentDropdownBtn');
+    const studentDropdown = document.getElementById('studentDropdown');
+    
+    if (!studentDropdownBtn || !studentDropdown) return;
+    
+    // 切换下拉框显示/隐藏
+    studentDropdownBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        studentDropdown.classList.toggle('show');
+        studentDropdownBtn.classList.toggle('active');
+    });
+    
+    // 点击页面其他区域关闭下拉框
+    document.addEventListener('click', function(e) {
+        if (!studentDropdownBtn.contains(e.target) && !studentDropdown.contains(e.target)) {
+            studentDropdown.classList.remove('show');
+            studentDropdownBtn.classList.remove('active');
+        }
+    });
+    
+    // 下拉项选择
+    studentDropdown.addEventListener('click', function(e) {
+        const dropdownItem = e.target.closest('.dropdown-item');
+        if (dropdownItem) {
+            const sortMode = dropdownItem.dataset.sort;
+            const modeText = dropdownItem.textContent;
+            
+            // 更新显示文本
+            document.getElementById('studentSortMode').textContent = modeText;
+            
+            // 更新选中状态
+            studentDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            dropdownItem.classList.add('active');
+            
+            // 关闭下拉框
+            studentDropdown.classList.remove('show');
+            studentDropdownBtn.classList.remove('active');
+            
+            // 根据排序条件重新排序学生数据
+            sortStudents(sortMode);
+        }
+    });
+}
+
+// 初始化活动模块下拉框
+function initActivityDropdown() {
+    const activityDropdownBtn = document.getElementById('activityDropdownBtn');
+    const activityDropdown = document.getElementById('activityDropdown');
+    
+    if (!activityDropdownBtn || !activityDropdown) return;
+    
+    // 切换下拉框显示/隐藏
+    activityDropdownBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        activityDropdown.classList.toggle('show');
+        activityDropdownBtn.classList.toggle('active');
+    });
+    
+    // 点击页面其他区域关闭下拉框
+    document.addEventListener('click', function(e) {
+        if (!activityDropdownBtn.contains(e.target) && !activityDropdown.contains(e.target)) {
+            activityDropdown.classList.remove('show');
+            activityDropdownBtn.classList.remove('active');
+        }
+    });
+    
+    // 下拉项选择
+    activityDropdown.addEventListener('click', function(e) {
+        const dropdownItem = e.target.closest('.dropdown-item');
+        if (dropdownItem) {
+            const sortMode = dropdownItem.dataset.sort;
+            const modeText = dropdownItem.textContent;
+            
+            // 更新显示文本
+            document.getElementById('activitySortMode').textContent = modeText;
+            
+            // 更新选中状态
+            activityDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            dropdownItem.classList.add('active');
+            
+            // 关闭下拉框
+            activityDropdown.classList.remove('show');
+            activityDropdownBtn.classList.remove('active');
+            
+            // 根据排序条件重新排序活动数据
+            sortActivities(sortMode);
+        }
+    });
+}
+
+// 初始化课程选择器
+function initCourseSelector() {
+    const courseSelectorBtn = document.getElementById('courseSelectorBtn');
+    const courseDropdown = document.getElementById('courseDropdown');
+    
+    if (!courseSelectorBtn || !courseDropdown) return;
+    
+    // 如果已经初始化过事件监听器，直接返回
+    if (courseSelectorBtn.dataset.initialized === 'true') return;
+    
+    // 标记为已初始化
+    courseSelectorBtn.dataset.initialized = 'true';
+    
+    // 切换下拉框显示/隐藏
+    courseSelectorBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        courseDropdown.classList.toggle('show');
+        courseSelectorBtn.classList.toggle('active');
+    });
+    
+    // 点击页面其他区域关闭下拉框
+    document.addEventListener('click', function(e) {
+        if (!courseSelectorBtn.contains(e.target) && !courseDropdown.contains(e.target)) {
+            courseDropdown.classList.remove('show');
+            courseSelectorBtn.classList.remove('active');
+        }
+    });
+    
+    // 课程选择事件监听器（修改后）
+courseDropdown.addEventListener('click', function(e) {
+    const courseItem = e.target.closest('.course-item');
+    if (courseItem) {
+        const courseId = courseItem.dataset.courseId;
+        const courseName = courseItem.dataset.courseName;
+        const sisCourseId = courseItem.dataset.sisCourseId || '';
+        const enrollmentTermId = courseItem.dataset.enrollmentTermId || '';
+        const workflowState = courseItem.dataset.workflowState || '';
+        
+        // 更新选中状态
+        document.querySelectorAll('.course-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        courseItem.classList.add('active');
+        
+        // 更新显示
+        document.getElementById('selectedCourseName').textContent = courseName;
+        
+        // 关闭下拉框
+        courseDropdown.classList.remove('show');
+        courseSelectorBtn.classList.remove('active');
+        
+        // 显示加载状态
+        showLoading(true);
+        
+        // 先更新当前课程，然后重新加载数据
+        updateCurrentCourse(courseId, courseName, sisCourseId, enrollmentTermId, workflowState)
+            .then((success) => {
+                if (success) {
+                    console.log(`当前课程已切换为: ${courseName} (${courseId})`);
+                    // 重新初始化AI助手
+                    initializeAIAssistant();
+                    // 显示成功提示
+                    showSuccess(`已切换到课程: ${courseName}`);
+                }
+                // 无论成功与否，都继续加载数据
+                return loadCourseDataByCourseId(courseId);
+            })
+            .catch(error => {
+                console.error('更新当前课程失败:', error);
+                // 即使更新失败，仍然继续加载数据
+                return loadCourseDataByCourseId(courseId);
+            })
+            .finally(() => {
+                showLoading(false);
+            });
+    }
+});
+}
+
+// 根据课程ID加载数据
+async function loadCourseDataByCourseId(courseId) {
+    try {
+        showLoading(true);
+        
+        const response = await fetch(`/dashboard/study_situation/comprehensive/overview?course_id=${courseId}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('加载课程数据失败:', data.error);
+            return;
+        }
+        
+        // 存储课程数据
+        currentCourseData = data;
+        
+        // 生成假数据并更新仪表板
+        generateMockData(data);
+        updateDashboardData(mockData);
+        
+        showLoading(false);
+        
+    } catch (error) {
+        console.error('加载课程数据失败:', error);
+        showError('加载数据失败，请重试');
+        showLoading(false);
+    }
+}
+
+//更新当前选中的课程
+async function updateCurrentCourse(courseId, courseName, sisCourseId = '', enrollmentTermId = '', workflowState = '') {
+    try {
+        const response = await fetch('/dashboard/study_situation/update_current_course', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                course_id: courseId,
+                course_name: courseName,
+                sis_course_id: sisCourseId,
+                enrollment_term_id: enrollmentTermId,
+                workflow_state: workflowState
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            console.warn('更新当前课程时出错:', data.error);
+            return false;
+        }
+        
+        console.log('当前课程已更新:', data);
+        return true;
+        
+    } catch (error) {
+        console.error('更新当前课程失败:', error);
+        return false;
+    }
+}
+// 初始化标签页事件
+function initTabEvents() {
+    document.querySelectorAll('.tab-buttons').forEach(tabButtons => {
+        // 如果已经初始化过事件监听器，直接返回
+        if (tabButtons.dataset.initialized === 'true') return;
+        
+        // 标记为已初始化
+        tabButtons.dataset.initialized = 'true';
+        
+        tabButtons.addEventListener('click', function(e) {
+            const tabButton = e.target.closest('.tab-button');
+            if (!tabButton) return;
+            
+            const tabName = tabButton.getAttribute('data-tab');
+            const tabsContainer = tabButtons.closest('[class*="-tabs"]');
+            
+            if (!tabsContainer) return;
+            
+            // 更新当前标签页组内的按钮状态
+            tabButtons.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            tabButton.classList.add('active');
+            
+            // 更新当前标签页组内的内容显示
+            const tabContent = tabsContainer.querySelector('.tab-content');
+            if (!tabContent) return;
+            
+            tabContent.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+            
+            // 根据tabName找到对应的tab-pane并激活
+            const tabPane = document.getElementById(tabName + '-tab');
+            if (tabPane) {
+                tabPane.classList.add('active');
+            }
+        });
+    });
+}
+
+// 更新课程选择器
+function updateCourseSelector(courseInfo) {
+    const courseList = document.getElementById('courseList');
+    const courses = courseInfo.user_course || [];
+    const currentCourseId = courseInfo.current_course_id;
+    
+    if (courses.length === 0) {
+        courseList.innerHTML = `
+            <div class="course-empty">
+                <i class="fas fa-folder-open"></i>
+                <p>暂无课程信息</p>
+            </div>
+        `;
+        
+        document.getElementById('selectedCourseName').textContent = '选择课程...';
+        return;
+    }
+    
+    // 更新当前选中的课程名称
+    let currentCourseName = '选择课程...';
+    let currentCourseSisId = '';
+    
+    if (currentCourseId) {
+        const currentCourse = courses.find(course => String(course.course_id) === String(currentCourseId));
+        if (currentCourse) {
+            currentCourseName = currentCourse.course_name || currentCourse.name || '未命名课程';
+            currentCourseSisId = currentCourse.sis_course_id || '';
+        }
+    } else if (courses.length > 0) {
+        const firstCourse = courses[0];
+        currentCourseName = firstCourse.course_name || firstCourse.name || '未命名课程';
+        currentCourseSisId = firstCourse.sis_course_id || '';
+    }
+    
+    document.getElementById('selectedCourseName').textContent = currentCourseName;
+    
+    // 生成课程列表
+    courseList.innerHTML = courses.map(course => {
+        const courseId = course.course_id;
+        const courseName = course.course_name || course.name || '未命名课程';
+        const sisCourseId = course.sis_course_id || '';
+        const isActive = String(courseId) === String(currentCourseId);
+        
+        return `
+            <div class="course-item ${isActive ? 'active' : ''}" 
+                 data-course-id="${courseId}" 
+                 data-course-name="${courseName}"
+                 data-sis-course-id="${sisCourseId}">
+                <div class="course-name">${courseName}</div>
+                <div class="course-id">课程ID: ${courseId}</div>
+                ${sisCourseId ? `<div class="course-sis-id">教务编号: ${sisCourseId}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// 更新仪表板数据
+function updateDashboardData(data) {
+    // 更新概览统计
+    updateOverviewStats(data);
+    
+    // 更新需要关注的学生
+    updateStudentsNeedAttention(data);
+    
+    // 更新作业和测验列表
+    updateActivitiesList(data);
+    
+    // 更新单元进度
+    updateModuleProgress(data);
+}
+
+// 更新概览统计 - 使用假数据
+function updateOverviewStats(data) {
+    const overview = data.course_overview || {};
+    
+    // 更新班级总人数
+    document.getElementById('total-students').textContent = 
+        overview.total_students ? overview.total_students : '42';
+    
+    // 更新已发布作业数量
+    document.getElementById('total-assignments').textContent = 
+        data.assignment_analysis?.total_assignments || '6';
+    
+    // 更新测验数量
+    document.getElementById('total-quizzes').textContent = 
+        data.quiz_analysis?.total_quizzes || '4';
+    
+    // 更新平均提交率
+    const avgRate = data.assignment_analysis?.submission_stats?.average_submission_rate || 85.7;
+    document.getElementById('avg-submission-rate').textContent = avgRate > 0 ? avgRate.toFixed(1) + '%' : '85.7%';
+}
+
+// 更新需要关注的学生
+function updateStudentsNeedAttention(data) {
+    const container = document.getElementById('students-need-attention');
+    
+    const students = data.student_performance?.need_attention || [];
+    
+    document.getElementById('attention-count').textContent = students.length;
+    
+    if (students.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-check"></i>
+                <p>暂无需要特别关注的学生</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 按成绩排序（默认）
+    const sortedStudents = [...students].sort((a, b) => (a.average_score || 0) - (b.average_score || 0));
+    
+    container.innerHTML = sortedStudents.map(student => {
+        const name = student.name || student.student_name || '未知学生';
+        const id = student.student_id || student.sis_user_id || '--';
+        const score = student.average_score || student.score || 0;
+        
+        return `
+            <div class="student-item">
+                <div class="student-avatar">
+                    <span>${name[0] || '?'}</span>
+                </div>
+                <div class="student-info">
+                    <h3>${name}</h3>
+                    <p>学号: ${id}</p>
+                </div>
+                <div class="student-score">${Math.round(score)}分</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 更新活动列表
+function updateActivitiesList(data) {
+    // 更新总计数
+    const assignments = data.assignment_analysis?.assignment_categories?.individual || [];
+    const groupAssignments = data.assignment_analysis?.assignment_categories?.group || [];
+    const quizzes = data.quiz_analysis?.quiz_analysis || [];
+    const totalCount = assignments.length + groupAssignments.length + quizzes.length;
+    
+    document.getElementById('published-count').textContent = totalCount;
+    
+    // 更新作业和测验列表
+    updateAssignmentsList(data);
+    updateQuizzesList(data);
+}
+
+// 更新作业列表 - 使用假数据
+function updateAssignmentsList(data) {
+    const container = document.getElementById('published-assignments');
+    
+    const assignments = data.assignment_analysis?.assignment_categories?.individual || [];
+    const groupAssignments = data.assignment_analysis?.assignment_categories?.group || [];
+    const allAssignments = [...assignments, ...groupAssignments];
+    
+    if (allAssignments.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>暂无已发布作业</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 按截止时间排序
+    const sortedAssignments = allAssignments.sort((a, b) => {
+        const aDue = a.due_at || a.due_date || '9999-12-31';
+        const bDue = b.due_at || b.due_date || '9999-12-31';
+        const aDate = new Date(aDue);
+        const bDate = new Date(bDue);
+        const now = new Date();
+        
+        if (aDate < now && bDate >= now) return 1;
+        if (aDate >= now && bDate < now) return -1;
+        
+        return aDate - bDate;
+    });
+    
+    container.innerHTML = sortedAssignments.map(assignment => {
+        const analysis = assignment.submission_analysis || {};
+        const dueAt = assignment.due_at || assignment.due_date;
+        const now = new Date();
+        const dueDate = dueAt ? new Date(dueAt) : null;
+        
+        let statusClass = 'upcoming';
+        let statusText = '进行中';
+        
+        if (dueDate && dueDate < now) {
+            statusClass = 'expired';
+            statusText = '已截止';
+        }
+        
+        const unsubmittedCount = analysis.not_submitted_count || 0;
+        const totalStudents = analysis.total_students || 42;
+        const submissionRate = analysis.submission_rate || 85;
+        const points = assignment.points_possible || 100;
+        const assignmentName = assignment.name || assignment.title || '未命名作业';
+        
+        return `
+            <div class="activity-item assignment ${statusClass}">
+                <div class="activity-info">
+                    <h3>${assignmentName}</h3>
+                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
+                    <div class="activity-meta">
+                        <span class="submission-count">
+                            提交率: ${submissionRate.toFixed(1)}%
+                        </span>
+                        <span class="status status-${statusClass}">
+                            ${statusText}
+                        </span>
+                        ${analysis.has_ungraded_submissions ? '<span class="status status-pending">待评分</span>' : ''}
+                    </div>
+                    ${unsubmittedCount > 0 && statusClass === 'expired' ? `
+                        <div class="unsubmitted-list">
+                            <div class="unsubmitted-title">未提交: ${unsubmittedCount}人</div>
+                            <div class="unsubmitted-names">${totalStudents - unsubmittedCount}/${totalStudents} 人已提交</div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 更新测验列表 - 使用假数据
+function updateQuizzesList(data) {
+    const container = document.getElementById('published-quizzes');
+    
+    const quizzes = data.quiz_analysis?.quiz_analysis || [];
+    
+    if (quizzes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-question-circle"></i>
+                <p>暂无已发布测验</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const sortedQuizzes = quizzes.sort((a, b) => {
+        const aDue = a.due_at || a.due_date || '9999-12-31';
+        const bDue = b.due_at || b.due_date || '9999-12-31';
+        const aDate = new Date(aDue);
+        const bDate = new Date(bDue);
+        const now = new Date();
+        
+        if (aDate < now && bDate >= now) return 1;
+        if (aDate >= now && bDate < now) return -1;
+        
+        return aDate - bDate;
+    });
+    
+    container.innerHTML = sortedQuizzes.map(quiz => {
+        const dueAt = quiz.due_at || quiz.due_date;
+        const now = new Date();
+        const dueDate = dueAt ? new Date(dueAt) : null;
+        
+        let statusClass = 'upcoming';
+        let statusText = '进行中';
+        
+        if (dueDate && dueDate < now) {
+            statusClass = 'expired';
+            statusText = '已截止';
+        }
+        
+        const submissionAnalysis = quiz.submission_analysis || {};
+        const avgScore = submissionAnalysis.average_score || 78.5;
+        const points = quiz.points_possible || 100;
+        const title = quiz.quiz_title || quiz.name || '未命名测验';
+        
+        return `
+            <div class="activity-item quiz ${statusClass}">
+                <div class="activity-info">
+                    <h3>${title}</h3>
+                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
+                    <div class="activity-meta">
+                        <span class="submission-count">
+                            平均分: ${avgScore.toFixed(1)}分
+                        </span>
+                        <span class="status status-${statusClass}">
+                            ${statusText}
+                        </span>
+                        ${quiz.quiz_reports_available ? '<span class="status status-completed">有报告</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 更新单元进度
+function updateModuleProgress(data) {
+    const container = document.getElementById('module-progress-list');
+    
+    const modules = data.module_analysis?.module_progress || [];
+    
+    if (modules.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>暂无单元数据</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = modules.map(module => {
+        const completionRate = module.completion_rate || 0;
+        const itemsCount = module.items_count || 0;
+        const moduleName = module.module_name || module.name || '未命名单元';
+        const moduleState = module.state || 'in-progress';
+        
+        let statusClass = 'in-progress';
+        let statusText = '进行中';
+        
+        if (moduleState === 'completed') {
+            statusClass = 'completed';
+            statusText = '已完成';
+        } else if (moduleState === 'locked') {
+            statusClass = 'locked';
+            statusText = '已锁定';
+        }
+        
+        return `
+            <div class="module-progress-item ${statusClass}">
+                <div class="module-header">
+                    <span class="module-name">${moduleName}</span>
+                    <span class="module-status status-${statusClass}">${statusText}</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: ${completionRate}%"></div>
+                </div>
+                <div class="progress-info">
+                    <span>${itemsCount} 个项目</span>
+                    <span>${completionRate}% 完成</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 过滤单元进度
+function filterModuleProgress(filter) {
+    const modules = mockData.module_analysis.module_progress || [];
+    let filteredModules = [...modules];
+    
+    switch(filter) {
+        case 'completed':
+            filteredModules = modules.filter(module => module.state === 'completed');
+            break;
+        case 'in-progress':
+            filteredModules = modules.filter(module => module.state === 'in-progress');
+            break;
+        case 'locked':
+            filteredModules = modules.filter(module => module.state === 'locked');
+            break;
+        default:
+            filteredModules = modules;
+    }
+    
+    const container = document.getElementById('module-progress-list');
+    
+    if (filteredModules.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-filter"></i>
+                <p>没有符合条件的单元</p>
+            </div>
+        `;
+        container.style.minHeight = '200px';
+        return;
+    } else {
+        container.style.minHeight = '';
+    }
+    
+    container.innerHTML = filteredModules.map(module => {
+        const completionRate = module.completion_rate || 0;
+        const itemsCount = module.items_count || 0;
+        const moduleName = module.module_name || module.name || '未命名单元';
+        const moduleState = module.state || 'in-progress';
+        
+        let statusClass = 'in-progress';
+        let statusText = '进行中';
+        
+        if (moduleState === 'completed') {
+            statusClass = 'completed';
+            statusText = '已完成';
+        } else if (moduleState === 'locked') {
+            statusClass = 'locked';
+            statusText = '已锁定';
+        }
+        
+        return `
+            <div class="module-progress-item ${statusClass}">
+                <div class="module-header">
+                    <span class="module-name">${moduleName}</span>
+                    <span class="module-status status-${statusClass}">${statusText}</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: ${completionRate}%"></div>
+                </div>
+                <div class="progress-info">
+                    <span>${itemsCount} 个项目</span>
+                    <span>${completionRate}% 完成</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 排序学生数据
+function sortStudents(sortMode) {
+    const students = [...(mockData.student_performance?.need_attention || [])];
+    let sortedStudents = [...students];
+    
+    switch(sortMode) {
+        case 'id':
+            sortedStudents.sort((a, b) => (a.student_id || '').localeCompare(b.student_id || ''));
+            break;
+        case 'score':
+        default:
+            sortedStudents.sort((a, b) => (a.average_score || 0) - (b.average_score || 0));
+    }
+    
+    const container = document.getElementById('students-need-attention');
+    
+    container.innerHTML = sortedStudents.map(student => {
+        const name = student.name || student.student_name || '未知学生';
+        const id = student.student_id || student.sis_user_id || '--';
+        const score = student.average_score || student.score || 0;
+        
+        return `
+            <div class="student-item">
+                <div class="student-avatar">
+                    <span>${name[0] || '?'}</span>
+                </div>
+                <div class="student-info">
+                    <h3>${name}</h3>
+                    <p>学号: ${id}</p>
+                </div>
+                <div class="student-score">${Math.round(score)}分</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 排序活动数据
+function sortActivities(sortMode) {
+    // 更新两个标签页的内容
+    updateAssignmentsListWithSort(sortMode);
+    updateQuizzesListWithSort(sortMode);
+}
+
+// 按指定排序方式更新作业列表
+function updateAssignmentsListWithSort(sortMode) {
+    const container = document.getElementById('published-assignments');
+    
+    const assignments = mockData.assignment_analysis?.assignment_categories?.individual || [];
+    const groupAssignments = mockData.assignment_analysis?.assignment_categories?.group || [];
+    const allAssignments = [...assignments, ...groupAssignments];
+    
+    if (allAssignments.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>暂无已发布作业</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let sortedAssignments = [...allAssignments];
+    
+    switch(sortMode) {
+        case 'name':
+            sortedAssignments.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            break;
+        case 'time':
+        default:
+            sortedAssignments.sort((a, b) => {
+                const aDue = a.due_at || a.due_date || '9999-12-31';
+                const bDue = b.due_at || b.due_date || '9999-12-31';
+                const aDate = new Date(aDue);
+                const bDate = new Date(bDue);
+                const now = new Date();
+                
+                if (aDate < now && bDate >= now) return 1;
+                if (aDate >= now && bDate < now) return -1;
+                
+                return aDate - bDate;
+            });
+    }
+    
+    container.innerHTML = sortedAssignments.map(assignment => {
+        const analysis = assignment.submission_analysis || {};
+        const dueAt = assignment.due_at || assignment.due_date;
+        const now = new Date();
+        const dueDate = dueAt ? new Date(dueAt) : null;
+        
+        let statusClass = 'upcoming';
+        let statusText = '进行中';
+        
+        if (dueDate && dueDate < now) {
+            statusClass = 'expired';
+            statusText = '已截止';
+        }
+        
+        const unsubmittedCount = analysis.not_submitted_count || 0;
+        const totalStudents = analysis.total_students || 42;
+        const submissionRate = analysis.submission_rate || 85;
+        const points = assignment.points_possible || 100;
+        const assignmentName = assignment.name || assignment.title || '未命名作业';
+        
+        return `
+            <div class="activity-item assignment ${statusClass}">
+                <div class="activity-info">
+                    <h3>${assignmentName}</h3>
+                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
+                    <div class="activity-meta">
+                        <span class="submission-count">
+                            提交率: ${submissionRate.toFixed(1)}%
+                        </span>
+                        <span class="status status-${statusClass}">
+                            ${statusText}
+                        </span>
+                        ${analysis.has_ungraded_submissions ? '<span class="status status-pending">待评分</span>' : ''}
+                    </div>
+                    ${unsubmittedCount > 0 && statusClass === 'expired' ? `
+                        <div class="unsubmitted-list">
+                            <div class="unsubmitted-title">未提交: ${unsubmittedCount}人</div>
+                            <div class="unsubmitted-names">${totalStudents - unsubmittedCount}/${totalStudents} 人已提交</div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 按指定排序方式更新测验列表
+function updateQuizzesListWithSort(sortMode) {
+    const container = document.getElementById('published-quizzes');
+    
+    const quizzes = mockData.quiz_analysis?.quiz_analysis || [];
+    
+    if (quizzes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-question-circle"></i>
+                <p>暂无已发布测验</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let sortedQuizzes = [...quizzes];
+    
+    switch(sortMode) {
+        case 'name':
+            sortedQuizzes.sort((a, b) => (a.quiz_title || '').localeCompare(b.quiz_title || ''));
+            break;
+        case 'time':
+        default:
+            sortedQuizzes.sort((a, b) => {
+                const aDue = a.due_at || a.due_date || '9999-12-31';
+                const bDue = b.due_at || b.due_date || '9999-12-31';
+                const aDate = new Date(aDue);
+                const bDate = new Date(bDue);
+                const now = new Date();
+                
+                if (aDate < now && bDate >= now) return 1;
+                if (aDate >= now && bDate < now) return -1;
+                
+                return aDate - bDate;
+            });
+    }
+    
+    container.innerHTML = sortedQuizzes.map(quiz => {
+        const dueAt = quiz.due_at || quiz.due_date;
+        const now = new Date();
+        const dueDate = dueAt ? new Date(dueAt) : null;
+        
+        let statusClass = 'upcoming';
+        let statusText = '进行中';
+        
+        if (dueDate && dueDate < now) {
+            statusClass = 'expired';
+            statusText = '已截止';
+        }
+        
+        const submissionAnalysis = quiz.submission_analysis || {};
+        const avgScore = submissionAnalysis.average_score || 78.5;
+        const points = quiz.points_possible || 100;
+        const title = quiz.quiz_title || quiz.name || '未命名测验';
+        
+        return `
+            <div class="activity-item quiz ${statusClass}">
+                <div class="activity-info">
+                    <h3>${title}</h3>
+                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
+                    <div class="activity-meta">
+                        <span class="submission-count">
+                            平均分: ${avgScore.toFixed(1)}分
+                        </span>
+                        <span class="status status-${statusClass}">
+                            ${statusText}
+                        </span>
+                        ${quiz.quiz_reports_available ? '<span class="status status-completed">有报告</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 日期格式化函数
+function formatDate(dateString) {
+    if (!dateString) return '无';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
+    } catch (e) {
+        return dateString;
+    }
+}
+
+// 显示/隐藏加载状态
+function showLoading(isLoading) {
+    if (isLoading) {
+        console.log('正在加载数据...');
+    } else {
+        console.log('数据加载完成');
+    }
+}
+
+// 显示错误信息
+function showError(message) {
+    console.warn('数据加载错误:', message);
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-notification';
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        background: #f8d7da;
+        color: #721c24;
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    `;
+    errorDiv.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.parentNode.removeChild(errorDiv);
+        }
+    }, 5000);
+}
+
+// 模拟定期刷新数据
+setInterval(() => {
+    console.log('自动刷新数据...');
+}, 5 * 60 * 1000);
+</script>
+{% endblock %}
