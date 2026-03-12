@@ -251,11 +251,11 @@ def create_sample_images():
 
 def process_user_courses(username, role):
     """
-    处理用户课程：获取课程、应用白名单和学期筛选、设置当前课程
-    将用户信息存储到 MongoDB 的 user_sessions 表中
+    处理用户课程：获取课程、应用白名单和学期筛选、设置当前课程和全局变量
     返回处理后的用户课程数据和当前课程信息
     """
-
+    global user_global_store
+    
     # 1. 根据身份获取原始课程列表
     user_courses = []
     if role == 'teacher':
@@ -315,49 +315,19 @@ def process_user_courses(username, role):
     else:
         print(f"警告: 用户 {username} 经过筛选后没有可用课程")
     
-    # 5. 将用户信息存储到 MongoDB
-    now = datetime.now()
-    user_session_data = {
-        'username': username,
-        'role': role,
+    # 5. 更新全局存储
+    if username not in user_global_store:
+        user_global_store[username] = {}
+    
+    user_global_store[username].update({
         'user_courses': semester_filtered_courses,
         'current_course': current_course,
-    }
-    print("user_session_data!!!",user_session_data)
-    # 存储到 MongoDB（如果集合可用）
-    if user_sessions_collection is not None:
-        try:
-            # 使用 upsert 操作：如果用户已存在则更新，否则插入
-            result = user_sessions_collection.update_one(
-                {'username': username},
-                {
-                    '$set': {
-                        'role': role,
-                        'user_courses': semester_filtered_courses,
-                        'current_course': current_course,
-                    },
-                },
-                upsert=True  # 不存在则插入
-            )
-            
-            if result.upserted_id:
-                print(f"✅ 用户 {username} 信息已插入到 MongoDB")
-            else:
-                print(f"✅ 用户 {username} 信息已更新到 MongoDB")
-                
-        except errors.DuplicateKeyError:
-            print(f"⚠️ 用户 {username} 已存在，更新信息")
-            # 更新已存在用户的信息
-            user_sessions_collection.update_one(
-                {'username': username},
-                {'$set': user_session_data}
-            )
-        except Exception as e:
-            print(f"❌ 存储用户信息到 MongoDB 失败: {e}")
-    else:
-        print(f"⚠️ MongoDB 不可用，用户 {username} 信息未持久化存储")
-
-    print(f"用户 {username} 信息处理完成")
+        'last_login': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'role': role
+    })
+    
+    print(f"已更新全局存储中的用户 {username} 信息")
+    print("存储的用户的信息",user_global_store[username])
     return semester_filtered_courses, current_course, True
 
 # 路由
@@ -370,6 +340,7 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    global user_global_store
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -384,7 +355,7 @@ def login():
                 session['username'] = username
                 session['role'] = result[1] or 'student'
                 session['user_courses'] = []
-                # 调用统一函数处理用户课程
+                # 调用统一函数处理用户课程和全局变量
                 user_courses, current_course, success = process_user_courses(session['username'], session['role'])
                 if not success:
                     flash('获取课程信息失败，请联系管理员', 'danger')
@@ -397,7 +368,6 @@ def login():
                 print("error")
                 flash('用户名或密码错误，请重试！', 'danger')
     return render_template('auth/login.html')
-
 
 @app.route('/auth/send_code', methods=['POST'])
 def send_verification_code():
@@ -559,34 +529,18 @@ def forget_password():
 def logout():
     username = session.get('username')
     if username:
-        # 从 MongoDB 中删除用户会话信息
-        delete_user_session(username)
-        print(f"用户 {username} 登出，已从数据库中删除会话信息")
-    
-    session.clear()
-    flash('您已成功登出', 'success')
+        # 从全局存储中删除该用户的数据
+        if username in user_global_store:
+            del user_global_store[username]
+            print(f"用户 {username} 登出，已从全局存储中删除")
+        else:
+            print(f"用户 {username} 登出，但全局存储中未找到该用户")
+    session.pop('user_email', None)
+    session.pop('username', None)
+    session.pop('role', None)
+    session.pop('user_course', None)
+    session.pop('current_course', None)
     return redirect(url_for('login'))
-
-def delete_user_session(username):
-    """从 MongoDB 中删除用户会话信息"""
-    if user_sessions_collection is not None:
-        try:
-            # 删除用户记录
-            result = user_sessions_collection.delete_one({'username': username})
-            
-            if result.deleted_count > 0:
-                print(f"✅ 用户 {username} 的会话信息已从 MongoDB 删除")
-                return True
-            else:
-                print(f"⚠️ 用户 {username} 的会话信息在 MongoDB 中不存在")
-                return False
-                
-        except Exception as e:
-            print(f"❌ 从 MongoDB 删除用户会话信息失败: {e}")
-            return False
-    else:
-        print(f"⚠️ MongoDB 不可用，无法删除用户 {username} 的会话信息")
-        return False
 
 
 @app.route('/dashboard/new-chat')
@@ -1064,33 +1018,7 @@ def update_current_course():
 #         "current_course": current_course,
 #         "has_course": bool(current_course)
 #     })
-def get_user_current_course_from_db(studentUid):
-    """从 MongoDB 获取用户的当前课程"""
-    if user_sessions_collection is not None:
-        try:
-            user_session = user_sessions_collection.find_one(
-                {'username': studentUid},
-                {'_id': 0, 'current_course': 1}
-            )
-            if user_session and 'current_course' in user_session:
-                return user_session['current_course']
-        except Exception as e:
-            print(f"❌ 从 MongoDB 获取用户当前课程失败: {e}")
-    return session.get('current_course')
-
-def get_user_courses_from_db(studentUid):
-    """从 MongoDB 获取用户的课程列表"""
-    if user_sessions_collection is not None:
-        try:
-            user_session = user_sessions_collection.find_one(
-                {'username': studentUid},
-                {'_id': 0, 'user_courses': 1}
-            )
-            if user_session and 'user_courses' in user_session:
-                return user_session['user_courses']
-        except Exception as e:
-            print(f"❌ 从 MongoDB 获取用户课程列表失败: {e}")
-    return session.get('user_courses', [])    
+    
     
 @app.route('/dashboard/study_situation/course/search')
 def search_course():
@@ -1100,43 +1028,49 @@ def search_course():
     studentUid = request.args.get('studentUid', '').strip()
     
     print(f"search_course 接收参数 - query: {query}, studentUid: {studentUid}")
-    # 1. 验证 studentUid 参数
-    if not studentUid:
-        return jsonify({
-            "error": "缺少studentUid参数",
-            "message": "请提供用户账号(studentUid)以识别用户身份"
-        }), 400
-    # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!search_course:current_course:",current_course)
     
-    # 3. 如果 MongoDB 中没有，尝试从 session 获取（作为后备方案）
+    # 1. 根据studentUid从全局字典中查找对应的current_course
+    current_course = None
+    
+    if studentUid and studentUid in user_global_store:
+        user_info = user_global_store[studentUid]
+        current_course = user_info.get('current_course')
+        print(f"从全局字典中找到用户 {studentUid} 的当前课程: {current_course}")
+    else:
+        print(f"警告: 用户 {studentUid} 不在全局字典中或未提供studentUid")
+    
+    # 如果没有从全局字典找到当前课程，尝试从session获取
     if not current_course:
         current_course = session.get('current_course')
         print(f"从session获取当前课程: {current_course}")
-
-    # 4. 如果仍然没有当前课程，返回错误
+    
+    # 如果仍然没有当前课程，返回错误
     if not current_course:
         return jsonify({
             "error": "未找到当前课程信息",
             "message": "请先在学情分析页面选择一门课程"
         }), 400
     
-    # 5. 获取当前课程的信息
+    # 获取当前课程的信息
     current_course_id = int(current_course.get('course_id'))
     current_course_name = current_course.get('name', '未命名课程')
     
-    # 6. 如果有 query 参数，验证用户是否有权限访问该课程(只有当与当前课程成功匹配才能查询)
+    # 2. 进行课程匹配检查
     if query:
         # 判断query是否能与当前课程的course_id或course_name匹配
         is_match = False
+        
+        # 检查是否与course_id匹配（精确匹配）
         if str(current_course_id).strip() == query:
             is_match = True
             print(f"query '{query}' 与当前课程ID '{current_course_id}' 匹配")
+        
+        # 检查是否与course_name匹配（模糊匹配，包含关系）
         elif query in str(current_course_name).strip():
             is_match = True
             print(f"query '{query}' 在当前课程名称 '{current_course_name}' 中找到匹配")
+        
+        # 如果query存在但不能匹配，返回权限错误
         if not is_match:
             return jsonify({
                 "error": f"无权限查询课程 '{query}'",
@@ -1147,12 +1081,15 @@ def search_course():
                 }
             }), 403
     
-    # 7. 使用当前课程的course_id查询相关课程信息
+    # 3. 使用当前课程的course_id查询相关课程信息
     print(f"使用当前课程ID查询: {current_course_id}")
+    
+    # 4. 从courses表查找课程信息
     course = db.courses.find_one({"courses_list.class_list.id": int(current_course_id)}, {"_id": 0})
     print("course?", course)
     
     if not course:
+        # 如果没有在class_list中找到，尝试直接匹配id字段
         course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
     
     if not course:
@@ -1164,6 +1101,8 @@ def search_course():
                 "course_name": current_course_name
             }
         })
+    
+    # 5. 从classes表查找班级信息（获取学生名单）
     class_info = db.classes.find_one({"id": int(current_course_id)}, {"_id": 0})
     print("class_info", class_info)
     
@@ -1176,8 +1115,14 @@ def search_course():
                 "course_name": current_course_name
             }
         })
+    
+    # 获取班级学生名单
     student_list = class_info.get('student_list', [])
+    
+    # 6. 从course中提取知识点列表
     knowledge_stats = {}
+    
+    # 如果课程有knowledge_list，使用它
     if 'knowledge_list' in course and course['knowledge_list']:
         for knowledge in course['knowledge_list']:
             knowledge_id = knowledge.get('knowledge_id')
@@ -1198,12 +1143,15 @@ def search_course():
         # 如果课程没有knowledge_list，返回空的知识点列表
         print("警告: 课程没有knowledge_list字段")
     
+    # 7. 统计每个知识点的学习状态
     for student in student_list:
         student_id = student.get('id')
         sis_user_id = student.get('sis_user_id')
         
         if not student_id and not sis_user_id:
             continue
+        
+        # 查找学生信息
         student_query = {}
         if student_id:
             student_query['id'] = student_id
@@ -1213,7 +1161,8 @@ def search_course():
         student_info = db.students.find_one(student_query, {"_id": 0})
         if not student_info:
             continue
-
+        
+        # 查找学生选修的当前课程
         enrolled_courses = student_info.get('enrolled_courses', [])
         current_enrolled_course = None
         
@@ -1404,20 +1353,20 @@ def get_course_student_status():
     - 多个 knowledge_not_learned（ID 或名称，模糊匹配）
     - 返回每个学生的 已完成/未完成 知识点详情（含名称）
     """
+    # Step 1: 获取studentUid参数
     studentUid = request.args.get('studentUid', '').strip()
     
-    # 1. 验证 studentUid 参数
-    if not studentUid:
-        return jsonify({
-            "error": "缺少studentUid参数",
-            "message": "请提供用户账号(studentUid)以识别用户身份"
-        }), 400
-    # 2. 从 MongoDB 中获取用户会话信息
+    # 1. 根据studentUid从全局字典中查找对应的current_course
     current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!get_course_student_status:current_course:",current_course)
     
-    # 未从MongoDB中找到当前课程，尝试从session获取
+    if studentUid and studentUid in user_global_store:
+        user_info = user_global_store[studentUid]
+        current_course = user_info.get('current_course')
+        print(f"从全局字典中找到用户 {studentUid} 的当前课程: {current_course}")
+    else:
+        print(f"警告: 用户 {studentUid} 不在全局字典中或未提供studentUid")
+    
+    # 如果没有从全局字典找到当前课程，尝试从session获取
     if not current_course:
         current_course = session.get('current_course')
         print(f"从session获取当前课程: {current_course}")
@@ -1447,15 +1396,23 @@ def get_course_student_status():
     # 如果提供了course_query，进行模糊匹配
     if course_query:
         is_matched = False
+        
+        # 检查课程ID是否匹配
         if str(current_course_id) == str(course_query):
             is_matched = True
             print(f"通过课程ID匹配: {course_query}")
+        
+        # 检查课程名称是否匹配（模糊匹配）
         elif current_course_name and course_query.lower() in current_course_name.lower():
             is_matched = True
             print(f"通过课程名称模糊匹配: {course_query} 匹配 {current_course_name}")
+        
+        # 检查sis_course_id是否匹配
         elif current_sis_course_id and course_query in current_sis_course_id:
             is_matched = True
             print(f"通过sis_course_id匹配: {course_query} 匹配 {current_sis_course_id}")
+        
+        # 如果都没有匹配，尝试在数据库中查找是否有该课程
         if not is_matched:
             print(f"未匹配到课程: {course_query}")
             return jsonify({
@@ -1466,6 +1423,70 @@ def get_course_student_status():
                     "course_name": current_course_name
                 }
             }), 403
+            # # 在数据库中查找匹配的课程
+            # regex_pattern = f".*{re.escape(course_query)}.*"
+            
+            # matching_courses = list(db.courses.find(
+            #     {
+            #         "$or": [
+            #             {"course_name": {"$regex": regex_pattern, "$options": "i"}},
+            #             {"courses_list.course_code": {"$regex": regex_pattern, "$options": "i"}},
+            #             {"courses_list.class_list.sis_course_id": {"$regex": regex_pattern, "$options": "i"}}
+            #         ]
+            #     },
+            #     {"_id": 0, "course_name": 1, "courses_list": 1}
+            # ))
+            
+            # # 检查classes表中是否有匹配的班级
+            # matching_classes = list(db.classes.find(
+            #     {
+            #         "$or": [
+            #             {"course_name": {"$regex": regex_pattern, "$options": "i"}},
+            #             {"course_code": {"$regex": regex_pattern, "$options": "i"}},
+            #             {"sis_course_id": {"$regex": regex_pattern, "$options": "i"}}
+            #         ]
+            #     },
+            #     {"_id": 0, "course_name": 1, "course_code": 1, "id": 1}
+            # ))
+            
+            # matched_courses_info = []
+            
+            # for match_course in matching_courses:
+            #     course_name = match_course.get("course_name", "")
+            #     for course_item in match_course.get('courses_list', []):
+            #         course_code = course_item.get('course_code', "")
+            #         for class_item in course_item.get('class_list', []):
+            #             matched_courses_info.append({
+            #                 "course_name": course_name,
+            #                 "course_code": course_code,
+            #                 "class_id": class_item.get('id'),
+            #                 "sis_course_id": class_item.get('sis_course_id'),
+            #                 "type": "班级",
+            #                 "reason": f"数据库查询匹配: {course_query}"
+            #             })
+            
+            # for match_class in matching_classes:
+            #     matched_courses_info.append({
+            #         "course_name": match_class.get("course_name"),
+            #         "course_code": match_class.get("course_code"),
+            #         "class_id": match_class.get("id"),
+            #         "type": "班级",
+            #         "reason": f"数据库查询匹配: {course_query}"
+            #     })
+            
+            # return jsonify({
+            #     "error": f"您无权限查询课程 '{course_query}' 相关的信息",
+            #     "message": "您只能查询您当前选中的课程",
+            #     "current_course": {
+            #         "course_id": current_course_id,
+            #         "course_name": current_course_name,
+            #         "sis_course_id": current_sis_course_id,
+            #         "studentUid": studentUid
+            #     },
+            #     "matched_courses_in_db": matched_courses_info if matched_courses_info else [],
+            #     "suggestion": f"您可查询的课程是: {current_course_name} (ID: {current_course_id})"
+            # }), 403
+    
     # Step 4: 使用current_course的course_id查询课程信息
     try:
         current_course_id = int(current_course_id)
@@ -1891,19 +1912,20 @@ def get_course_knowledge_status():
     - 返回每个知识点的掌握学生名单（已完成 / 未完成）
     注意：直接使用courses表中的knowledge_list作为课程的全部知识点
     """
+    # Step 1: 获取studentUid参数
     studentUid = request.args.get('studentUid', '').strip()
-    # 1. 验证 studentUid 参数
-    if not studentUid:
-        return jsonify({
-            "error": "缺少studentUid参数",
-            "message": "请提供用户账号(studentUid)以识别用户身份"
-        }), 400
-    # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!get_course_student_status:current_course:",current_course)
     
-    # 未从MongoDB中找到当前课程，尝试从session获取
+    # 1. 根据studentUid从全局字典中查找对应的current_course
+    current_course = None
+    
+    if studentUid and studentUid in user_global_store:
+        user_info = user_global_store[studentUid]
+        current_course = user_info.get('current_course')
+        print(f"get_course_knowledge_status从全局字典中找到用户 {studentUid} 的当前课程: {current_course}")
+    else:
+        print(f"警告: 用户 {studentUid} 不在全局字典中或未提供studentUid")
+    
+    # 如果没有从全局字典找到当前课程，尝试从session获取
     if not current_course:
         current_course = session.get('current_course')
         print(f"从session获取当前课程: {current_course}")
@@ -1919,28 +1941,37 @@ def get_course_knowledge_status():
     current_course_id = current_course.get('course_id')
     current_course_name = current_course.get('name', '未命名课程')
     current_sis_course_id = current_course.get('sis_course_id', '')
+    
     if not current_course_id:
         return jsonify({
             "error": "当前课程信息不完整",
             "message": "当前课程缺少course_id字段",
             "current_course": current_course
         }), 400
-        
+    
     # Step 3: 获取course_query参数并进行匹配
     course_query = request.args.get('course_query', '').strip()
     
     # 如果提供了course_query，进行模糊匹配
     if course_query:
         is_matched = False
+        
+        # 检查课程ID是否匹配
         if str(current_course_id) == str(course_query):
             is_matched = True
             print(f"通过课程ID匹配: {course_query}")
+        
+        # 检查课程名称是否匹配（模糊匹配）
         elif current_course_name and course_query.lower() in current_course_name.lower():
             is_matched = True
             print(f"通过课程名称模糊匹配: {course_query} 匹配 {current_course_name}")
+        
+        # 检查sis_course_id是否匹配
         elif current_sis_course_id and course_query in current_sis_course_id:
             is_matched = True
             print(f"通过sis_course_id匹配: {course_query} 匹配 {current_sis_course_id}")
+        
+        # 如果都没有匹配，尝试在数据库中查找是否有该课程
         if not is_matched:
             print(f"未匹配到课程: {course_query}")
             return jsonify({
@@ -5358,4 +5389,4 @@ if __name__ == '__main__':
     #     print("❌ MCP 初始化失败：", e)
     #     traceback.print_exc()
         
-    app.run(debug=False, use_reloader=True, host='0.0.0.0', port=APP_PORT)
+    app.run(debug=False, use_reloader=True, host='0.0.0.0', port=APP_PORT) 
