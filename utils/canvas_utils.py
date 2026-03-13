@@ -518,5 +518,32 @@ def get_quiz_submissions(course_id, quiz_id, per_page=100):
         print(f"获取测验提交失败: {e}")
         return []
     
+def get_student_assignment_submission(course_id, assignment_id, user_id):
+    """获取学生单个作业提交详情"""
+    url = f"{BASE_URL}/courses/{course_id}/assignments/{assignment_id}/submissions/{user_id}"
+    try:
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"获取学生作业提交失败: {e}")
+        return {}
+
+def get_student_quiz_submissions(course_id, quiz_id, user_id):
+    """获取学生测验提交"""
+    url = f"{BASE_URL}/courses/{course_id}/quizzes/{quiz_id}/submissions"
+    params = {'include[]': ['user', 'submission']}
+    
+    try:
+        response = requests.get(url, headers=HEADERS, params=params)
+        response.raise_for_status()
+        submissions = response.json().get('quiz_submissions', [])
+        
+        # 过滤出当前学生的提交
+        student_submissions = [s for s in submissions if s.get('user_id') == user_id]
+        return student_submissions
+    except requests.exceptions.RequestException as e:
+        print(f"获取学生测验提交失败: {e}")
+        return []
 if __name__=="__main__":
     print(get_courses_by_teacher_id("test"))
