@@ -1105,5 +1105,5 @@ try:
 except Exception as e:
     print(f"KG模块加载失败: {str(e)}")
 
-if __name__ == '__main__': 
-    app.run(debug=False, use_reloader=True, host='0.0.0.0', port=APP_PORT) 
+if __name__ == '__main__':
+    app.run(debug=False, use_reloader=False, host='0.0.0.0', port=APP_PORT)

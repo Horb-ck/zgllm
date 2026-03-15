@@ -10,12 +10,13 @@ from fastapi import HTTPException
 import asyncio
 from config import *
 
-mcp = FastMCP (name="study",
+mcp = FastMCP(
+    name="study",
     host="0.0.0.0",
     port=MCP_TEST_PORT,
-    description="获取学习信息",
-    sse_path='/sse'
-     )
+    instructions="获取学习信息",
+    sse_path="/sse",
+)
     
 
 # LOCAL_API_BASE = "http://180.85.206.21:7777/dashboard/study_situation"
@@ -613,4 +614,3 @@ if __name__ == "__main__":
        
     except Exception as e:
         print(f"Error: {e}")#
-
