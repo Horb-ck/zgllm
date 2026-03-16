@@ -1,6 +1,7 @@
 import pymysql
 from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify, send_from_directory
 import os
+import copy
 from werkzeug.security import generate_password_hash, check_password_hash
 import time
 from functools import wraps
@@ -192,35 +193,149 @@ agents = [
 
 
 agents_kd = [
+    # {
+    #     "id": 2,
+    #     "name": "Robomaster",
+    #     "description": "Robomaster 智能体，支持竞赛知识问答与训练策略辅助。",
+    #     "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
+    #     "image_url": "/static/img/c1.png"
+    # },
     {
         "id": 1,
-        "name": "Robomaster",
-        "description": "Robomaster 智能体，支持竞赛知识问答与训练策略辅助。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
-        "image_url": "/static/img/c1.png"
-    },
-    {
-        "id": 2,
         "name": "Robocon-主赛",
         "description": "Robocon 主赛智能体，聚焦赛题解析、方案设计与实战复盘。",
         "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
         "image_url": "/static/img/c2.png"
-    },
-    {
-        "id": 3,
-        "name": "Robocon-足式",
-        "description": "Robocon 足式智能体，提供足式机器人结构与控制相关支持。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
-        "image_url": "/static/img/c3.png"
-    },
-    {
-        "id": 4,
-        "name": "Robotac",
-        "description": "Robotac 智能体，面向战术任务分析、系统联调与训练建议。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
-        "image_url": "/static/img/c0.png"
     }
+    # },
+    # {
+    #     "id": 3,
+    #     "name": "Robocon-足式",
+    #     "description": "Robocon 足式智能体，提供足式机器人结构与控制相关支持。",
+    #     "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
+    #     "image_url": "/static/img/c3.png"
+    # },
+    # {
+    #     "id": 4,
+    #     "name": "Robotac",
+    #     "description": "Robotac 智能体，面向战术任务分析、系统联调与训练建议。",
+    #     "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
+    #     "image_url": "/static/img/c0.png"
+    # }
 ]
+
+ROBOCON_MAIN_RESOURCES = {
+    "national": {
+        "key": "national",
+        "label": "国赛",
+        "description": "全国大学生机器人大赛 ROBOCON 主赛官方规则资料。",
+        "official_url": "https://robocon.org.cn/",
+        "updated_at": "2026-02-27",
+        "update_note": "官网赛事动态页显示最新主赛规则已更新到 V4。",
+        "docs": [
+            {
+                "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V4",
+                "type": "最新规则",
+                "date": "2026-02-27",
+                "url": "https://robocon.org.cn/h-col-104.html",
+                "preview_url": "https://robocon.org.cn/h-col-104.html",
+                "source": "ROBOCON 官网赛事动态页"
+            },
+            {
+                "title": "第二十五届全国大学生机器人大赛ROBOCON武林探秘图册V3",
+                "type": "图册",
+                "date": "2026-01-08",
+                "url": "https://robocon.org.cn/sys-nd/77.html",
+                "preview_url": "https://robocon.org.cn/sys-nd/77.html",
+                "source": "ROBOCON 官网文章页"
+            },
+            {
+                "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V3",
+                "type": "历史版本",
+                "date": "2026-01-08",
+                "url": "https://robocon.org.cn/sys-nd/76.html",
+                "preview_url": "https://robocon.org.cn/sys-nd/76.html",
+                "source": "ROBOCON 官网文章页"
+            }
+        ]
+    },
+    "international": {
+        "key": "international",
+        "label": "国际赛",
+        "description": "ABU Robocon 官方规则资料。当前最新资料实际发布在 2025 主办方官网，aburobocon.net 主页仍显示 2017 页面。",
+        "official_url": "https://aburobocon2025.mnb.mn/en",
+        "updated_at": "2025-08-05",
+        "update_note": "按当前可访问的官方站点，最新规则资料来自 ABU Robocon 2025 Ulaanbaatar 官网。",
+        "docs": [
+            {
+                "title": "ABU ROBOCON 2025 Rule Book",
+                "type": "最新规则",
+                "date": "2024-11-21",
+                "url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_Rulebook_20241121.pdf",
+                "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_Rulebook_20241121.pdf",
+                "source": "ABU Robocon 2025 官网"
+            },
+            {
+                "title": "ABU ROBOCON 2025 FAQ",
+                "type": "FAQ",
+                "date": "2025-08-05",
+                "url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_FAQ_20250805.pdf",
+                "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_FAQ_20250805.pdf",
+                "source": "ABU Robocon 2025 官网"
+            },
+            {
+                "title": "Appendix 1. Game field - Structure",
+                "type": "Figures",
+                "date": "2024-08-08",
+                "url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-1.pdf",
+                "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-1.pdf",
+                "source": "ABU Robocon 2025 官网"
+            },
+            {
+                "title": "Appendix 2. Game field - Dimensions (Top view)",
+                "type": "Figures",
+                "date": "2024-08-08",
+                "url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-2.pdf",
+                "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-2.pdf",
+                "source": "ABU Robocon 2025 官网"
+            }
+        ]
+    }
+}
+
+
+def get_robocon_main_resources():
+    resources = copy.deepcopy(ROBOCON_MAIN_RESOURCES)
+    local_path_map = {
+        "national": {
+            "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V4": "static/robocon_docs/national/national_rule_v4.pdf",
+            "第二十五届全国大学生机器人大赛ROBOCON武林探秘图册V3": "static/robocon_docs/national/national_figure_v3.pdf",
+            "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V3": "static/robocon_docs/national/national_rule_v3.pdf"
+        },
+        "international": {
+            "ABU ROBOCON 2025 Rule Book": "static/robocon_docs/international/international_rulebook_2025.pdf",
+            "ABU ROBOCON 2025 FAQ": "static/robocon_docs/international/international_faq_20250805.pdf",
+            "Appendix 1. Game field - Structure": "static/robocon_docs/international/international_appendix_1.pdf",
+            "Appendix 2. Game field - Dimensions (Top view)": "static/robocon_docs/international/international_appendix_2.pdf"
+        }
+    }
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    for section_key, section in resources.items():
+        title_to_path = local_path_map.get(section_key, {})
+        for doc in section["docs"]:
+            relative_path = title_to_path.get(doc["title"])
+            if not relative_path:
+                continue
+
+            absolute_path = os.path.join(base_dir, relative_path)
+            if os.path.exists(absolute_path):
+                local_url = f"/{relative_path}"
+                doc["url"] = local_url
+                doc["preview_url"] = local_url
+                doc["source"] = f"{doc['source']} / 本地副本"
+
+    return resources
 
 # 定义课程白名单
 COURSES_LIST = [
@@ -588,10 +703,18 @@ def view_kd(agent_id):
     if not agent:
         flash('找不到该知识库智能体', 'error')
         return redirect(url_for('course_kd'))
-    return render_template('dashboard/new_chat.html', 
+    template_name = 'dashboard/new_chat.html'
+    extra_context = {}
+    if agent_id == 1:
+        template_name = 'dashboard/robocon_main_chat.html'
+        extra_context["robocon_resources"] = get_robocon_main_resources()
+
+    return render_template(template_name,
                          embed_url=agent['url'],
                          agent=agent,
-                         username=session.get('username', '用户'))
+                         username=session.get('username', '用户'),
+                         role=session.get('role', 'student'),
+                         **extra_context)
 
 
 @app.route('/dashboard/his')
