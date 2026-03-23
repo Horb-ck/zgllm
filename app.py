@@ -209,7 +209,7 @@ agents_kd = [
         "id": 1,
         "name": "Robocon-主赛",
         "description": "Robocon 主赛智能体，聚焦赛题解析、方案设计与实战复盘。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=i49FK9SyVmZp5b082Y1LF3hZ",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=mmvR2bCNNp9pHH3ngkx1ODwo",
         "image_url": "/static/img/c2.png"
     }
     # },
