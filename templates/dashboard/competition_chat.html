@@ -137,7 +137,7 @@
                 <div class="chat-shell">
                     <div class="chat-shell-header">
                         <span class="panel-tag neutral">问答助手</span>
-                        <strong>主赛智能问答</strong>
+                        <strong>{{ assistant_title }}</strong>
                     </div>
                     <iframe
                         src="{{ embed_url }}"
@@ -644,7 +644,7 @@
 </style>
 
 <script>
-const roboconResources = {{ robocon_resources|tojson }};
+const competitionResources = {{ competition_resources|tojson }};
 
 const state = {
     category: "national",
@@ -672,7 +672,7 @@ const expandRulesBtnEl = document.getElementById("expand-rules-btn");
 const backToListBtnEl = document.getElementById("back-to-list-btn");
 
 function getSection() {
-    return roboconResources[state.category];
+    return competitionResources[state.category];
 }
 
 function getDoc() {
@@ -702,7 +702,7 @@ function setCategory(categoryKey) {
 
 function renderSwitcher() {
     switcherEl.innerHTML = "";
-    Object.values(roboconResources).forEach((section) => {
+    Object.values(competitionResources).forEach((section) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = `switch-btn${state.category === section.key ? " active" : ""}`;
@@ -794,7 +794,7 @@ function render() {
     const doc = getDoc();
     renderSwitcher();
     officialLinkEl.href = section.official_url;
-    officialLinkEl.textContent = section.label === "国际赛" ? "国际赛官网入口" : "国赛官网入口";
+    officialLinkEl.textContent = {{ official_link_label|tojson }};
     updatedAtEl.textContent = section.updated_at;
     noteEl.textContent = `${section.description} ${section.update_note}`;
     renderList(section);
