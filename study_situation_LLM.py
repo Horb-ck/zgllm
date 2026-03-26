@@ -1992,3 +1992,408 @@ def get_knowledge_status(knowledge_query=None):
         },
         "last_updated": datetime.now().isoformat()
     }), 200
+
+# 查询单个学生的学习情况
+@study_situation_LLM.route('/dashboard/study_situation/course/student/myprogress')
+def get_student_myprogress():
+    """
+    查询学生在某课程中的学习进度（学生自查询接口）
+    
+    参数说明：
+    - studentUid: 必填参数，当前用户的ID
+    - course_query: 可选参数，课程ID或名称，如未提供则使用当前课程
+    - student_query: 可选路径参数，要查询的目标学生信息，如未提供则查询当前用户自己
+    
+    权限验证逻辑：
+    1. 验证当前用户(studentUid)在当前课程中
+    2. 如果提供了student_query，验证其与当前用户信息匹配
+    3. 只有匹配成功才能查看学习情况
+    """
+    # Step 1: 获取studentUid参数（当前用户的ID）
+    studentUid = request.args.get('studentUid', '').strip()
+    student_query = request.args.get('student_query', '').strip()
+    # 1. 验证 studentUid 参数
+    if not studentUid:
+        return jsonify({
+            "error": "缺少studentUid参数",
+            "message": "请提供用户账号(studentUid)以识别用户身份"
+        }), 400
+    # 2. 从 MongoDB 中获取用户会话信息
+    current_course = None
+    current_course = get_user_current_course_from_db(studentUid)
+    print("!!!!search_course:current_course:",current_course)
+    
+    # 3. 如果 MongoDB 中没有，尝试从 session 获取（作为后备方案）
+    if not current_course:
+        current_course = session.get('current_course')
+        print(f"从session获取当前课程: {current_course}")
+        
+    # 4. 如果仍然没有当前课程，返回错误
+    if not current_course:
+        return jsonify({
+            "error": "未找到当前课程信息",
+            "message": "请先在学情分析页面选择一门课程"
+        }), 400
+    
+    current_course_id = current_course.get('course_id')
+    current_course_name = current_course.get('course_name', '')
+    current_sis_course_id = current_course.get('sis_course_id', '')
+    
+    if not current_course_id:
+        return jsonify({
+            "error": "当前课程信息不完整",
+            "message": "当前课程缺少course_id字段",
+            "current_course": current_course
+        }), 400
+    
+    # Step 3: 获取course_query参数并进行匹配（如果存在）
+    course_query_param = request.args.get('course_query', '').strip()
+    print(f"课程查询参数: {course_query_param}")
+    
+    # 如果提供了course_query，进行模糊匹配
+    if course_query_param:
+        is_matched = False
+        if str(current_course_id) == str(course_query_param):
+            is_matched = True
+            print(f"通过课程ID匹配: {course_query_param}")
+        elif current_course_name and course_query_param.lower() in current_course_name.lower():
+            is_matched = True
+            print(f"通过课程名称模糊匹配: {course_query_param} 匹配 {current_course_name}")
+        elif current_sis_course_id and course_query_param in current_sis_course_id:
+            is_matched = True
+            print(f"通过sis_course_id匹配: {course_query_param} 匹配 {current_sis_course_id}")
+        if not is_matched:
+            print(f"未匹配到课程: {course_query_param}")
+            return jsonify({
+                "error": f"无权限查询课程 '{course_query_param}'",
+                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})",
+                "current_course": {
+                    "course_id": current_course_id,
+                    "course_name": current_course_name
+                }
+            }), 403
+    
+    # Step 4: 使用current_course的course_id查询课程信息
+    try:
+        current_course_id = int(current_course_id)
+    except ValueError:
+        return jsonify({"error": "课程ID格式错误"}), 400
+    
+    print(f"开始查询学生进度 - 课程ID: {current_course_id}")
+    
+    # 获取当前课程信息
+    course = db.courses.find_one(
+        {"courses_list.class_list.id": current_course_id},
+        {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_count": 1, "knowledge_list": 1}
+    )
+    
+    if not course:
+        # 如果没有在courses_list.class_list中找到，尝试直接匹配id字段
+        course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    
+    if not course:
+        return jsonify({
+            "error": f"未找到ID为 {current_course_id} 的课程信息",
+            "current_course_id": current_course_id
+        }), 404
+    
+    # 提取当前课程的具体信息
+    course_name = course.get("course_name", f"课程 {current_course_id}")
+    course_code = None
+    sis_course_id = None
+    term_id = None
+    
+    # 从courses_list中提取具体的课程代码和班级信息
+    for course_item in course.get('courses_list', []):
+        for class_item in course_item.get('class_list', []):
+            if class_item.get('id') == current_course_id:
+                course_code = course_item.get('course_code')
+                sis_course_id = class_item.get('sis_course_id')
+                term_id = class_item.get('enrollment_term_id')
+                break
+        if course_code:
+            break
+    
+    # Step 5: 获取班级信息以验证学生是否在班级中
+    class_info = db.classes.find_one(
+        {"id": current_course_id},
+        {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1}
+    )
+    
+    if not class_info:
+        return jsonify({
+            "error": f"未找到ID为 {current_course_id} 的班级信息",
+            "course_id": current_course_id,
+            "course_name": course_name,
+            "course_code": course_code
+        }), 404
+    
+    # 使用classes表中的课程名称（如果存在）
+    actual_course_name = class_info.get("course_name", course_name)
+    student_list = class_info.get("student_list", [])
+    
+    # 确保course_code正确
+    if not course_code:
+        course_code = class_info.get("course_code", "")
+    
+    print(f"班级信息: {actual_course_name}, 学生数量: {len(student_list)}")
+    
+    # ========== Step 6: 验证当前用户在当前课程中 ==========
+    print(f"\n{'='*60}")
+    print(f"验证当前用户权限")
+    print(f"{'='*60}")
+    
+    # 查找当前用户(studentUid)在班级列表中的信息
+    current_user_info = None
+    for student_info in student_list:
+        student_id = student_info.get("id")
+        sis_user_id = student_info.get("sis_user_id")
+        
+        # 主要匹配sis_user_id（根据你的要求）
+        if sis_user_id and str(sis_user_id) == str(studentUid):
+            current_user_info = student_info
+            print(f"✓ 找到当前用户: {sis_user_id} (通过sis_user_id匹配)")
+            break
+        
+        # 也可以匹配id
+        if student_id and str(student_id) == str(studentUid):
+            current_user_info = student_info
+            print(f"✓ 找到当前用户: {student_id} (通过id匹配)")
+            break
+    
+    if not current_user_info:
+        print(f"✗ 当前用户 {studentUid} 不在当前课程的学生列表中")
+        return jsonify({
+            "error": f"用户 {studentUid} 不在课程 '{actual_course_name}' 的学生列表中",
+            "message": "您没有权限查询此课程中的学生信息",
+            "course_name": actual_course_name,
+            "course_id": current_course_id,
+            "studentUid": studentUid
+        }), 403
+    
+    # 获取当前用户的详细信息
+    current_user_id = current_user_info.get("id")
+    current_user_sis_id = current_user_info.get("sis_user_id")
+    current_user_name = current_user_info.get("student_name", "")
+    
+    print(f"当前用户信息: 姓名={current_user_name}, ID={current_user_id}, SIS={current_user_sis_id}")
+    
+    # ========== Step 7: 查询当前用户的详细信息 ==========
+    # 在数据库中查找当前用户的完整信息
+    user_query_conditions = {}
+    if current_user_id:
+        user_query_conditions["$or"] = [
+            {"id": current_user_id},
+            {"id": str(current_user_id)}
+        ]
+    elif current_user_sis_id:
+        user_query_conditions["sis_user_id"] = current_user_sis_id
+    
+    current_user = db.students.find_one(user_query_conditions, {"_id": 0})
+    
+    if not current_user:
+        print(f"✗ 数据库中未找到当前用户的详细信息")
+        return jsonify({
+            "error": "用户信息不完整",
+            "message": f"未找到用户 {studentUid} 的详细信息",
+            "studentUid": studentUid
+        }), 404
+    
+    # ========== Step 8: 验证student_query参数（如果存在） ==========
+    print(f"\n{'='*60}")
+    print(f"验证目标学生查询")
+    print(f"{'='*60}")
+    
+    # 如果提供了student_query，验证其与当前用户信息匹配
+    if student_query and student_query.strip():
+        print(f"验证student_query: {student_query}")
+        
+        # 获取当前用户的各种标识信息
+        current_user_db_id = current_user.get("id")
+        current_user_db_sis = current_user.get("sis_user_id")
+        current_user_db_name = current_user.get("student_name", "")
+        
+        print(f"当前用户数据库信息: ID={current_user_db_id}, SIS={current_user_db_sis}, 姓名={current_user_db_name}")
+        
+        is_matched = False
+        match_reason = ""
+        
+        # 1. 检查姓名匹配（模糊）
+        if current_user_db_name and student_query.lower() in current_user_db_name.lower():
+            is_matched = True
+            match_reason = f"姓名模糊匹配: '{student_query}' in '{current_user_db_name}'"
+            print(f"✓ {match_reason}")
+        
+        # 2. 检查ID匹配
+        elif current_user_db_id is not None:
+            query_str = str(student_query).strip()
+            id_str = str(current_user_db_id).strip()
+            
+            # 完全匹配（字符串）
+            if query_str == id_str:
+                is_matched = True
+                match_reason = f"ID精确匹配: {query_str} == {id_str}"
+                print(f"✓ {match_reason}")
+            
+            # 数字比较（如果都是数字）
+            elif query_str.isdigit() and id_str.isdigit():
+                if int(query_str) == int(id_str):
+                    is_matched = True
+                    match_reason = f"ID数字匹配: {int(query_str)} == {int(id_id_str)}"
+                    print(f"✓ {match_reason}")
+        
+        # 3. 检查SIS匹配
+        elif current_user_db_sis:
+            query_str = str(student_query).strip()
+            sis_str = str(current_user_db_sis).strip()
+            
+            if query_str == sis_str:
+                is_matched = True
+                match_reason = f"SIS精确匹配: {query_str} == {sis_str}"
+                print(f"✓ {match_reason}")
+        
+        # 如果没有匹配，返回权限错误
+        if not is_matched:
+            print(f"✗ student_query不匹配当前用户")
+            return jsonify({
+                "error": "无权查看该学生信息",
+                "message": f"您只能查看自己的学习进度，无法查看 '{student_query}' 的信息",
+                "current_user": {
+                    "student_name": current_user_db_name,
+                    "student_id": current_user_db_id,
+                    "sis_user_id": current_user_db_sis
+                },
+                "student_query": student_query,
+                "suggestion": "如果您想查看其他同学的信息，请联系教师"
+            }), 403
+    else:
+        # 如果没有提供student_query，默认是查询自己
+        print(f"未提供student_query，默认查询当前用户自己")
+        match_reason = "默认查询当前用户"
+    
+    # ========== Step 9: 检查当前用户是否选修了当前课程 ==========
+    print(f"\n{'='*60}")
+    print(f"检查课程选修情况")
+    print(f"{'='*60}")
+    
+    enrolled_courses = current_user.get("enrolled_courses", [])
+    matched_enrolled_course = None
+    
+    for enrolled_course in enrolled_courses:
+        enrolled_id = enrolled_course.get("id")
+        if enrolled_id is not None and str(enrolled_id) == str(current_course_id):
+            matched_enrolled_course = enrolled_course
+            print(f"✓ 用户已选修当前课程")
+            break
+    
+    if not matched_enrolled_course:
+        print(f"✗ 用户未选修当前课程")
+        # 用户在班级中但未选修课程
+        return jsonify({
+            "warning": f"学生 {current_user_name} 在班级 '{actual_course_name}' 中，但未选修该课程",
+            "student": {
+                "student_id": current_user_id,
+                "sis_user_id": current_user_sis_id,
+                "student_name": current_user_name
+            },
+            "course": {
+                "course_id": current_course_id,
+                "course_name": actual_course_name,
+                "course_code": course_code
+            },
+            "studentUid": studentUid,
+            "query_key": course_query_param if course_query_param else "当前课程",
+            "is_in_class": True,
+            "has_enrolled": False,
+            "suggestion": "您在班级名单中，但尚未在系统中选修此课程"
+        }), 200
+    
+    # ========== Step 10: 获取用户的知识点学习情况 ==========
+    print(f"\n{'='*60}")
+    print(f"获取学习进度")
+    print(f"{'='*60}")
+    
+    knowledge_list = matched_enrolled_course.get("knowledge_list", [])
+    
+    # 如果课程有knowledge_list，获取知识点的名称
+    course_knowledge_list = course.get('knowledge_list', [])
+    knowledge_name_map = {
+        str(k.get('knowledge_id')): k.get('knowledge_name', f"知识点{k.get('knowledge_id')}")
+        for k in course_knowledge_list
+    }
+    
+    # 统计学习进度
+    completed_knowledges = []
+    uncompleted_knowledges = []
+    in_progress_knowledges = []
+    review_needed_knowledges = []
+    
+    for k_item in knowledge_list:
+        knowledge_id = k_item.get("knowledge_id")
+        state = k_item.get("state", "not_learned")
+        knowledge_name = knowledge_name_map.get(str(knowledge_id), f"知识点{knowledge_id}")
+        
+        knowledge_detail = {
+            "knowledge_id": knowledge_id,
+            "knowledge_name": knowledge_name,
+            "state": state
+        }
+        
+        if state == "learned":
+            completed_knowledges.append(knowledge_detail)
+        elif state == "review_needed":
+            review_needed_knowledges.append(knowledge_detail)
+        elif state == "in_progress":
+            in_progress_knowledges.append(knowledge_detail)
+        else:  # not_learned or other
+            uncompleted_knowledges.append(knowledge_detail)
+    
+    total_knowledge = len(course_knowledge_list) if course_knowledge_list else len(knowledge_list)
+    completed_count = len(completed_knowledges) + len(review_needed_knowledges)  # 将需复习的也计入完成
+    progress_percentage = round((completed_count / total_knowledge * 100), 2) if total_knowledge > 0 else 0
+    
+    # Step 11: 返回结果
+    return jsonify({
+        "student": {
+            "student_id": current_user_id,
+            "sis_user_id": current_user_sis_id,
+            "student_name": current_user_name,
+            "is_in_class": True,
+            "enrollment_status": matched_enrolled_course.get("enrollment_status", "active"),
+            "match_method": match_reason if 'match_reason' in locals() else "默认查询"
+        },
+        "course": {
+            "course_id": current_course_id,
+            "course_name": actual_course_name,
+            "course_code": course_code,
+            "class_sis_id": sis_course_id,
+            "term_id": term_id,
+            "query_key": course_query_param if course_query_param else "当前课程",
+            "query_matched": True if not course_query_param else True,
+            "note": f"查询用户 {studentUid} 在课程 '{actual_course_name}' 中的学习进度"
+        },
+        "studentUid": studentUid,
+        "progress": {
+            "total_knowledges": total_knowledge,
+            "completed_knowledges_count": len(completed_knowledges),
+            "review_needed_knowledges_count": len(review_needed_knowledges),
+            "in_progress_knowledges_count": len(in_progress_knowledges),
+            "uncompleted_knowledges_count": len(uncompleted_knowledges),
+            "progress_percentage": progress_percentage,
+            "completion_percentage": round(len(completed_knowledges) / total_knowledge * 100, 2) if total_knowledge > 0 else 0,
+            "review_needed_percentage": round(len(review_needed_knowledges) / total_knowledge * 100, 2) if total_knowledge > 0 else 0
+        },
+        "knowledge_details": {
+            "completed_knowledges": completed_knowledges,
+            "review_needed_knowledges": review_needed_knowledges,
+            "in_progress_knowledges": in_progress_knowledges,
+            "uncompleted_knowledges": uncompleted_knowledges
+        },
+        "permission_info": {
+            "is_self_query": True,
+            "query_validated": True,
+            "student_query_provided": bool(student_query and student_query.strip()),
+            "course_query_provided": bool(course_query_param)
+        },
+        "last_updated": datetime.now().isoformat()
+    }), 200
