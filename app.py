@@ -581,10 +581,19 @@ def new_chat():
 @app.route('/dashboard/his')
 @login_required
 def his():
-    return render_template('dashboard/his.html', 
-                          embed_url=new_chat_url,
-                          username=session.get('username', '用户'),
-                            role=session.get('role', 'student'))
+    username = session.get('username', '用户')
+    role = session.get('role', 'student')
+    # 获取知识库统计（kb 模块初始化后 _get_kb_stats_for_page 才可用）
+    kb_stats = _get_kb_stats_for_page(username)
+    user_courses_info = process_user_courses(username, role)[0] or []
+    return render_template('dashboard/his.html',
+                          username=username,
+                          name=username,
+                          role=role,
+                          courses_info=user_courses_info,
+                          kb_stats=kb_stats,
+                          page_title='个人知识库')
+
 
 @app.route('/dashboard/agents') 
 @login_required
@@ -1053,6 +1062,83 @@ try:
     print("KG模块加载成功")
 except Exception as e:
     print(f"KG模块加载失败: {str(e)}")
+
+
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  📚 个人知识库 (KB) 模块                                              ║
+# ║  所有 KB 相关代码集中在此，方便统一维护                                  ║
+# ║  包含：环境变量、服务初始化、辅助函数、蓝图注册                           ║
+# ║  依赖：services/fastgpt_kb_service.py, routes/kb_routes.py            ║
+# ║  注意：上方 /dashboard/his 路由调用了本区块中的 _get_kb_stats_for_page  ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+# ---- 1. KB 环境变量 ----
+os.environ.setdefault('FASTGPT_API_URL',        'http://180.85.206.30:3000/api')
+os.environ.setdefault('FASTGPT_API_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
+os.environ.setdefault('FASTGPT_APP_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
+os.environ.setdefault('FASTGPT_SHARE_ID',        'zDrmPPnh9rdi3WmnyWCFwDcb')
+os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  'http://180.85.206.30:3000')
+
+# ---- 2. KB 服务初始化 ----
+fastgpt_kb_service = None
+try:
+    from services.fastgpt_kb_service import FastGPTKBService
+    fastgpt_kb_service = FastGPTKBService(
+        db=db,
+        base_url=os.environ.get('FASTGPT_API_URL'),
+        api_key=os.environ.get('FASTGPT_API_KEY')
+    )
+    print("✅ FastGPT 知识库服务初始化成功")
+except Exception as e:
+    print(f"⚠️ FastGPT 知识库服务初始化失败（KB 功能不可用）: {e}")
+    traceback.print_exc()
+
+# ---- 3. KB 辅助函数（供上方 his() 路由调用） ----
+def _get_kb_stats_for_page(username):
+    """获取用户知识库统计信息，供 /dashboard/his 页面渲染使用"""
+    _default = {
+        'documents': 0, 'ready_documents': 0,
+        'chunks': 0, 'queries': 0, 'rag_enabled': False
+    }
+    if not fastgpt_kb_service:
+        return _default
+    try:
+        if hasattr(fastgpt_kb_service, 'get_user_stats'):
+            return fastgpt_kb_service.get_user_stats(username)
+        if hasattr(fastgpt_kb_service, 'get_kb_stats'):
+            stats = fastgpt_kb_service.get_kb_stats(username)
+            return {
+                'documents': stats.get('total_documents', 0),
+                'ready_documents': stats.get('ready_documents', 0),
+                'chunks': stats.get('total_chunks', 0),
+                'queries': stats.get('queries', 0),
+                'rag_enabled': stats.get('ready_documents', 0) > 0
+            }
+    except Exception as e:
+        print(f"⚠️ 获取 KB 统计失败: {e}")
+    return _default
+
+# ---- 4. KB 蓝图注册（只注册 /api/kb/* 的 API 路由） ----
+try:
+    from routes.kb_routes import kb_bp, init_kb_blueprint
+    init_kb_blueprint(
+        app=app,
+        db=db,
+        fastgpt_kb_service=fastgpt_kb_service,
+        login_required_func=login_required,
+        process_user_courses_func=process_user_courses
+    )
+    app.register_blueprint(kb_bp)
+    print("✅ 知识库路由蓝图注册成功（/api/kb/*）")
+except Exception as e:
+    print(f"⚠️ 知识库路由注册失败: {e}")
+    traceback.print_exc()
+
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  📚 个人知识库 (KB) 模块结束                                          ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+
 
 if __name__ == '__main__': 
     app.run(debug=False, use_reloader=True, host='0.0.0.0', port=APP_PORT) 
