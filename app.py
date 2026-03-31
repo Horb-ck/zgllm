@@ -148,7 +148,7 @@ DEFAULT_EMBED_URL = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=cc1gre
 qea_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=zci1ditlgimgguu13dz5ra5n&studentUid="
 poac_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=my14ciwq8qa7moats2q4p28v&studentUid="
 pp_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=k53UaEbEHTWKQRLHzIjV5jFT&studentUid="
-syat_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eajvaYCSBHZSXVN1q24sbYNR&studentUid="
+sd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eajvaYCSBHZSXVN1q24sbYNR&studentUid="
 vsdf_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=kbcdnjU7cfTVFjGjTAkKz223&studentUid="
 aosaa_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=iZBNYVKb0zVZnnTZbq6gNnt6&studentUid="
 mraad_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=i8Oeda9zIrXfVUfqZXQ1qKuv&studentUid="
@@ -156,7 +156,8 @@ la_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=fhw37
 rm_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=cFXQK1BlZq1zNkWSuGsxbu8J&studentUid="
 ptams_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=vqjCwyKQLzmNbxiJbNT8o3mi&studentUid="
 hohc_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=ed78T6IEQ5hanDkXVovkQtjZ&studentUid="
-hotd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=zAwoWpdEmuQgdDG1kFJOnlq7&studentUid="
+hotd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=xVJOQmaXZC2hxKkO2B75VrRs&studentUid="
+rdac_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=iecsnqtrFQeuOY4353ZZ1ilM&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
@@ -186,10 +187,10 @@ agents = [
     },
     { 
         "id": 4,
-        "name": "软件系统构架技术",
+        "name": "软件设计",
         "description": "掌握全栈软件设计，构建高可用、可扩展的工业级应用。",
-        "url": syat_agent_class_url,
-        "image_url": "/static/img/syat.jpg"
+        "url": sd_agent_class_url,
+        "image_url": "/static/img/sd.jpg"
     },
     # { 
     #     "id": 5,
@@ -246,6 +247,13 @@ agents = [
         "description": "理解科技发展脉络，培养历史洞察与未来设计的系统性思维。",
         "url": hotd_agent_class_url,
         "image_url": "/static/img/hotd.jpg"
+    },
+    {
+        "id": 11,
+        "name": "机器人动力学与控制",
+        "description": "学习运动学、轨迹规划、动力学与运动控制，掌握建模与控制核心技能。",
+        "url": rdac_agent_class_url,
+        "image_url": "/static/img/rdac.png"
     }
 ]
 
@@ -467,6 +475,7 @@ def login():
                 session['user_courses'] = []
                 # 调用统一函数处理用户课程
                 user_courses, current_course, success = process_user_courses(session['username'], session['role'])
+                print("/login/user_global_store",user_global_store)
                 if not success:
                     flash('获取课程信息失败，请联系管理员', 'danger')
                     return render_template('auth/login.html')

@@ -26,7 +26,7 @@ netstat -aon|findstr 7777
 mysql -u root -p
 use zgllm;
 select * from student where email="20201851@stu.cqu.edu.cn";
-delete from student where email="20201851@stu.cqu.edu.cn";
+delete from student where email="202414131117@stu.cqu.edu.cn";
 UPDATE student SET sid = "30169437" WHERE email="roywang@cqu.edu.cn";
 
 1. pip install flask
