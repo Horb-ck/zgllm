@@ -1,0 +1,531 @@
+{% extends "layout.html" %}
+
+{% block title %}开发者统计面板{% endblock %}
+
+{% block content %}
+<div class="analytics-shell">
+    <header class="analytics-topbar">
+        <div>
+            <div class="eyebrow">Developer Only</div>
+            <h1>平台使用统计</h1>
+            <p>独立查看平台活跃度、在线峰值、页面热度和课程使用情况</p>
+        </div>
+        <div class="topbar-actions">
+            <form method="get" class="period-form">
+                <label for="start_date">开始日期</label>
+                <input id="start_date" name="start_date" type="date" value="{{ analytics.date_range.start_date }}">
+                <label for="end_date">结束日期</label>
+                <input id="end_date" name="end_date" type="date" value="{{ analytics.date_range.end_date }}">
+                <button type="submit" class="filter-btn">查询</button>
+            </form>
+            <a href="{{ url_for('analytics_logout') }}" class="ghost-btn">退出开发者入口</a>
+        </div>
+    </header>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">今日 DAU</div>
+            <div class="stat-value">{{ analytics.today.dau }}</div>
+            <div class="stat-note">今天访问过平台的去重用户数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">当前在线</div>
+            <div class="stat-value">{{ analytics.today.current_online }}</div>
+            <div class="stat-note">最近 5 分钟内有活动的用户</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">今日峰值在线</div>
+            <div class="stat-value">{{ analytics.today.peak_online }}</div>
+            <div class="stat-note">按最近 5 分钟活跃窗口估算</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">今日请求量</div>
+            <div class="stat-value">{{ analytics.today.requests }}</div>
+            <div class="stat-note">不含静态资源和心跳请求</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">今日登录数</div>
+            <div class="stat-value">{{ analytics.today.logins }}</div>
+            <div class="stat-note">成功登录次数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">今日对话数</div>
+            <div class="stat-value">{{ analytics.today.chats }}</div>
+            <div class="stat-note">MCP 对话接口调用次数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">今日注册数</div>
+            <div class="stat-value">{{ analytics.today.registrations }}</div>
+            <div class="stat-note">当日成功注册次数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">所选时段活跃</div>
+            <div class="stat-value">{{ analytics.selected_period.active_users }}</div>
+            <div class="stat-note">所选时段内的去重活跃用户</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">所选时段峰值在线</div>
+            <div class="stat-value">{{ analytics.selected_period.peak_online }}</div>
+            <div class="stat-note">所选时段内每日峰值在线的最大值</div>
+        </div>
+    </section>
+
+    <section class="analytics-panels">
+        <div class="panel panel-wide">
+            <div class="panel-header">
+                <div>
+                    <h3>{{ analytics.date_range.label }}趋势</h3>
+                    <span>DAU / 请求量 / 峰值在线</span>
+                </div>
+                <span class="timestamp">生成时间：{{ analytics.generated_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            </div>
+            <div id="usage-trend-chart" class="chart-box"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h3>{{ analytics.date_range.label }}热门页面</h3>
+                <span>按访问量排序</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>页面</th>
+                            <th>访问量</th>
+                            <th>UV</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if analytics.top_pages %}
+                            {% for item in analytics.top_pages %}
+                            <tr>
+                                <td>{{ item.path }}</td>
+                                <td>{{ item.views }}</td>
+                                <td>{{ item.uv }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="empty-cell">暂无页面访问数据</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h3>{{ analytics.date_range.label }}热门课程智能体</h3>
+                <span>按打开次数排序</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>智能体</th>
+                            <th>打开次数</th>
+                            <th>UV</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if analytics.top_agents %}
+                            {% for item in analytics.top_agents %}
+                            <tr>
+                                <td>{{ item.agent_name }}</td>
+                                <td>{{ item.opens }}</td>
+                                <td>{{ item.uv }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="empty-cell">暂无智能体使用数据</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel panel-wide">
+            <div class="panel-header">
+                <h3>今日角色分布</h3>
+                <span>按今日活跃用户去重</span>
+            </div>
+            <div class="simple-list role-list-wide">
+                {% if analytics.role_distribution %}
+                    {% for item in analytics.role_distribution %}
+                    <div class="list-row">
+                        <span>{{ '教师' if item.role == 'teacher' else '学生' if item.role == 'student' else item.role }}</span>
+                        <strong>{{ item.users }}</strong>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">暂无角色活跃数据</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel panel-wide">
+            <div class="panel-header">
+                <h3>{{ analytics.date_range.label }}明细</h3>
+                <span>方便开发侧排查和复盘</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>DAU</th>
+                            <th>请求量</th>
+                            <th>登录数</th>
+                            <th>注册数</th>
+                            <th>对话数</th>
+                            <th>峰值在线</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="summary-row">
+                            <td>所选时段汇总</td>
+                            <td>{{ analytics.selected_period.active_users }}</td>
+                            <td>{{ analytics.selected_period.requests }}</td>
+                            <td>{{ analytics.selected_period.logins }}</td>
+                            <td>{{ analytics.selected_period.registrations }}</td>
+                            <td>{{ analytics.selected_period.chats }}</td>
+                            <td>{{ analytics.selected_period.peak_online }}</td>
+                        </tr>
+                        {% for item in analytics.daily_trend %}
+                        <tr>
+                            <td>{{ item.day }}</td>
+                            <td>{{ item.dau }}</td>
+                            <td>{{ item.requests }}</td>
+                            <td>{{ item.logins }}</td>
+                            <td>{{ item.registrations }}</td>
+                            <td>{{ item.chats }}</td>
+                            <td>{{ item.peak_online }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(180deg, #edf4fb 0%, #f8fafc 100%);
+    }
+
+    .analytics-shell {
+        padding: 28px;
+        max-width: 1440px;
+        margin: 0 auto;
+    }
+
+    .analytics-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .eyebrow {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+
+    .analytics-topbar h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        color: #183153;
+    }
+
+    .analytics-topbar p {
+        margin: 0;
+        color: #64748b;
+    }
+
+    .ghost-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 16px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #163150;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(180, 198, 218, 0.5);
+    }
+
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .period-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(180, 198, 218, 0.5);
+    }
+
+    .period-form label {
+        color: #516579;
+        font-size: 14px;
+    }
+
+    .period-form input {
+        border: 1px solid #c9d6e2;
+        border-radius: 10px;
+        padding: 8px 12px;
+        background: #fff;
+        color: #183153;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .filter-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 9px 14px;
+        background: #1d4ed8;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card,
+    .panel {
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(180, 198, 218, 0.45);
+        border-radius: 18px;
+        box-shadow: 0 14px 32px rgba(23, 52, 86, 0.08);
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-label {
+        color: #5b6f84;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        font-size: 34px;
+        line-height: 1;
+        color: #0f2f52;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .stat-note {
+        color: #7b8ea3;
+        font-size: 13px;
+    }
+
+    .analytics-panels {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+    }
+
+    .panel {
+        padding: 18px 20px 20px;
+    }
+
+    .panel-wide {
+        grid-column: 1 / -1;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .panel-header h3 {
+        margin: 0;
+        color: #183153;
+        font-size: 18px;
+    }
+
+    .panel-header span,
+    .timestamp {
+        color: #7b8ea3;
+        font-size: 13px;
+    }
+
+    .chart-box {
+        width: 100%;
+        height: 340px;
+    }
+
+    .simple-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .list-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        background: #f5f9fc;
+        border-radius: 12px;
+        color: #24486d;
+    }
+
+    .role-list-wide {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    th,
+    td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #edf2f7;
+        text-align: left;
+        color: #27405e;
+        white-space: nowrap;
+    }
+
+    th {
+        color: #6f8195;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .summary-row td {
+        background: #eef6ff;
+        font-weight: 700;
+        color: #173a63;
+    }
+
+    .empty-state,
+    .empty-cell {
+        color: #7b8ea3;
+        text-align: center;
+        padding: 18px 0;
+    }
+
+    @media (max-width: 1100px) {
+        .analytics-panels {
+            grid-template-columns: 1fr;
+        }
+
+        .analytics-topbar {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+<script>
+    (function () {
+        const chartDom = document.getElementById('usage-trend-chart');
+        if (!chartDom || typeof echarts === 'undefined') {
+            return;
+        }
+
+        const trend = {{ analytics.daily_trend | tojson }};
+        const chart = echarts.init(chartDom);
+        chart.setOption({
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['DAU', '请求量', '峰值在线']
+            },
+            grid: {
+                left: 40,
+                right: 20,
+                top: 40,
+                bottom: 30
+            },
+            xAxis: {
+                type: 'category',
+                data: trend.map(item => item.day.slice(5))
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '人数'
+                },
+                {
+                    type: 'value',
+                    name: '请求量'
+                }
+            ],
+            series: [
+                {
+                    name: 'DAU',
+                    type: 'line',
+                    smooth: true,
+                    data: trend.map(item => item.dau),
+                    itemStyle: { color: '#1f78ff' },
+                    areaStyle: { color: 'rgba(31, 120, 255, 0.12)' }
+                },
+                {
+                    name: '请求量',
+                    type: 'bar',
+                    yAxisIndex: 1,
+                    data: trend.map(item => item.requests),
+                    itemStyle: { color: '#8bc34a' }
+                },
+                {
+                    name: '峰值在线',
+                    type: 'line',
+                    smooth: true,
+                    data: trend.map(item => item.peak_online),
+                    itemStyle: { color: '#ff8f00' }
+                }
+            ]
+        });
+
+        window.addEventListener('resize', function () {
+            chart.resize();
+        });
+    })();
+</script>
+{% endblock %}
