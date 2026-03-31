@@ -989,7 +989,7 @@ def analytics_login():
 @app.route('/dev/analytics/logout')
 def analytics_logout():
     session.pop('analytics_admin', None)
-    return redirect(url_for('analytics_login'))
+    return redirect(EXTERNAL_URL)
 
 
 @app.route('/dev/analytics')
