@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+
+{% block title %}开发者统计登录{% endblock %}
+
+{% block content %}
+<div class="analytics-login-page">
+    <div class="analytics-login-card">
+        <div class="analytics-login-head">
+            <h1>开发者统计入口</h1>
+            <p>这个页面仅供开发人员查看平台使用数据。</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-list">
+                    {% for category, message in messages %}
+                    <div class="flash-item {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if analytics_enabled %}
+        <form method="post" class="analytics-login-form">
+            <input type="hidden" name="next" value="{{ next_url }}">
+            <label for="access_key">访问密钥</label>
+            <input id="access_key" name="access_key" type="password" placeholder="请输入开发者访问密钥" required>
+            <button type="submit">进入统计页面</button>
+        </form>
+        {% else %}
+        <div class="empty-tip">
+            服务器尚未配置 `ANALYTICS_ACCESS_KEY`，当前无法访问统计页面。
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .analytics-login-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: radial-gradient(circle at top, #dceeff 0%, #eef3f8 45%, #f8fafc 100%);
+    }
+
+    .analytics-login-card {
+        width: 100%;
+        max-width: 460px;
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 20px 50px rgba(18, 46, 84, 0.12);
+        border: 1px solid rgba(168, 188, 210, 0.35);
+    }
+
+    .analytics-login-head h1 {
+        margin: 0 0 10px;
+        color: #163150;
+        font-size: 28px;
+    }
+
+    .analytics-login-head p {
+        margin: 0 0 20px;
+        color: #637990;
+        font-size: 14px;
+    }
+
+    .analytics-login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .analytics-login-form label {
+        color: #36506d;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .analytics-login-form input {
+        border: 1px solid #c9d6e2;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 15px;
+        outline: none;
+    }
+
+    .analytics-login-form input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+    }
+
+    .analytics-login-form button {
+        margin-top: 6px;
+        border: none;
+        border-radius: 12px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, #1d4ed8, #0f766e);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .flash-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .flash-item {
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .flash-item.danger {
+        background: #fff1f2;
+        color: #b42318;
+    }
+
+    .empty-tip {
+        padding: 14px 16px;
+        background: #fff7ed;
+        color: #9a3412;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}

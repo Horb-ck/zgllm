@@ -1,6 +1,7 @@
 import pymysql
 from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify, send_from_directory
 import os
+import hmac
 from werkzeug.security import generate_password_hash, check_password_hash
 import time
 from functools import wraps
@@ -31,6 +32,21 @@ from utils.email_verify import (
     _verify_code,
     VERIFICATION_TTL_MINUTES,
 )
+from utils.usage_analytics import (
+    AGENT_OPEN_EVENT,
+    CHAT_EVENT,
+    HEARTBEAT_EVENT,
+    KG_VIEW_EVENT,
+    LOGIN_SUCCESS_EVENT,
+    REGISTER_SUCCESS_EVENT,
+    cleanup_stale_online_users,
+    collect_request_usage,
+    get_usage_summary,
+    init_usage_analytics,
+    refresh_online_user,
+    should_track_request,
+    track_event,
+)
 from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL
 from app_kg import app_kg
 
@@ -48,13 +64,38 @@ CORS(app,
      vary_header=True)
 app.register_blueprint(app_kg)
 
+ANALYTICS_ACCESS_KEY = os.environ.get("ANALYTICS_ACCESS_KEY", "").strip()
+
+
+@app.before_request
+def collect_platform_usage():
+    if not should_track_request(request):
+        return
+
+    username = session.get('username')
+    role = session.get('role')
+    if username:
+        refresh_online_user(db, username, role, request)
+    collect_request_usage(db, request, username=username, role=role)
+
 
 # ================== Flask 路由 ==================
 @app.route('/dashboard/chat', methods=['POST'])
 def chat():
     user_input = request.json.get("message")
     username = session.get('username')  # 获取当前用户
+    role = session.get('role')
     print("Mcp username:",username)
+    if username:
+        refresh_online_user(db, username, role, request)
+    track_event(
+        db,
+        CHAT_EVENT,
+        request=request,
+        username=username,
+        role=role,
+        meta={"message_length": len(user_input or "")},
+    )
     # 创建新事件循环（与主线程隔离）
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -226,6 +267,22 @@ def login_required(f):
     return decorated_function
 
 
+def analytics_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('analytics_admin'):
+            return redirect(url_for('analytics_login', next=request.path))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def _safe_internal_next(target, fallback):
+    if target and target.startswith('/') and not target.startswith('//'):
+        return target
+    return fallback
+
+
 # 创建必要的目录
 os.makedirs('static/img', exist_ok=True)
 os.makedirs('static/css', exist_ok=True)
@@ -362,6 +419,15 @@ def login():
                     return render_template('auth/login.html')
                 session['user_courses'] = user_courses
                 session['current_course'] = current_course
+                track_event(
+                    db,
+                    LOGIN_SUCCESS_EVENT,
+                    request=request,
+                    username=username,
+                    role=session['role'],
+                    meta={"login_source": "password"},
+                )
+                refresh_online_user(db, username, session['role'], request)
                 flash('登录成功', 'success')
                 return redirect(url_for('new_chat'))
             else:
@@ -471,6 +537,15 @@ def register():
                 return render_template('auth/login.html')
             session['user_courses'] = user_courses
             session['current_course'] = current_course
+            track_event(
+                db,
+                REGISTER_SUCCESS_EVENT,
+                request=request,
+                username=username,
+                role=role,
+                meta={"register_source": "email_verification"},
+            )
+            refresh_online_user(db, username, role, request)
             return redirect(url_for('new_chat'))
 
     return render_template('auth/register.html', form_data=form_data)
@@ -535,6 +610,10 @@ def logout():
             print(f"用户 {username} 登出，已从全局存储中删除")
         else:
             print(f"用户 {username} 登出，但全局存储中未找到该用户")
+        try:
+            db["usage_online_users"].delete_one({"username": username})
+        except Exception as e:
+            print(f"⚠️ 清理在线用户状态失败: {e}")
     session.pop('user_email', None)
     session.pop('username', None)
     session.pop('role', None)
@@ -633,6 +712,19 @@ def view_agent(agent_id):
     base_student_url = agent.get('url') or DEFAULT_EMBED_URL
     embed_url = f"{base_student_url}{username}"
     kg_url = url_for('kg_page', course_id=agent['id'], mode=kg_mode)
+    track_event(
+        db,
+        AGENT_OPEN_EVENT,
+        request=request,
+        username=username,
+        role=role,
+        meta={
+            "agent_id": agent['id'],
+            "agent_name": agent['name'],
+            "kg_mode": kg_mode,
+            "is_own_course": is_own,
+        },
+    )
 
     return render_template('dashboard/class_chat.html',
                         embed_url=embed_url,
@@ -819,8 +911,88 @@ def kg_page(course_id):
     else:
         target_url = url_for('app_kg.visitor_view', course_name=course_name, visitor_id=user_id)
 
+    track_event(
+        db,
+        KG_VIEW_EVENT,
+        request=request,
+        username=user_id,
+        role=role,
+        meta={
+            "course_id": course_id,
+            "course_name": course_name,
+            "selected_mode": selected,
+        },
+    )
+
     # print(f"[KG 跳转] course_id={course_id}, course_name={course_name}, role={role}, selected_mode={selected}, target={target_url}")
     return redirect(target_url)
+
+
+@app.route('/usage/heartbeat', methods=['POST'])
+@login_required
+def usage_heartbeat():
+    username = session.get('username')
+    role = session.get('role')
+    current_online = refresh_online_user(db, username, role, request)
+    track_event(
+        db,
+        HEARTBEAT_EVENT,
+        request=request,
+        username=username,
+        role=role,
+        meta={"source": "browser_heartbeat"},
+    )
+    return jsonify({"success": True, "current_online": current_online})
+
+
+@app.route('/dev/analytics/login', methods=['GET', 'POST'])
+def analytics_login():
+    next_url = _safe_internal_next(request.args.get('next'), url_for('usage_analytics'))
+    if session.get('analytics_admin'):
+        return redirect(next_url)
+
+    analytics_enabled = bool(ANALYTICS_ACCESS_KEY)
+    if request.method == 'POST':
+        access_key = (request.form.get('access_key') or '').strip()
+        next_url = _safe_internal_next(request.form.get('next'), url_for('usage_analytics'))
+
+        if not analytics_enabled:
+            flash('统计页面访问密钥未配置，请先设置 ANALYTICS_ACCESS_KEY', 'danger')
+            return render_template(
+                'auth/analytics_login.html',
+                analytics_enabled=analytics_enabled,
+                next_url=next_url,
+            )
+
+        if hmac.compare_digest(access_key, ANALYTICS_ACCESS_KEY):
+            session['analytics_admin'] = True
+            return redirect(next_url)
+
+        flash('访问密钥错误', 'danger')
+
+    return render_template(
+        'auth/analytics_login.html',
+        analytics_enabled=analytics_enabled,
+        next_url=next_url,
+    )
+
+
+@app.route('/dev/analytics/logout')
+def analytics_logout():
+    session.pop('analytics_admin', None)
+    return redirect(url_for('analytics_login'))
+
+
+@app.route('/dev/analytics')
+@analytics_required
+def usage_analytics():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    summary = get_usage_summary(db, start_date=start_date, end_date=end_date)
+    return render_template(
+        'dashboard/usage_analytics.html',
+        analytics=summary,
+    )
 
 @app.route('/js/<path:filename>')
 def kg_js(filename):
@@ -5356,6 +5528,8 @@ client = MongoClient(
         authSource='admin'
     )
 db = client["education2"]
+init_usage_analytics(db)
+cleanup_stale_online_users(db)
 mcp_thread = threading.Thread(target=start_mcp_server, daemon=True)
 mcp_thread.start()
 # 预加载KG模块，确保可以正常导入
