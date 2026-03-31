@@ -92,18 +92,7 @@ def chat():
     user_input = request.json.get("message")
     username = session.get('username')  # 获取当前用户
     role = session.get('role')
-    role = session.get('role')
     print("Mcp username:",username)
-    if username:
-        refresh_online_user(db, username, role, request)
-    track_event(
-        db,
-        CHAT_EVENT,
-        request=request,
-        username=username,
-        role=role,
-        meta={"message_length": len(user_input or "")},
-    )
     if username:
         refresh_online_user(db, username, role, request)
     track_event(
@@ -281,22 +270,6 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
-
-
-def analytics_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('analytics_admin'):
-            return redirect(url_for('analytics_login', next=request.path))
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
-def _safe_internal_next(target, fallback):
-    if target and target.startswith('/') and not target.startswith('//'):
-        return target
-    return fallback
 
 
 def analytics_required(f):
@@ -680,7 +653,6 @@ def logout():
             db["usage_online_users"].delete_one({"username": username})
         except Exception as e:
             print(f"⚠️ 清理在线用户状态失败: {e}")
-    
     session.clear()
     return redirect(url_for('login'))
 
@@ -1030,7 +1002,7 @@ def analytics_login():
 @app.route('/dev/analytics/logout')
 def analytics_logout():
     session.pop('analytics_admin', None)
-    return redirect(url_for('analytics_login'))
+    return redirect(EXTERNAL_URL)
 
 
 @app.route('/dev/analytics')
