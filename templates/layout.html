@@ -11,6 +11,48 @@
     {% block content %}{% endblock %}
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% if session.get('username') %}
+    <script>
+        (function () {
+            const heartbeatUrl = "{{ url_for('usage_heartbeat') }}";
+            const intervalMs = 60000;
+            let timer = null;
+
+            function sendHeartbeat() {
+                if (document.visibilityState === 'hidden') {
+                    return;
+                }
+                fetch(heartbeatUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        path: window.location.pathname
+                    })
+                }).catch(function () {});
+            }
+
+            function startHeartbeat() {
+                if (timer) {
+                    clearInterval(timer);
+                }
+                timer = setInterval(sendHeartbeat, intervalMs);
+            }
+
+            window.addEventListener('focus', sendHeartbeat);
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible') {
+                    sendHeartbeat();
+                }
+            });
+
+            sendHeartbeat();
+            startHeartbeat();
+        })();
+    </script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>
