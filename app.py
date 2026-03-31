@@ -92,7 +92,18 @@ def chat():
     user_input = request.json.get("message")
     username = session.get('username')  # 获取当前用户
     role = session.get('role')
+    role = session.get('role')
     print("Mcp username:",username)
+    if username:
+        refresh_online_user(db, username, role, request)
+    track_event(
+        db,
+        CHAT_EVENT,
+        request=request,
+        username=username,
+        role=role,
+        meta={"message_length": len(user_input or "")},
+    )
     if username:
         refresh_online_user(db, username, role, request)
     track_event(
@@ -262,6 +273,22 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def analytics_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('analytics_admin'):
+            return redirect(url_for('analytics_login', next=request.path))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def _safe_internal_next(target, fallback):
+    if target and target.startswith('/') and not target.startswith('//'):
+        return target
+    return fallback
 
 
 def analytics_required(f):
@@ -1227,6 +1254,8 @@ cleanup_stale_online_users(db)
 # db = client["education2"]
 # user_sessions_collection = db["user_sessions"]
 # user_sessions_collection.create_index("username", unique=True)
+init_usage_analytics(db)
+cleanup_stale_online_users(db)
 mcp_thread = threading.Thread(target=start_mcp_server, daemon=True)
 mcp_thread.start()
 # 预加载KG模块，确保可以正常导入

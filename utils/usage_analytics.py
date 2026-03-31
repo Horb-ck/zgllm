@@ -25,6 +25,8 @@ SKIP_PATHS = {
     "/get_session",
     "/usage/heartbeat",
 }
+
+
 def _now():
     return datetime.now(CHINA_TZ)
 
