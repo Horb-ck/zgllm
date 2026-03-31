@@ -89,7 +89,7 @@ DEFAULT_EMBED_URL = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=cc1gre
 qea_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=zci1ditlgimgguu13dz5ra5n&studentUid="
 poac_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=my14ciwq8qa7moats2q4p28v&studentUid="
 pp_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=k53UaEbEHTWKQRLHzIjV5jFT&studentUid="
-syat_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eajvaYCSBHZSXVN1q24sbYNR&studentUid="
+sd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eajvaYCSBHZSXVN1q24sbYNR&studentUid="
 vsdf_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=kbcdnjU7cfTVFjGjTAkKz223&studentUid="
 aosaa_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=iZBNYVKb0zVZnnTZbq6gNnt6&studentUid="
 mraad_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=i8Oeda9zIrXfVUfqZXQ1qKuv&studentUid="
@@ -97,7 +97,8 @@ la_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=fhw37
 rm_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=cFXQK1BlZq1zNkWSuGsxbu8J&studentUid="
 ptams_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=vqjCwyKQLzmNbxiJbNT8o3mi&studentUid="
 hohc_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=ed78T6IEQ5hanDkXVovkQtjZ&studentUid="
-hotd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=zAwoWpdEmuQgdDG1kFJOnlq7&studentUid="
+hotd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=xVJOQmaXZC2hxKkO2B75VrRs&studentUid="
+rdac_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=iecsnqtrFQeuOY4353ZZ1ilM&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
@@ -127,10 +128,10 @@ agents = [
     },
     { 
         "id": 4,
-        "name": "软件系统构架技术",
+        "name": "软件设计",
         "description": "掌握全栈软件设计，构建高可用、可扩展的工业级应用。",
-        "url": syat_agent_class_url,
-        "image_url": "/static/img/syat.jpg"
+        "url": sd_agent_class_url,
+        "image_url": "/static/img/sd.jpg"
     },
     # { 
     #     "id": 5,
@@ -187,6 +188,13 @@ agents = [
         "description": "理解科技发展脉络，培养历史洞察与未来设计的系统性思维。",
         "url": hotd_agent_class_url,
         "image_url": "/static/img/hotd.jpg"
+    },
+    {
+        "id": 11,
+        "name": "机器人动力学与控制",
+        "description": "学习运动学、轨迹规划、动力学与运动控制，掌握建模与控制核心技能。",
+        "url": rdac_agent_class_url,
+        "image_url": "/static/img/rdac.png"
     }
 ]
 
@@ -357,6 +365,7 @@ def login():
                 session['user_courses'] = []
                 # 调用统一函数处理用户课程和全局变量
                 user_courses, current_course, success = process_user_courses(session['username'], session['role'])
+                print("/login/user_global_store",user_global_store)
                 if not success:
                     flash('获取课程信息失败，请联系管理员', 'danger')
                     return render_template('auth/login.html')
@@ -2306,30 +2315,30 @@ def get_student_progress(student_query=None):
     - 学生表(students): sis_user_id, enrolled_courses[{id, knowledge_list[{knowledge_id, state}]}]
     """
     # Step 1: 获取studentUid参数
-    student_uid = request.args.get('studentUid', '').strip()
-    if not student_uid:
+    studentUid = request.args.get('studentUid', '').strip()
+    if not studentUid:
         return jsonify({
             "error": "缺少studentUid参数",
             "message": "请提供studentUid参数以确定当前用户"
         }), 400
     
-    print(f"获取学生进度请求 - studentUid: {student_uid}, student_query: {student_query}")
+    print(f"获取学生进度请求 - studentUid: {studentUid}, student_query: {student_query}")
     
     # Step 2: 从全局存储查找当前课程
     current_course = None
-    if student_uid in user_global_store:
-        user_data = user_global_store[student_uid]
+    if studentUid in user_global_store:
+        user_data = user_global_store[studentUid]
         current_course = user_data.get('current_course')
-        print(f"从全局存储找到用户数据: {student_uid}")
+        print(f"从全局存储找到用户数据: {studentUid}")
         print(f"当前课程: {current_course}")
     else:
-        print(f"studentUid {student_uid} 不在全局存储中")
+        print(f"studentUid {studentUid} 不在全局存储中")
     
     if not current_course:
         return jsonify({
             "error": "未找到当前课程信息",
-            "message": f"用户 {student_uid} 尚未在学情分析页面选择课程",
-            "studentUid": student_uid,
+            "message": f"用户 {studentUid} 尚未在学情分析页面选择课程",
+            "studentUid": studentUid,
             "suggestion": "请先在学情分析页面选择课程"
         }), 404
     
@@ -2429,7 +2438,7 @@ def get_student_progress(student_query=None):
             #         "course_id": current_course_id,
             #         "course_name": current_course_name,
             #         "sis_course_id": current_sis_course_id,
-            #         "studentUid": student_uid
+            #         "studentUid": studentUid
             #     },
             #     "matched_courses_in_db": matched_courses_info if matched_courses_info else [],
             #     "suggestion": f"您可查询的课程是: {current_course_name} (ID: {current_course_id})"
@@ -2673,7 +2682,7 @@ def get_student_progress(student_query=None):
             "error": f"未找到与 '{student_query}' 匹配的学生",
             "course_name": actual_course_name,
             "course_id": current_course_id,
-            "studentUid": student_uid,
+            "studentUid": studentUid,
             "debug_info": {
                 "student_query": student_query,
                 "query_type": type(student_query).__name__,
@@ -2720,7 +2729,7 @@ def get_student_progress(student_query=None):
                     "course_name": actual_course_name,
                     "course_code": course_code
                 },
-                "studentUid": student_uid,
+                "studentUid": studentUid,
                 "query_key": course_query if course_query else "当前课程",
                 "is_in_class": True,
                 "has_enrolled": False,
@@ -2739,7 +2748,7 @@ def get_student_progress(student_query=None):
                     "course_id": current_course_id,
                     "course_name": actual_course_name
                 },
-                "studentUid": student_uid,
+                "studentUid": studentUid,
                 "query_key": course_query if course_query else "当前课程",
                 "is_in_class": False,
                 "has_enrolled": False,
@@ -2804,9 +2813,9 @@ def get_student_progress(student_query=None):
             "term_id": term_id,
             "query_key": course_query if course_query else "当前课程",
             "query_matched": True,
-            "note": f"查询用户 {student_uid} 的课程 '{actual_course_name}' 中的学生进度"
+            "note": f"查询用户 {studentUid} 的课程 '{actual_course_name}' 中的学生进度"
         },
-        "studentUid": student_uid,
+        "studentUid": studentUid,
         "progress": {
             "total_knowledges": total_knowledge,
             "completed_knowledges_count": len(completed_knowledges),
@@ -2849,30 +2858,30 @@ def get_knowledge_status(knowledge_query=None):
     - 学生表(students): sis_user_id, enrolled_courses[{id, knowledge_list[{knowledge_id, state}]}]
     """
     # Step 1: 获取studentUid参数
-    student_uid = request.args.get('studentUid', '').strip()
-    if not student_uid:
+    studentUid = request.args.get('studentUid', '').strip()
+    if not studentUid:
         return jsonify({
             "error": "缺少studentUid参数",
             "message": "请提供studentUid参数以确定当前用户"
         }), 400
     
-    print(f"获取知识点状态请求 - studentUid: {student_uid}, knowledge_query: {knowledge_query}")
+    print(f"获取知识点状态请求 - studentUid: {studentUid}, knowledge_query: {knowledge_query}")
     
     # Step 2: 从全局存储查找当前课程
     current_course = None
-    if student_uid in user_global_store:
-        user_data = user_global_store[student_uid]
+    if studentUid in user_global_store:
+        user_data = user_global_store[studentUid]
         current_course = user_data.get('current_course')
-        print(f"从全局存储找到用户数据: {student_uid}")
+        print(f"从全局存储找到用户数据: {studentUid}")
         print(f"当前课程: {current_course}")
     else:
-        print(f"studentUid {student_uid} 不在全局存储中")
+        print(f"studentUid {studentUid} 不在全局存储中")
     
     if not current_course:
         return jsonify({
             "error": "未找到当前课程信息",
-            "message": f"用户 {student_uid} 尚未在学情分析页面选择课程",
-            "studentUid": student_uid,
+            "message": f"用户 {studentUid} 尚未在学情分析页面选择课程",
+            "studentUid": studentUid,
             "suggestion": "请先在学情分析页面选择课程"
         }), 404
     
@@ -2978,7 +2987,7 @@ def get_knowledge_status(knowledge_query=None):
             #         "course_id": current_course_id,
             #         "course_name": current_course_name,
             #         "sis_course_id": current_sis_course_id,
-            #         "studentUid": student_uid
+            #         "studentUid": studentUid
             #     },
             #     "matched_courses_in_db": matched_courses_info if matched_courses_info else [],
             #     "suggestion": f"您可查询的课程是: {current_course_name} (ID: {current_course_id})"
@@ -3058,7 +3067,7 @@ def get_knowledge_status(knowledge_query=None):
             "total_students": 0,
             "query_key": query if query else "当前课程",
             "query_matched": True,
-            "studentUid": student_uid,
+            "studentUid": studentUid,
             "message": "班级中没有学生"
         }), 200
 
@@ -3118,7 +3127,7 @@ def get_knowledge_status(knowledge_query=None):
             "course_id": current_course_id,
             "course_name": actual_course_name,
             "knowledge_query": knowledge_query,
-            "studentUid": student_uid,
+            "studentUid": studentUid,
             "query_key": query if query else "当前课程",
             "available_knowledges": [
                 {"knowledge_id": k.get('knowledge_id'), "knowledge_name": k.get('knowledge_name', '')}
@@ -3293,9 +3302,9 @@ def get_knowledge_status(knowledge_query=None):
             "knowledge_query": knowledge_query,
             "course_query": query if query else "当前课程",
             "query_matched": True,
-            "note": f"查询用户 {student_uid} 的课程 '{actual_course_name}' 中的知识点状态"
+            "note": f"查询用户 {studentUid} 的课程 '{actual_course_name}' 中的知识点状态"
         },
-        "studentUid": student_uid,
+        "studentUid": studentUid,
         "course_info": {
             "class_sis_id": sis_course_id,
             "term_id": term_id
@@ -3323,31 +3332,31 @@ def get_student_myprogress():
     3. 只有匹配成功才能查看学习情况
     """
     # Step 1: 获取studentUid参数（当前用户的ID）
-    student_uid = request.args.get('studentUid', '').strip()
+    studentUid = request.args.get('studentUid', '').strip()
     student_query = request.args.get('student_query', '').strip()
-    if not student_uid:
+    if not studentUid:
         return jsonify({
             "error": "缺少studentUid参数",
             "message": "请提供当前用户的studentUid参数"
         }), 400
     
-    print(f"获取学生进度请求 - 当前用户ID: {student_uid}, 目标学生查询: {student_query}")
+    print(f"获取学生进度请求 - 当前用户ID: {studentUid}, 目标学生查询: {student_query}")
     
     # Step 2: 从全局存储查找当前课程
     current_course = None
-    if student_uid in user_global_store:
-        user_data = user_global_store[student_uid]
+    if studentUid in user_global_store:
+        user_data = user_global_store[studentUid]
         current_course = user_data.get('current_course')
-        print(f"从全局存储找到当前用户数据: {student_uid}")
+        print(f"从全局存储找到当前用户数据: {studentUid}")
         print(f"当前课程: {current_course}")
     else:
-        print(f"studentUid {student_uid} 不在全局存储中")
+        print(f"studentUid {studentUid} 不在全局存储中")
     
     if not current_course:
         return jsonify({
             "error": "未找到当前课程信息",
-            "message": f"用户 {student_uid} 尚未在学情分析页面选择课程",
-            "studentUid": student_uid,
+            "message": f"用户 {studentUid} 尚未在学情分析页面选择课程",
+            "studentUid": studentUid,
             "suggestion": "请先在学情分析页面选择课程"
         }), 404
     
@@ -3467,32 +3476,32 @@ def get_student_myprogress():
     print(f"验证当前用户权限")
     print(f"{'='*60}")
     
-    # 查找当前用户(student_uid)在班级列表中的信息
+    # 查找当前用户(studentUid)在班级列表中的信息
     current_user_info = None
     for student_info in student_list:
         student_id = student_info.get("id")
         sis_user_id = student_info.get("sis_user_id")
         
         # 主要匹配sis_user_id（根据你的要求）
-        if sis_user_id and str(sis_user_id) == str(student_uid):
+        if sis_user_id and str(sis_user_id) == str(studentUid):
             current_user_info = student_info
             print(f"✓ 找到当前用户: {sis_user_id} (通过sis_user_id匹配)")
             break
         
         # 也可以匹配id
-        if student_id and str(student_id) == str(student_uid):
+        if student_id and str(student_id) == str(studentUid):
             current_user_info = student_info
             print(f"✓ 找到当前用户: {student_id} (通过id匹配)")
             break
     
     if not current_user_info:
-        print(f"✗ 当前用户 {student_uid} 不在当前课程的学生列表中")
+        print(f"✗ 当前用户 {studentUid} 不在当前课程的学生列表中")
         return jsonify({
-            "error": f"用户 {student_uid} 不在课程 '{actual_course_name}' 的学生列表中",
+            "error": f"用户 {studentUid} 不在课程 '{actual_course_name}' 的学生列表中",
             "message": "您没有权限查询此课程中的学生信息",
             "course_name": actual_course_name,
             "course_id": current_course_id,
-            "studentUid": student_uid
+            "studentUid": studentUid
         }), 403
     
     # 获取当前用户的详细信息
@@ -3519,8 +3528,8 @@ def get_student_myprogress():
         print(f"✗ 数据库中未找到当前用户的详细信息")
         return jsonify({
             "error": "用户信息不完整",
-            "message": f"未找到用户 {student_uid} 的详细信息",
-            "studentUid": student_uid
+            "message": f"未找到用户 {studentUid} 的详细信息",
+            "studentUid": studentUid
         }), 404
     
     # ========== Step 8: 验证student_query参数（如果存在） ==========
@@ -3625,7 +3634,7 @@ def get_student_myprogress():
                 "course_name": actual_course_name,
                 "course_code": course_code
             },
-            "studentUid": student_uid,
+            "studentUid": studentUid,
             "query_key": course_query_param if course_query_param else "当前课程",
             "is_in_class": True,
             "has_enrolled": False,
@@ -3694,9 +3703,9 @@ def get_student_myprogress():
             "term_id": term_id,
             "query_key": course_query_param if course_query_param else "当前课程",
             "query_matched": True if not course_query_param else True,
-            "note": f"查询用户 {student_uid} 在课程 '{actual_course_name}' 中的学习进度"
+            "note": f"查询用户 {studentUid} 在课程 '{actual_course_name}' 中的学习进度"
         },
-        "studentUid": student_uid,
+        "studentUid": studentUid,
         "progress": {
             "total_knowledges": total_knowledge,
             "completed_knowledges_count": len(completed_knowledges),
@@ -5389,4 +5398,4 @@ if __name__ == '__main__':
     #     print("❌ MCP 初始化失败：", e)
     #     traceback.print_exc()
         
-    app.run(debug=False, use_reloader=True, host='0.0.0.0', port=APP_PORT) 
+    app.run(debug=False, use_reloader=True, host='0.0.0.0', port=APP_PORT)

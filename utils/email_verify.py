@@ -2,10 +2,14 @@ import os
 import sys
 import smtplib
 import random
+import traceback
+import pymysql
+from contextlib import closing
+from threading import Lock
 from datetime import datetime, timedelta
 from email.header import Header
 from email.mime.text import MIMEText
-from typing import Iterable
+from typing import Iterable, Optional, Dict
 
 # Ensure project root is on sys.path so `config` can be imported when running this file directly
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,64 +17,316 @@ PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from config import MAIL_AUTH_KEY, EMAIL_URL  # noqa: E402
+from config import MAIL_AUTH_KEY, EMAIL_URL, MYSQL_URL  # noqa: E402
 
 # https://net.cqu.edu.cn/info/1028/1571.htm
 
-# 简单的验证码与发送计数存储（内存级） 
-verification_store = {}
-send_counter_ip = {}
-send_counter_account = {}
 VERIFICATION_TTL_MINUTES = 10
 SEND_LIMIT_PER_DAY = 5
+MAX_VERIFY_FAILS = 5
 
-def _today_key():
-    return datetime.utcnow().date()
+# 验证码状态
+STATUS_UNUSED = 0
+STATUS_USED = 1
+STATUS_EXPIRED = 2
+STATUS_INVALID = 3
 
-def _cleanup_counters():
-    today = _today_key()
-    for counter in (send_counter_ip, send_counter_account):
-        expired = [k for k, v in counter.items() if v["day"] != today]
-        for k in expired:
-            counter.pop(k, None)
+_last_code_ctx_by_account: Dict[str, dict] = {}
+_last_code_ctx_lock = Lock()
+
+
+def _get_conn():
+    """
+    Keep connection settings aligned with current project defaults.
+    Env vars are supported to avoid hard-coding credentials in all environments.
+    """
+    return pymysql.connect(
+        host=os.getenv("MYSQL_HOST", MYSQL_URL),
+        user=os.getenv("MYSQL_USER", "root"),
+        password=os.getenv("MYSQL_PASSWORD", "123456"),
+        database=os.getenv("MYSQL_DATABASE", "zgllm"),
+        charset="utf8mb4",
+    )
+
+
+def _purpose_key(scene: str, account: str, email: str) -> str:
+    return f"{scene}:{account}:{email.lower()}"
+
+
+def _remember_last_code(account: str, scene: str, email: str, code_id: int):
+    with _last_code_ctx_lock:
+        _last_code_ctx_by_account[account] = {
+            "scene": scene,
+            "email": email.lower(),
+            "code_id": code_id,
+            "created_at": datetime.utcnow(),
+        }
+
+
+def _get_last_code_ctx(account: str) -> Optional[dict]:
+    with _last_code_ctx_lock:
+        ctx = _last_code_ctx_by_account.get(account)
+        if not ctx:
+            return None
+        if datetime.utcnow() - ctx["created_at"] > timedelta(minutes=30):
+            _last_code_ctx_by_account.pop(account, None)
+            return None
+        return dict(ctx)
 
 def _can_send(ip_addr: str, account: str):
-    _cleanup_counters()
-    today = _today_key()
-    ip_info = send_counter_ip.get(ip_addr, {"day": today, "count": 0})
-    acct_info = send_counter_account.get(account, {"day": today, "count": 0})
-    return ip_info["count"] < SEND_LIMIT_PER_DAY and acct_info["count"] < SEND_LIMIT_PER_DAY
+    ip_addr = (ip_addr or "unknown").strip() or "unknown"
+    account = str(account or "").strip()
+    if not account:
+        return False
+
+    day_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = day_start + timedelta(days=1)
+
+    try:
+        with closing(_get_conn()) as conn, conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM email_send_log
+                WHERE ip_addr = %s
+                  AND send_status = 1
+                  AND created_at >= %s
+                  AND created_at < %s
+                """,
+                (ip_addr, day_start, day_end),
+            )
+            ip_count = int(cursor.fetchone()[0] or 0)
+
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM email_send_log
+                WHERE account = %s
+                  AND send_status = 1
+                  AND created_at >= %s
+                  AND created_at < %s
+                """,
+                (account, day_start, day_end),
+            )
+            account_count = int(cursor.fetchone()[0] or 0)
+
+        return ip_count < SEND_LIMIT_PER_DAY and account_count < SEND_LIMIT_PER_DAY
+    except Exception as exc:
+        print(f"_can_send failed: {exc}")
+        traceback.print_exc()
+        # 安全起见，频控不可用时默认不允许发送
+        return False
+
 
 def _bump_counters(ip_addr: str, account: str):
-    today = _today_key()
-    send_counter_ip[ip_addr] = {
-        "day": today,
-        "count": send_counter_ip.get(ip_addr, {"day": today, "count": 0})["count"] + 1
-    }
-    send_counter_account[account] = {
-        "day": today,
-        "count": send_counter_account.get(account, {"day": today, "count": 0})["count"] + 1
-    }
+    ip_addr = (ip_addr or "unknown").strip() or "unknown"
+    account = str(account or "").strip()
+    if not account:
+        return
+
+    now = datetime.utcnow()
+    ctx = _get_last_code_ctx(account)
+
+    try:
+        with closing(_get_conn()) as conn, conn.cursor() as cursor:
+            scene = None
+            email = None
+            code_id = None
+
+            if ctx:
+                scene = ctx["scene"]
+                email = ctx["email"]
+                code_id = ctx["code_id"]
+            else:
+                cursor.execute(
+                    """
+                    SELECT id, scene, email
+                    FROM email_verification_code
+                    WHERE account = %s
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """,
+                    (account,),
+                )
+                row = cursor.fetchone()
+                if row:
+                    code_id, scene, email = row[0], row[1], row[2]
+
+            if not scene:
+                scene = "register"
+            if email is None:
+                email = ""
+
+            cursor.execute(
+                """
+                INSERT INTO email_send_log (
+                    scene, account, email, code_id, ip_addr, user_agent,
+                    send_status, error_message, created_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (scene, account, email.lower(), code_id, ip_addr, None, 1, None, now),
+            )
+            conn.commit()
+    except Exception as exc:
+        print(f"_bump_counters failed: {exc}")
+        traceback.print_exc()
 
 def _store_code(scene: str, account: str, email: str, code: str):
-    key = f"{scene}:{account}:{email.lower()}"
-    verification_store[key] = {
-        "code": code,
-        "expires_at": datetime.utcnow() + timedelta(minutes=VERIFICATION_TTL_MINUTES)
-    }
+    scene = str(scene or "").strip()
+    account = str(account or "").strip()
+    email_lower = str(email or "").strip().lower()
+    code = str(code or "").strip()
+    if not scene or not account or not email_lower or not code:
+        return
+
+    now = datetime.utcnow()
+    expires_at = now + timedelta(minutes=VERIFICATION_TTL_MINUTES)
+    purpose_key = _purpose_key(scene, account, email_lower)
+
+    try:
+        with closing(_get_conn()) as conn, conn.cursor() as cursor:
+            # 同一业务键下老的未使用验证码置为作废，避免多码并存
+            cursor.execute(
+                """
+                UPDATE email_verification_code
+                SET status = %s, updated_at = %s
+                WHERE purpose_key = %s AND status = %s
+                """,
+                (STATUS_INVALID, now, purpose_key, STATUS_UNUSED),
+            )
+
+            cursor.execute(
+                """
+                INSERT INTO email_verification_code (
+                    scene, account, email, code, purpose_key,
+                    status, fail_count, ip_addr, user_agent,
+                    expires_at, used_at, created_at, updated_at
+                )
+                VALUES (
+                    %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s
+                )
+                """,
+                (
+                    scene,
+                    account,
+                    email_lower,
+                    code,
+                    purpose_key,
+                    STATUS_UNUSED,
+                    0,
+                    None,
+                    None,
+                    expires_at,
+                    None,
+                    now,
+                    now,
+                ),
+            )
+            code_id = int(cursor.lastrowid)
+            conn.commit()
+
+        _remember_last_code(account, scene, email_lower, code_id)
+    except Exception as exc:
+        print(f"_store_code failed: {exc}")
+        traceback.print_exc()
 
 def _verify_code(scene: str, account: str, email: str, code: str) -> bool:
-    key = f"{scene}:{account}:{email.lower()}"
-    entry = verification_store.get(key)
-    if not entry:
+    scene = str(scene or "").strip()
+    account = str(account or "").strip()
+    email_lower = str(email or "").strip().lower()
+    input_code = str(code or "").strip()
+    if not scene or not account or not email_lower or not input_code:
         return False
-    if datetime.utcnow() > entry["expires_at"]:
-        verification_store.pop(key, None)
+
+    now = datetime.utcnow()
+    purpose_key = _purpose_key(scene, account, email_lower)
+
+    try:
+        with closing(_get_conn()) as conn, conn.cursor() as cursor:
+            # 清理已过期未使用验证码
+            cursor.execute(
+                """
+                UPDATE email_verification_code
+                SET status = %s, updated_at = %s
+                WHERE purpose_key = %s
+                  AND status = %s
+                  AND expires_at <= %s
+                """,
+                (STATUS_EXPIRED, now, purpose_key, STATUS_UNUSED, now),
+            )
+
+            cursor.execute(
+                """
+                SELECT id, code, expires_at, fail_count
+                FROM email_verification_code
+                WHERE purpose_key = %s
+                  AND status = %s
+                ORDER BY id DESC
+                LIMIT 1
+                FOR UPDATE
+                """,
+                (purpose_key, STATUS_UNUSED),
+            )
+            row = cursor.fetchone()
+            if not row:
+                conn.commit()
+                return False
+
+            code_id, saved_code, expires_at, fail_count = row
+            fail_count = int(fail_count or 0)
+
+            if now >= expires_at:
+                cursor.execute(
+                    """
+                    UPDATE email_verification_code
+                    SET status = %s, updated_at = %s
+                    WHERE id = %s
+                    """,
+                    (STATUS_EXPIRED, now, code_id),
+                )
+                conn.commit()
+                return False
+
+            if saved_code != input_code:
+                new_fail_count = fail_count + 1
+                if new_fail_count >= MAX_VERIFY_FAILS:
+                    cursor.execute(
+                        """
+                        UPDATE email_verification_code
+                        SET fail_count = %s, status = %s, updated_at = %s
+                        WHERE id = %s
+                        """,
+                        (new_fail_count, STATUS_INVALID, now, code_id),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        UPDATE email_verification_code
+                        SET fail_count = %s, updated_at = %s
+                        WHERE id = %s
+                        """,
+                        (new_fail_count, now, code_id),
+                    )
+                conn.commit()
+                return False
+
+            cursor.execute(
+                """
+                UPDATE email_verification_code
+                SET status = %s, used_at = %s, updated_at = %s
+                WHERE id = %s
+                """,
+                (STATUS_USED, now, now, code_id),
+            )
+            conn.commit()
+            return True
+    except Exception as exc:
+        print(f"_verify_code failed: {exc}")
+        traceback.print_exc()
         return False
-    if entry["code"] != code:
-        return False
-    verification_store.pop(key, None)
-    return True
 
 def send_email_via_CQU(
     to_addrs: Iterable[str],

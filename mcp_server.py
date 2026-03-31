@@ -276,6 +276,7 @@ async def get_course_knowledge_status(
     
     # 检查必填参数
     if not studentUid:
+        print("工具get_course_knowledge_status，studentUid",studentUid)
         return {"error": "studentUid是必填参数"}
     
     # 构建查询URL和参数
@@ -307,7 +308,6 @@ async def get_course_knowledge_status(
     completion_rate_gte = _to_float(completion_rate_gte)
     completion_rate_lte = _to_float(completion_rate_lte)
     
-    completion_rate_lte: Any = None
     if completion_rate_gte is not None and not (0 <= completion_rate_gte <= 100):
         raise ValueError("completion_rate_gte must be between 0 and 100")
     if completion_rate_lte is not None and not (0 <= completion_rate_lte <= 100):
@@ -596,21 +596,13 @@ async def get_student_myprogress(
 #             pass
 #     print("❌ 无法获取 ngrok URL")
     
+# mcp_server.py 末尾
 if __name__ == "__main__":
-    try:
-        print("Starting server...")
-        
-        
-        # # 并发启动 ngrok（后台）
-        # threading.Thread(target=run_ngrok, daemon=True).start()
-
-        # # 稍等一下再获取 ngrok 地址
-        # threading.Thread(target=get_ngrok_url, daemon=True).start()
-        mcp.run(transport='sse') 
-       
-        #直接运行app.py即可，可配合client使用
-        # mcp.run(transport='stdio')  
-       
-    except Exception as e:
-        print(f"Error: {e}")#
+    # 只有直接运行才启动服务器
+    print(f"Starting MCP server on port {MCP_TEST_PORT}...")
+    print(f"SSE endpoint: http://0.0.0.0:{MCP_TEST_PORT}/sse")
+    mcp.run(transport='sse')
+else:
+    # 被其他模块导入时，只打印信息，不启动
+    print("MCP server module imported (will be started as subprocess)")
 
