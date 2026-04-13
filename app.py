@@ -11,7 +11,7 @@ import re
 import random
 from datetime import datetime, timedelta, timezone
 from dateutil import parser
-from urllib.parse import quote
+from urllib.parse import quote, parse_qs, urlparse
 import requests
 import asyncio
 from threading import Thread
@@ -44,6 +44,7 @@ from utils.usage_analytics import (
     get_usage_summary,
     init_usage_analytics,
     refresh_online_user,
+    resolve_date_range,
     should_track_request,
     track_event,
 )
@@ -73,6 +74,7 @@ app.register_blueprint(study_situation_LLM)
 app.register_blueprint(study_situation_canvas)
 
 ANALYTICS_ACCESS_KEY = os.environ.get("ANALYTICS_ACCESS_KEY", "").strip()
+FASTGPT_MONGO_URI = os.environ.get("FASTGPT_MONGO_URI", "").strip()
 
 
 @app.before_request
@@ -286,6 +288,181 @@ def _safe_internal_next(target, fallback):
     if target and target.startswith('/') and not target.startswith('//'):
         return target
     return fallback
+
+
+def _extract_share_id(url):
+    try:
+        return parse_qs(urlparse(url).query).get("shareId", [None])[0]
+    except Exception:
+        return None
+
+
+def _fastgpt_dialogue_targets():
+    course_targets = {}
+    for agent in agents:
+        share_id = _extract_share_id(agent.get("url", ""))
+        if share_id:
+            course_targets[share_id] = agent["name"]
+
+    extra_targets = {}
+    for share_url, name in [
+        (new_chat_url, "首页通用问答"),
+        ("http://180.85.206.30:3000/chat/share?shareId=eXdNT9oSlB5U6MDNrYCCFK0T", "学情分析-教师"),
+        ("http://180.85.206.30:3000/chat/share?shareId=eJTdUHhzeIBYWb7Kdp6URitd", "学情分析-学生"),
+    ]:
+        share_id = _extract_share_id(share_url)
+        if share_id:
+            extra_targets[share_id] = name
+
+    return course_targets, extra_targets
+
+
+def get_fastgpt_super_teacher_question_stats(start_date=None, end_date=None):
+    date_range = resolve_date_range(start_date, end_date)
+    course_targets, extra_targets = _fastgpt_dialogue_targets()
+    default_courses = [
+        {"course_name": agent["name"], "question_count": 0}
+        for agent in agents
+        if _extract_share_id(agent.get("url", ""))
+    ]
+    default_result = {
+        "total_questions": 0,
+        "total_questions_all_time": 0,
+        "courses": default_courses,
+        "daily_counts": [],
+        "date_range": date_range,
+    }
+
+    if not FASTGPT_MONGO_URI:
+        return default_result
+
+    share_to_course = dict(course_targets)
+    all_share_targets = dict(course_targets)
+    all_share_targets.update(extra_targets)
+
+    if not all_share_targets:
+        return default_result
+
+    client = None
+    try:
+        client = MongoClient(FASTGPT_MONGO_URI, serverSelectionTimeoutMS=5000)
+        fastgpt_db = client.get_default_database()
+        if fastgpt_db is None:
+            fastgpt_db = client["fastgpt"]
+
+        outlinks = list(
+            fastgpt_db.outlinks.find(
+                {"shareId": {"$in": list(all_share_targets.keys())}},
+                {"shareId": 1, "appId": 1},
+            )
+        )
+
+        app_to_course = {}
+        all_app_ids = []
+        for item in outlinks:
+            share_id = item.get("shareId")
+            app_id = item.get("appId")
+            target_name = all_share_targets.get(share_id)
+            if app_id and target_name:
+                all_app_ids.append(app_id)
+            course_name = share_to_course.get(share_id)
+            if app_id and course_name:
+                app_to_course[app_id] = course_name
+
+        all_app_ids = list(dict.fromkeys(all_app_ids))
+
+        if not all_app_ids:
+            return default_result
+
+        start_at_utc = date_range["start_at"].astimezone(timezone.utc)
+        end_at_utc = date_range["end_at"].astimezone(timezone.utc)
+        pipeline = [
+            {
+                "$match": {
+                    "appId": {"$in": list(app_to_course.keys())},
+                    "obj": "Human",
+                    "time": {"$gte": start_at_utc, "$lt": end_at_utc},
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$appId",
+                    "question_count": {"$sum": 1},
+                }
+            },
+        ]
+        question_counts = list(fastgpt_db.chatitems.aggregate(pipeline))
+        daily_counts_pipeline = [
+            {
+                "$match": {
+                    "appId": {"$in": all_app_ids},
+                    "obj": "Human",
+                    "time": {"$gte": start_at_utc, "$lt": end_at_utc},
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "day": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$time",
+                                "timezone": "Asia/Shanghai",
+                            }
+                        }
+                    },
+                    "question_count": {"$sum": 1},
+                }
+            },
+            {"$sort": {"_id.day": 1}},
+        ]
+        daily_counts = list(fastgpt_db.chatitems.aggregate(daily_counts_pipeline))
+        total_all_time_pipeline = [
+            {
+                "$match": {
+                    "appId": {"$in": all_app_ids},
+                    "obj": "Human",
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "question_count": {"$sum": 1},
+                }
+            },
+        ]
+        total_all_time_result = list(fastgpt_db.chatitems.aggregate(total_all_time_pipeline))
+        count_by_course = {name: 0 for name in share_to_course.values()}
+        for item in question_counts:
+            course_name = app_to_course.get(item["_id"])
+            if course_name:
+                count_by_course[course_name] = int(item.get("question_count", 0) or 0)
+
+        courses = [
+            {"course_name": agent["name"], "question_count": count_by_course.get(agent["name"], 0)}
+            for agent in agents
+            if _extract_share_id(agent.get("url", ""))
+        ]
+        courses.sort(key=lambda item: (-item["question_count"], item["course_name"]))
+
+        return {
+            "total_questions": sum(item["question_count"] for item in courses),
+            "total_questions_all_time": int(
+                (total_all_time_result[0].get("question_count", 0) if total_all_time_result else 0) or 0
+            ),
+            "courses": courses,
+            "daily_counts": [
+                {"day": item["_id"]["day"], "question_count": int(item.get("question_count", 0) or 0)}
+                for item in daily_counts
+            ],
+            "date_range": date_range,
+        }
+    except Exception as e:
+        print(f"获取 FastGPT 超级教师提问次数失败: {e}")
+        return default_result
+    finally:
+        if client is not None:
+            client.close()
 
 
 # 创建必要的目录
@@ -1001,6 +1178,36 @@ def usage_analytics():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     summary = get_usage_summary(db, start_date=start_date, end_date=end_date)
+    summary["super_teacher_questions"] = get_fastgpt_super_teacher_question_stats(
+        start_date=start_date,
+        end_date=end_date,
+    )
+    fastgpt_daily_counts = {
+        item["day"]: item["question_count"]
+        for item in summary["super_teacher_questions"].get("daily_counts", [])
+    }
+    summary["selected_period"]["chats"] = summary["super_teacher_questions"].get("total_questions", 0)
+    today_day = summary["date_range"]["end_date"] if summary["date_range"].get("is_single_day") else datetime.now().strftime("%Y-%m-%d")
+    if "today" in summary:
+        summary["today"]["chats"] = fastgpt_daily_counts.get(today_day, 0)
+    for item in summary.get("daily_trend", []):
+        item["chats"] = fastgpt_daily_counts.get(item.get("day"), 0)
+    question_count_by_course = {
+        item["course_name"]: item["question_count"]
+        for item in summary["super_teacher_questions"].get("courses", [])
+    }
+    for item in summary.get("top_agents", []):
+        item["question_count"] = question_count_by_course.get(item.get("agent_name"), 0)
+    total_registered_users = 0
+    try:
+        with closing(get_conn()) as conn, conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM student")
+            row = cursor.fetchone()
+            total_registered_users = int((row or [0])[0] or 0)
+    except Exception as e:
+        print(f"获取总注册人数失败: {e}")
+
+    summary["total_registered_users"] = total_registered_users
     return render_template(
         'dashboard/usage_analytics.html',
         analytics=summary,

@@ -24,6 +24,9 @@ SKIP_PATHS = {
     "/favicon.ico",
     "/get_session",
     "/usage/heartbeat",
+    "/dev/analytics",
+    "/dev/analytics/login",
+    "/dev/analytics/logout",
 }
 
 
@@ -338,28 +341,32 @@ def _top_agents(events, start_at, end_at, limit=8):
     return list(events.aggregate(pipeline))
 
 
-def _role_distribution(events, day):
+def _top_users(events, start_at, end_at, limit=10):
     pipeline = [
         {
             "$match": {
-                "day": day,
+                "occurred_at": {"$gte": start_at, "$lt": end_at},
                 "event_type": {"$in": TRACKED_ACTIVITY_EVENTS},
                 "username": {"$nin": [None, ""]},
             }
         },
         {
             "$group": {
-                "_id": {"role": "$role", "username": "$username"},
+                "_id": "$username",
+                "events": {"$sum": 1},
+                "roles": {"$addToSet": "$role"},
             }
         },
         {
-            "$group": {
-                "_id": "$_id.role",
-                "users": {"$sum": 1},
+            "$project": {
+                "_id": 0,
+                "username": "$_id",
+                "events": 1,
+                "role": {"$arrayElemAt": ["$roles", 0]},
             }
         },
-        {"$project": {"_id": 0, "role": {"$ifNull": ["$_id", "unknown"]}, "users": 1}},
-        {"$sort": {"users": -1}},
+        {"$sort": {"events": -1, "username": 1}},
+        {"$limit": limit},
     ]
     return list(events.aggregate(pipeline))
 
@@ -388,7 +395,7 @@ def get_usage_summary(db, start_date=None, end_date=None):
         "rolling": {"wau": 0, "mau": 0},
         "top_pages": [],
         "top_agents": [],
-        "role_distribution": [],
+        "top_users": [],
         "daily_trend": [],
         "date_range": date_range,
         "generated_at": _now(),
@@ -473,7 +480,7 @@ def get_usage_summary(db, start_date=None, end_date=None):
 
     default_summary["top_pages"] = _top_pages(events, period_start, period_end)
     default_summary["top_agents"] = _top_agents(events, period_start, period_end)
-    default_summary["role_distribution"] = _role_distribution(events, today)
+    default_summary["top_users"] = _top_users(events, period_start, period_end)
     default_summary["daily_trend"] = trend
     default_summary["generated_at"] = now
     return default_summary
