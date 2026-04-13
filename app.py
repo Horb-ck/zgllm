@@ -48,8 +48,9 @@ from utils.usage_analytics import (
     should_track_request,
     track_event,
 )
+
 from database_mongo import db, user_sessions_collection
-from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL
+from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL,FASTGPT_MONGO_URI
 from app_kg import app_kg
 from app_comp import app_comp
 from study_situation_LLM import study_situation_LLM
@@ -74,7 +75,7 @@ app.register_blueprint(study_situation_LLM)
 app.register_blueprint(study_situation_canvas)
 
 ANALYTICS_ACCESS_KEY = os.environ.get("ANALYTICS_ACCESS_KEY", "").strip()
-FASTGPT_MONGO_URI = os.environ.get("FASTGPT_MONGO_URI", "").strip()
+FASTGPT_MONGO_URI = os.environ.get("FASTGPT_MONGO_URI", FASTGPT_MONGO_URI).strip()
 
 
 @app.before_request
@@ -334,6 +335,7 @@ def get_fastgpt_super_teacher_question_stats(start_date=None, end_date=None):
     }
 
     if not FASTGPT_MONGO_URI:
+        print("FASTGPT_MONGO_URI 未配置，FastGPT 对话统计返回 0")
         return default_result
 
     share_to_course = dict(course_targets)
