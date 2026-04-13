@@ -22,6 +22,7 @@
    - `chatitems`
    - `outlinks`
    - `chat_input_guides` 仅作为结构判断参考，不直接参与计数
+  (数据库路径存放在config.py)
 
 它们分别承担的职责是：
 
