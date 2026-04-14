@@ -50,7 +50,7 @@ from utils.usage_analytics import (
 )
 
 from database_mongo import db, user_sessions_collection
-from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL,FASTGPT_MONGO_URI
+from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL,FASTGPT_MONGO_URI,ANALYTICS_ACCESS_KEY
 from app_kg import app_kg
 from app_comp import app_comp
 from study_situation_LLM import study_situation_LLM
@@ -74,7 +74,7 @@ app.register_blueprint(app_comp)
 app.register_blueprint(study_situation_LLM)
 app.register_blueprint(study_situation_canvas)
 
-ANALYTICS_ACCESS_KEY = os.environ.get("ANALYTICS_ACCESS_KEY", "").strip()
+ANALYTICS_ACCESS_KEY = os.environ.get("ANALYTICS_ACCESS_KEY", ANALYTICS_ACCESS_KEY).strip()
 FASTGPT_MONGO_URI = os.environ.get("FASTGPT_MONGO_URI", FASTGPT_MONGO_URI).strip()
 
 
