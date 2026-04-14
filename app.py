@@ -448,21 +448,11 @@ def login():
                 session['user_courses'] = []
                 # 调用统一函数处理用户课程
                 user_courses, current_course, success = process_user_courses(session['username'], session['role'])
-                print("/login/user_global_store",user_global_store)
                 if not success:
                     flash('获取课程信息失败，请联系管理员', 'danger')
                     return render_template('auth/login.html')
                 session['user_courses'] = user_courses
                 session['current_course'] = current_course
-                track_event(
-                    db,
-                    LOGIN_SUCCESS_EVENT,
-                    request=request,
-                    username=username,
-                    role=session['role'],
-                    meta={"login_source": "password"},
-                )
-                refresh_online_user(db, username, session['role'], request)
                 flash('登录成功', 'success')
                 return redirect(url_for('new_chat'))
             else:
