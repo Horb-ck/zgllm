@@ -1,0 +1,820 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ agent.name }} - 明月科创教育大模型{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="hh">
+                <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
+                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div>
+            </h2>
+        </div>
+
+        <div class="user-info">
+            <div class="user-avatar">
+                <span>{{ username[0].upper() }}</span>
+            </div>
+            <div class="user-name">{{ username }}</div>
+            <div class="user-role">
+                {{ '教师' if role == 'teacher' else '学生' }}
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="{% if request.path == url_for('new_chat') %}active{% endif %}">
+                    <a href="{{ url_for('new_chat') }}">
+                        <span class="icon">💬</span>
+                        <span class="label">开启新对话</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('course_agents') %}active{% endif %}">
+                    <a href="{{ url_for('course_agents') }}">
+                        <span class="icon">🤖</span>
+                        <span class="label">课程广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('app_comp.course_kd') %}active{% endif %}">
+                    <a href="{{ url_for('app_comp.course_kd') }}">
+                        <span class="icon">🔍</span>
+                        <span class="label">智能体广场</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('his') %}active{% endif %}">
+                    <a href="{{ url_for('his') }}">
+                        <span class="icon">📚</span>
+                        <span class="label">个人知识库</span>
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('chat') %}active{% endif %}">
+                    <a href="{{ url_for('chat') }}">
+                        <span class="icon">🎓</span>
+                        <span class="label">学情分析</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2"
+               class="logout-btn"
+               target="_blank">
+                <span class="icon">📝</span>
+                <span class="label">意见反馈</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <span class="icon">🚪</span>
+                <span class="label">退出登录</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content robocon-page">
+        <div class="page-header">
+            <h1>{{ agent.name }}</h1>
+            <p>{{ agent.description }}</p>
+        </div>
+
+        <div class="robocon-layout" id="robocon-layout" data-layout="list-chat">
+            <section class="rules-panel" id="rules-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="panel-tag">官方规则</span>
+                        <h2>比赛资料区</h2>
+                        <p>默认展示规则标题与问答页面。点击某条资料后，PDF 会优先占据右侧；如果再折叠列表，PDF 会移动到左侧，右边恢复问答。</p>
+                    </div>
+                    <button type="button" class="panel-action-btn" id="collapse-rules-btn">折叠列表</button>
+                </div>
+
+                <div class="resource-switcher" id="resource-switcher"></div>
+
+                <div class="resource-meta">
+                    <div>
+                        <span class="meta-label">资料来源</span>
+                        <a id="resource-official-link" href="#" target="_blank" rel="noopener">官网入口</a>
+                    </div>
+                    <div>
+                        <span class="meta-label">最近更新</span>
+                        <strong id="resource-updated-at"></strong>
+                    </div>
+                </div>
+
+                <p class="resource-note" id="resource-note"></p>
+
+                <div class="resource-list" id="resource-list"></div>
+            </section>
+
+            <div class="rail-hover-zone" id="rail-hover-zone" hidden></div>
+            <aside class="rules-rail" id="rules-rail" hidden>
+                <button type="button" class="rail-toggle-btn" id="expand-rules-btn" title="展开规则列表">
+                    <span>比</span>
+                    <span>赛</span>
+                    <span>规</span>
+                    <span>则</span>
+                </button>
+            </aside>
+
+            <section class="pdf-panel" id="pdf-panel" hidden>
+                <div class="pdf-panel-header">
+                    <div class="pdf-header-copy">
+                        <span class="meta-label">当前资料</span>
+                        <h3 id="preview-title"></h3>
+                        <p id="preview-subtitle"></p>
+                    </div>
+                    <div class="pdf-actions">
+                        <button type="button" class="panel-action-btn secondary" id="back-to-list-btn">返回规则列表</button>
+                        <a class="preview-link" id="preview-link" href="#" target="_blank" rel="noopener">打开原文</a>
+                    </div>
+                </div>
+                <iframe id="rules-preview" title="规则预览" loading="lazy"></iframe>
+                <p class="preview-tip">如果预览区域空白，通常是官网禁止嵌入；这时点击“打开原文”即可。返回会恢复成规则标题列表视图。</p>
+            </section>
+
+            <section class="chat-panel" id="chat-panel">
+                <div class="chat-shell">
+                    <div class="chat-shell-header">
+                        <span class="panel-tag neutral">问答助手</span>
+                        <strong>主赛智能问答</strong>
+                    </div>
+                    <iframe
+                        src="{{ embed_url }}"
+                        frameborder="0"
+                        allow="microphone; camera"
+                        allowfullscreen
+                        loading="lazy"
+                        id="chat-iframe"
+                    ></iframe>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<style>
+.robocon-page {
+    flex: 1;
+    overflow: auto;
+    background:
+        radial-gradient(circle at top left, rgba(21, 101, 192, 0.08), transparent 28%),
+        linear-gradient(180deg, #f7fbff 0%, #eef4f7 100%);
+}
+
+.robocon-layout {
+    display: grid;
+    grid-template-columns: minmax(340px, 0.9fr) minmax(460px, 1.1fr);
+    gap: 20px;
+    min-height: calc(100vh - 170px);
+    padding: 0 24px 24px;
+    box-sizing: border-box;
+    align-items: stretch;
+    position: relative;
+}
+
+.rules-panel,
+.chat-panel,
+.pdf-panel {
+    min-height: 0;
+}
+
+.rules-panel[hidden],
+.rules-rail[hidden],
+.pdf-panel[hidden],
+.chat-panel[hidden] {
+    display: none !important;
+}
+
+.rules-panel,
+.pdf-panel,
+.chat-shell,
+.rules-rail {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.rules-panel,
+.pdf-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 252, 0.94));
+}
+
+.panel-header,
+.pdf-panel-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.panel-header h2 {
+    margin: 12px 0 10px;
+    font-size: 28px;
+    color: #0f172a;
+}
+
+.panel-header p {
+    margin: 0;
+    line-height: 1.7;
+    color: #475569;
+}
+
+.panel-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.panel-tag.neutral {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.resource-switcher {
+    display: inline-flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.switch-btn {
+    padding: 10px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.switch-btn.active {
+    border-color: #1d4ed8;
+    background: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(29, 78, 216, 0.18);
+}
+
+.panel-action-btn {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border: 1px solid rgba(59, 130, 246, 0.18);
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.panel-action-btn:hover,
+.preview-link:hover,
+.rail-toggle-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.12);
+}
+
+.panel-action-btn.secondary {
+    background: #ffffff;
+    color: #334155;
+    border-color: rgba(148, 163, 184, 0.28);
+}
+
+.resource-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.resource-meta > div {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.meta-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: #64748b;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.resource-meta a,
+.resource-meta strong {
+    color: #0f172a;
+    font-size: 15px;
+}
+
+.resource-note {
+    margin: 0;
+    color: #475569;
+    line-height: 1.7;
+}
+
+.resource-list {
+    display: grid;
+    gap: 12px;
+    overflow: auto;
+    padding-right: 2px;
+}
+
+.resource-item {
+    text-align: left;
+    padding: 16px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resource-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.resource-item.active {
+    border-color: #2563eb;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+}
+
+.resource-item-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.resource-item h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #0f172a;
+    line-height: 1.5;
+}
+
+.doc-badge {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.resource-item-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.rules-rail {
+    position: absolute;
+    left: -18px;
+    top: 50%;
+    z-index: 6;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.rail-toggle-btn {
+    width: 56px;
+    height: 148px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 0;
+    border-radius: 16px;
+    background: #1d4ed8;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(29, 78, 216, 0.22);
+}
+
+.rail-toggle-btn span {
+    display: block;
+    line-height: 1;
+}
+
+.rail-hover-zone {
+    position: absolute;
+    left: -24px;
+    top: 0;
+    width: 28px;
+    height: 100%;
+    z-index: 5;
+    background: transparent;
+}
+
+.robocon-layout[data-layout="rail-chat"] .rail-hover-zone,
+.robocon-layout[data-layout="rail-pdf-chat"] .rail-hover-zone {
+    display: block;
+}
+
+.robocon-layout[data-layout="rail-chat"] .rail-hover-zone:hover + .rules-rail,
+.robocon-layout[data-layout="rail-pdf-chat"] .rail-hover-zone:hover + .rules-rail,
+.robocon-layout[data-layout="rail-chat"] .rules-rail:hover,
+.robocon-layout[data-layout="rail-pdf-chat"] .rules-rail:hover {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(-2px);
+}
+
+.pdf-panel {
+    min-height: calc(100vh - 170px);
+    overflow: hidden;
+}
+
+.pdf-panel-header {
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.pdf-header-copy h3 {
+    margin: 4px 0 8px;
+    font-size: 22px;
+    color: #0f172a;
+}
+
+.pdf-header-copy p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.pdf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.preview-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+#rules-preview {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 640px;
+    border: 0;
+    background: #f8fafc;
+    border-radius: 18px;
+}
+
+.preview-tip {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.chat-panel {
+    min-height: calc(100vh - 170px);
+}
+
+.chat-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: calc(100vh - 170px);
+    overflow: hidden;
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.chat-shell-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    color: #0f172a;
+}
+
+#chat-iframe {
+    width: 100%;
+    height: calc(100% - 62px);
+    flex: 1 1 auto;
+    border: 0;
+    display: block;
+}
+
+.robocon-layout[data-layout="list-chat"] {
+    grid-template-columns: minmax(340px, 0.9fr) minmax(520px, 1.1fr);
+}
+
+.robocon-layout[data-layout="list-pdf"] {
+    grid-template-columns: minmax(340px, 0.82fr) minmax(580px, 1.18fr);
+}
+
+.robocon-layout[data-layout="rail-chat"] {
+    grid-template-columns: minmax(520px, 1fr);
+}
+
+.robocon-layout[data-layout="rail-pdf-chat"] {
+    grid-template-columns: minmax(460px, 1.02fr) minmax(420px, 0.98fr);
+}
+
+@media (max-width: 1100px) {
+    .robocon-layout {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .resource-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .robocon-layout[data-layout="list-chat"],
+    .robocon-layout[data-layout="list-pdf"],
+    .robocon-layout[data-layout="rail-chat"],
+    .robocon-layout[data-layout="rail-pdf-chat"] {
+        grid-template-columns: 1fr;
+    }
+
+    .rules-rail {
+        left: -10px;
+    }
+
+    .rules-panel,
+    .pdf-panel,
+    .chat-panel {
+        order: 2;
+    }
+
+    .chat-shell,
+    .pdf-panel {
+        min-height: 760px;
+    }
+
+    #rules-preview {
+        min-height: 560px;
+    }
+}
+
+@media (max-width: 768px) {
+    .robocon-layout {
+        padding: 0 16px 16px;
+        gap: 16px;
+    }
+
+    .rules-panel {
+        padding: 18px;
+        border-radius: 20px;
+    }
+
+    .pdf-panel {
+        padding: 18px;
+        border-radius: 20px;
+    }
+
+    .chat-shell {
+        min-height: 680px;
+        border-radius: 20px;
+    }
+
+    .rules-rail {
+        left: -6px;
+    }
+
+    .rail-toggle-btn {
+        width: 46px;
+        height: 124px;
+        border-radius: 14px;
+        font-size: 12px;
+    }
+
+    .panel-header h2 {
+        font-size: 24px;
+    }
+
+    .panel-header,
+    .pdf-panel-header {
+        flex-direction: column;
+    }
+
+    .pdf-actions {
+        width: 100%;
+    }
+
+    .panel-action-btn,
+    .preview-link {
+        justify-content: center;
+    }
+
+    #rules-preview {
+        min-height: 460px;
+    }
+}
+</style>
+
+<script>
+const roboconResources = {{ robocon_resources|tojson }};
+
+const state = {
+    category: "national",
+    activeDocIndex: null,
+    rulesCollapsed: false
+};
+
+const layoutEl = document.getElementById("robocon-layout");
+const rulesPanelEl = document.getElementById("rules-panel");
+const rulesRailEl = document.getElementById("rules-rail");
+const railHoverZoneEl = document.getElementById("rail-hover-zone");
+const pdfPanelEl = document.getElementById("pdf-panel");
+const chatPanelEl = document.getElementById("chat-panel");
+const switcherEl = document.getElementById("resource-switcher");
+const officialLinkEl = document.getElementById("resource-official-link");
+const updatedAtEl = document.getElementById("resource-updated-at");
+const noteEl = document.getElementById("resource-note");
+const listEl = document.getElementById("resource-list");
+const previewTitleEl = document.getElementById("preview-title");
+const previewSubtitleEl = document.getElementById("preview-subtitle");
+const previewLinkEl = document.getElementById("preview-link");
+const previewFrameEl = document.getElementById("rules-preview");
+const collapseRulesBtnEl = document.getElementById("collapse-rules-btn");
+const expandRulesBtnEl = document.getElementById("expand-rules-btn");
+const backToListBtnEl = document.getElementById("back-to-list-btn");
+
+function getSection() {
+    return roboconResources[state.category];
+}
+
+function getDoc() {
+    if (state.activeDocIndex === null) {
+        return null;
+    }
+
+    return getSection().docs[state.activeDocIndex] || null;
+}
+
+function openDoc(index) {
+    state.activeDocIndex = index;
+    render();
+}
+
+function showRulesList() {
+    state.activeDocIndex = null;
+    state.rulesCollapsed = false;
+    render();
+}
+
+function setCategory(categoryKey) {
+    state.category = categoryKey;
+    state.activeDocIndex = null;
+    render();
+}
+
+function renderSwitcher() {
+    switcherEl.innerHTML = "";
+    Object.values(roboconResources).forEach((section) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `switch-btn${state.category === section.key ? " active" : ""}`;
+        button.textContent = section.label;
+        button.addEventListener("click", () => setCategory(section.key));
+        switcherEl.appendChild(button);
+    });
+}
+
+function renderList(section) {
+    listEl.innerHTML = "";
+    section.docs.forEach((doc, index) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = `resource-item${state.activeDocIndex === index ? " active" : ""}`;
+        item.innerHTML = `
+            <div class="resource-item-head">
+                <h3>${doc.title}</h3>
+                <span class="doc-badge">${doc.type}</span>
+            </div>
+            <div class="resource-item-footer">
+                <span>${doc.date}</span>
+                <span>${doc.source}</span>
+            </div>
+        `;
+        item.addEventListener("click", () => openDoc(index));
+        listEl.appendChild(item);
+    });
+}
+
+function renderPreview(doc) {
+    if (!doc) {
+        previewTitleEl.textContent = "";
+        previewSubtitleEl.textContent = "";
+        previewLinkEl.href = "#";
+        previewFrameEl.removeAttribute("src");
+        return;
+    }
+
+    previewTitleEl.textContent = doc.title;
+    previewSubtitleEl.textContent = `${doc.type} · ${doc.date} · ${doc.source}`;
+    previewLinkEl.href = doc.url;
+    previewFrameEl.src = doc.preview_url;
+}
+
+function renderLayout() {
+    const hasActiveDoc = state.activeDocIndex !== null;
+
+    if (hasActiveDoc && state.rulesCollapsed) {
+        layoutEl.dataset.layout = "rail-pdf-chat";
+        rulesPanelEl.hidden = true;
+        railHoverZoneEl.hidden = false;
+        rulesRailEl.hidden = false;
+        pdfPanelEl.hidden = false;
+        chatPanelEl.hidden = false;
+        return;
+    }
+
+    if (hasActiveDoc) {
+        layoutEl.dataset.layout = "list-pdf";
+        rulesPanelEl.hidden = false;
+        railHoverZoneEl.hidden = true;
+        rulesRailEl.hidden = true;
+        pdfPanelEl.hidden = false;
+        chatPanelEl.hidden = true;
+        return;
+    }
+
+    if (state.rulesCollapsed) {
+        layoutEl.dataset.layout = "rail-chat";
+        rulesPanelEl.hidden = true;
+        railHoverZoneEl.hidden = false;
+        rulesRailEl.hidden = false;
+        pdfPanelEl.hidden = true;
+        chatPanelEl.hidden = false;
+        return;
+    }
+
+    layoutEl.dataset.layout = "list-chat";
+    rulesPanelEl.hidden = false;
+    railHoverZoneEl.hidden = true;
+    rulesRailEl.hidden = true;
+    pdfPanelEl.hidden = true;
+    chatPanelEl.hidden = false;
+}
+
+function render() {
+    const section = getSection();
+    const doc = getDoc();
+    renderSwitcher();
+    officialLinkEl.href = section.official_url;
+    officialLinkEl.textContent = section.label === "国际赛" ? "国际赛官网入口" : "国赛官网入口";
+    updatedAtEl.textContent = section.updated_at;
+    noteEl.textContent = `${section.description} ${section.update_note}`;
+    renderList(section);
+    renderPreview(doc);
+    collapseRulesBtnEl.textContent = state.rulesCollapsed ? "展开列表" : "折叠列表";
+    renderLayout();
+}
+
+collapseRulesBtnEl.addEventListener("click", () => {
+    state.rulesCollapsed = !state.rulesCollapsed;
+    render();
+});
+
+expandRulesBtnEl.addEventListener("click", () => {
+    state.rulesCollapsed = false;
+    render();
+});
+
+backToListBtnEl.addEventListener("click", showRulesList);
+
+render();
+</script>
+{% endblock %}

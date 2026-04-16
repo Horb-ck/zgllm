@@ -1,16 +1,16 @@
 {% extends "layout.html" %}
 
-{% block title %}个人收藏 - 明月科创教育大模型{% endblock %}
+{% block title %}个人知识库 - 明月科创教育大模型{% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
     <!-- 侧边导航栏 -->
     <div class="sidebar">
         <div class="sidebar-header">
-            
             <h2 class="hh">
                 <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
-                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div></h2>
+                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div>
+            </h2>
         </div>
         
         <div class="user-info">
@@ -37,14 +37,13 @@
                         <span class="label">课程广场</span>
                     </a>
                 </li>
-
-
-                <li class="{% if request.path == url_for('course_kd') %}active{% endif %}">
-                    <a href="{{ url_for('course_kd') }}">
+                <li class="{% if request.path == url_for('app_comp.course_kd') %}active{% endif %}">
+                    <a href="{{ url_for('app_comp.course_kd') }}">
                         <span class="icon">🔍</span>
                         <span class="label">智能体广场</span>
                     </a>
                 </li>
+
                 <li class="{% if request.path == url_for('his') %}active{% endif %}">
                     <a href="{{ url_for('his') }}">
                         <span class="icon">📚</span>
@@ -57,8 +56,6 @@
                         <span class="label">学情分析</span>
                     </a>
                 </li>
-                
-
             </ul>
         </nav>
         <div class="sidebar-footer">
@@ -77,41 +74,1888 @@
         </div>
     </div>
     
-    <!-- 主内容区域 -->
+    <!-- V3 主内容区域 -->
     <div class="main-content">
-        <div class="page-header">
-            <h1>个人知识库</h1>
-            <p>您的个人知识库 等待开发中ing</p>
+        <style>
+            /* ==================== V3 个人知识库样式 ==================== */
+            .kb-page-header {
+                margin-bottom: 24px;
+                flex-shrink: 0;
+            }
+            .kb-page-header h1 {
+                font-size: 26px;
+                color: #1a1a2e;
+                margin: 0 0 8px 0;
+                font-weight: 700;
+            }
+            .kb-page-header p {
+                color: #666;
+                margin: 0;
+                font-size: 14px;
+            }
+            
+            .main-content {
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
+                padding: 24px;
+                box-sizing: border-box;
+            }
+            
+            .kb-main-layout {
+                display: grid;
+                grid-template-columns: 340px 1fr;
+                gap: 24px;
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
+            
+            /* 卡片样式 */
+            .kb-card {
+                background: #fff;
+                border-radius: 16px;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+                overflow: hidden;
+            }
+            
+            .kb-card-header {
+                padding: 16px 20px;
+                border-bottom: 1px solid #f0f0f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            
+            .kb-card-title {
+                font-size: 15px;
+                font-weight: 600;
+                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            /* 上传区域 */
+            .kb-upload-zone {
+                padding: 24px 16px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s;
+                border: 2px dashed transparent;
+                margin: 12px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+            }
+            
+            .kb-upload-zone:hover {
+                border-color: #7c3aed;
+                background: linear-gradient(135deg, #f0f4ff 0%, #ede9fe 100%);
+            }
+            
+            .kb-upload-zone.dragover {
+                border-color: #7c3aed;
+                background: #ede9fe;
+                transform: scale(1.02);
+            }
+            
+            .kb-upload-icon { font-size: 32px; margin-bottom: 8px; }
+            .kb-upload-text { color: #555; font-size: 13px; margin-bottom: 4px; }
+            .kb-upload-hint { color: #999; font-size: 11px; }
+            
+            .kb-upload-btn {
+                margin-top: 12px;
+                padding: 8px 24px;
+                background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            
+            .kb-upload-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+            }
+            
+            /* ==================== 文件夹样式 ==================== */
+            .kb-folder-actions {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .kb-new-folder-btn {
+                padding: 4px 10px;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                font-size: 11px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            
+            .kb-new-folder-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            }
+            
+            /* 面包屑导航 */
+            .kb-breadcrumb {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 8px 12px;
+                background: #f9fafb;
+                border-bottom: 1px solid #f0f0f0;
+                font-size: 12px;
+                flex-wrap: wrap;
+            }
+            
+            .kb-breadcrumb-item {
+                color: #6b7280;
+                cursor: pointer;
+                padding: 2px 6px;
+                border-radius: 4px;
+                transition: all 0.2s;
+            }
+            
+            .kb-breadcrumb-item:hover {
+                background: #e5e7eb;
+                color: #374151;
+            }
+            
+            .kb-breadcrumb-item.active {
+                color: #7c3aed;
+                font-weight: 500;
+                cursor: default;
+            }
+            
+            .kb-breadcrumb-item.active:hover {
+                background: transparent;
+            }
+            
+            .kb-breadcrumb-separator {
+                color: #d1d5db;
+            }
+
+            /* 面包屑拖放高亮 */
+            .kb-breadcrumb-item.drop-target {
+                background: #dbeafe !important;
+                color: #2563eb !important;
+                outline: 2px dashed #3b82f6;
+                outline-offset: 1px;
+                font-weight: 600;
+                transform: scale(1.08);
+                transition: all 0.15s;
+            }
+            
+            /* 文件夹项 */
+            .kb-folder-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                margin: 0 10px 6px;
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                border-radius: 8px;
+                transition: all 0.2s;
+                cursor: pointer;
+            }
+            
+            .kb-folder-item:hover {
+                background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+                transform: translateX(4px);
+            }
+
+            /* 文件夹拖放高亮 */
+            .kb-folder-item.drop-target {
+                background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%) !important;
+                outline: 2px dashed #16a34a;
+                outline-offset: -2px;
+                transform: scale(1.03) !important;
+                box-shadow: 0 4px 16px rgba(22, 163, 74, 0.3);
+            }
+            
+            .kb-folder-info {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                min-width: 0;
+                flex: 1;
+            }
+            
+            .kb-folder-icon { 
+                font-size: 20px; 
+                flex-shrink: 0; 
+            }
+            
+            .kb-folder-name {
+                font-size: 13px;
+                font-weight: 500;
+                color: #92400e;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .kb-folder-meta {
+                font-size: 10px;
+                color: #b45309;
+                margin-top: 2px;
+            }
+            
+            .kb-folder-actions-inline {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+            
+            .kb-folder-item:hover .kb-folder-actions-inline {
+                opacity: 1;
+            }
+            
+            .kb-folder-action-btn {
+                padding: 3px 6px;
+                background: rgba(255,255,255,0.8);
+                border: none;
+                color: #92400e;
+                border-radius: 4px;
+                font-size: 10px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .kb-folder-action-btn:hover {
+                background: #fff;
+            }
+            
+            .kb-folder-action-btn.delete {
+                color: #dc2626;
+            }
+            
+            /* 文档列表 */
+            .kb-doc-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                overflow-y: auto;
+            }
+            
+            .kb-doc-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                margin: 0 10px 6px;
+                background: #f9fafb;
+                border-radius: 8px;
+                transition: all 0.2s;
+                position: relative;
+                overflow: hidden;
+                cursor: grab;
+            }
+            
+            .kb-doc-item:hover {
+                background: #f3f4f6;
+                transform: translateX(4px);
+            }
+
+            /* 拖拽中的文档样式 */
+            .kb-doc-item.dragging {
+                opacity: 0.4;
+                transform: scale(0.95) !important;
+                cursor: grabbing;
+                box-shadow: 0 0 0 2px #a855f7;
+            }
+            
+            .kb-doc-info {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                min-width: 0;
+                flex: 1;
+                z-index: 2;
+                position: relative;
+            }
+            
+            .kb-doc-icon { font-size: 18px; flex-shrink: 0; }
+            
+            .kb-doc-name {
+                font-size: 12px;
+                font-weight: 500;
+                color: #333;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 140px;
+            }
+            
+            .kb-doc-meta {
+                font-size: 10px;
+                color: #999;
+                margin-top: 2px;
+            }
+            
+            .kb-doc-actions {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                flex-shrink: 0;
+                z-index: 2;
+                position: relative;
+            }
+            
+            .kb-doc-delete {
+                padding: 3px 8px;
+                background: none;
+                border: 1px solid #fca5a5;
+                color: #dc2626;
+                border-radius: 4px;
+                font-size: 10px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .kb-doc-delete:hover {
+                background: #fee2e2;
+            }
+            
+            .kb-empty-docs {
+                text-align: center;
+                padding: 20px;
+                color: #999;
+                font-size: 13px;
+            }
+            
+            /* 左侧面板布局 */
+            .kb-left-panel {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                height: 100%;
+                min-height: 0;
+                overflow: hidden;
+            }
+            
+            .kb-left-panel > .kb-card { 
+                flex-shrink: 0; 
+            }
+            
+            .kb-left-panel .kb-docs-card {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            
+            .kb-left-panel .kb-docs-card .kb-doc-list {
+                flex: 1;
+                overflow-y: auto;
+                max-height: none;
+            }
+            
+            .kb-header-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            /* 隐藏旧同步按钮 */
+            .kb-sync-btn {
+                display: none;
+            }
+
+            .kb-doc-sync {
+                display: none;
+            }
+            
+            /* ==================== 右侧 FastGPT 聊天面板 ==================== */
+            .kb-right-panel { 
+                height: 100%; 
+                min-height: 0;
+                overflow: hidden;
+            }
+            
+            .kb-chat-card {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                background: #fff;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(124, 58, 237, 0.1);
+                border: 1px solid rgba(124, 58, 237, 0.1);
+            }
+            
+            .kb-chat-header {
+                padding: 16px 20px;
+                background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            
+            .kb-chat-header-title {
+                font-size: 16px;
+                font-weight: 600;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .kb-chat-header-title .icon {
+                font-size: 20px;
+            }
+            
+            .kb-chat-header-badge {
+                padding: 4px 12px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 20px;
+                font-size: 12px;
+                color: #fff;
+                backdrop-filter: blur(10px);
+            }
+            
+            /* FastGPT iframe 容器 */
+            .kb-fastgpt-container {
+                flex: 1;
+                min-height: 0;
+                position: relative;
+                background: #f5f5f5;
+            }
+            
+            .kb-fastgpt-iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: #fff;
+            }
+            
+            /* iframe 加载状态 */
+            .kb-iframe-loading {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+                z-index: 10;
+                transition: opacity 0.3s, visibility 0.3s;
+            }
+            
+            .kb-iframe-loading.hidden {
+                opacity: 0;
+                visibility: hidden;
+            }
+            
+            .kb-loading-spinner {
+                width: 48px;
+                height: 48px;
+                border: 4px solid #e9d5ff;
+                border-top-color: #7c3aed;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            
+            .kb-loading-text {
+                margin-top: 16px;
+                color: #7c3aed;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            
+            .kb-loading-hint {
+                margin-top: 8px;
+                color: #a78bfa;
+                font-size: 12px;
+            }
+            
+            /* 提示条 */
+            .kb-chat-tips {
+                padding: 10px 16px;
+                background: linear-gradient(90deg, #faf5ff 0%, #f3e8ff 50%, #faf5ff 100%);
+                border-bottom: 1px solid #e9d5ff;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 12px;
+                color: #7c3aed;
+                flex-shrink: 0;
+            }
+            
+            .kb-chat-tips .tip-icon {
+                font-size: 14px;
+            }
+
+            /* 处理中状态动画 */
+            .processing-dot {
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                background: #d97706;
+                border-radius: 50%;
+                margin-right: 4px;
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(0.8); }
+            }
+
+            /* ==================== 文档行内进度条样式 ==================== */
+            .kb-doc-progress-fill {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                background: rgba(251, 191, 36, 0.15);
+                border-radius: 8px 0 0 8px;
+                transition: width 0.6s ease;
+                z-index: 1;
+                pointer-events: none;
+            }
+
+            .kb-doc-progress-bar {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
+                background-size: 200% 100%;
+                border-radius: 0 0 0 8px;
+                transition: width 0.6s ease;
+                z-index: 3;
+                animation: progressShimmer 1.5s ease-in-out infinite;
+            }
+
+            @keyframes progressShimmer {
+                0%   { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+
+            .kb-progress-pct {
+                font-size: 10px;
+                font-weight: 600;
+                color: #d97706;
+                font-variant-numeric: tabular-nums;
+                font-feature-settings: "tnum";
+                margin-left: 6px;
+                flex-shrink: 0;
+                z-index: 2;
+                position: relative;
+                min-width: 32px;
+                text-align: right;
+            }
+
+            /* ==================== 公开/私有 Toggle 开关 ==================== */
+            .kb-share-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                z-index: 2;
+                position: relative;
+                flex-shrink: 0;
+                user-select: none;
+            }
+            .kb-share-toggle input { display: none; }
+            .kb-share-slider {
+                width: 34px;
+                height: 18px;
+                background: #d1d5db;
+                border-radius: 9px;
+                position: relative;
+                transition: all 0.3s;
+                flex-shrink: 0;
+            }
+            .kb-share-slider::after {
+                content: '';
+                position: absolute;
+                width: 14px; height: 14px;
+                background: #fff;
+                border-radius: 50%;
+                top: 2px; left: 2px;
+                transition: all 0.3s;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            }
+            .kb-share-toggle input:checked + .kb-share-slider {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            }
+            .kb-share-toggle input:checked + .kb-share-slider::after {
+                left: 18px;
+            }
+            .kb-share-toggle input:disabled + .kb-share-slider {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            .kb-share-label {
+                font-size: 10px;
+                color: #9ca3af;
+                font-weight: 500;
+                min-width: 20px;
+                transition: color 0.2s;
+            }
+            .kb-share-toggle input:checked ~ .kb-share-label {
+                color: #059669;
+            }
+
+            /* 非 ready 文档的小状态图标 */
+            .kb-doc-status-icon {
+                font-size: 12px;
+                flex-shrink: 0;
+                z-index: 2;
+                position: relative;
+            }
+            
+            /* ==================== 弹窗样式 ==================== */
+            .kb-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s;
+            }
+            
+            .kb-modal-overlay.show {
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .kb-modal {
+                background: #fff;
+                border-radius: 16px;
+                width: 400px;
+                max-width: 90%;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                transform: translateY(-20px);
+                transition: transform 0.3s;
+            }
+            
+            .kb-modal-overlay.show .kb-modal {
+                transform: translateY(0);
+            }
+            
+            .kb-modal-header {
+                padding: 20px 24px;
+                border-bottom: 1px solid #f0f0f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .kb-modal-title {
+                font-size: 18px;
+                font-weight: 600;
+                color: #1a1a2e;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .kb-modal-close {
+                width: 32px;
+                height: 32px;
+                border: none;
+                background: #f3f4f6;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 18px;
+                color: #6b7280;
+                transition: all 0.2s;
+            }
+            
+            .kb-modal-close:hover {
+                background: #e5e7eb;
+                color: #374151;
+            }
+            
+            .kb-modal-body {
+                padding: 24px;
+            }
+            
+            .kb-modal-input {
+                width: 100%;
+                padding: 12px 16px;
+                border: 2px solid #e5e7eb;
+                border-radius: 10px;
+                font-size: 14px;
+                outline: none;
+                transition: all 0.2s;
+                box-sizing: border-box;
+            }
+            
+            .kb-modal-input:focus {
+                border-color: #7c3aed;
+                box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+            }
+            
+            .kb-modal-input::placeholder {
+                color: #9ca3af;
+            }
+            
+            .kb-modal-footer {
+                padding: 16px 24px;
+                border-top: 1px solid #f0f0f0;
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+            
+            .kb-modal-btn {
+                padding: 10px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .kb-modal-btn.cancel {
+                background: #f3f4f6;
+                border: none;
+                color: #6b7280;
+            }
+            
+            .kb-modal-btn.cancel:hover {
+                background: #e5e7eb;
+            }
+            
+            .kb-modal-btn.confirm {
+                background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+                border: none;
+                color: #fff;
+            }
+            
+            .kb-modal-btn.confirm:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+            }
+            
+            .kb-modal-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none !important;
+            }
+            
+            /* 移动文档弹窗 - 文件夹选择列表 */
+            .kb-folder-select-list {
+                max-height: 300px;
+                overflow-y: auto;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                margin-top: 12px;
+            }
+            
+            .kb-folder-select-item {
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                cursor: pointer;
+                transition: all 0.2s;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            
+            .kb-folder-select-item:last-child {
+                border-bottom: none;
+            }
+            
+            .kb-folder-select-item:hover {
+                background: #f9fafb;
+            }
+            
+            .kb-folder-select-item.selected {
+                background: #ede9fe;
+            }
+            
+            .kb-folder-select-item .folder-icon {
+                font-size: 20px;
+                margin-right: 12px;
+            }
+            
+            .kb-folder-select-item .folder-name {
+                font-size: 14px;
+                color: #374151;
+            }
+            
+            .kb-folder-select-item.root-folder {
+                background: #f0fdf4;
+            }
+            
+            .kb-folder-select-item.root-folder:hover {
+                background: #dcfce7;
+            }
+
+            /* ==================== 拖放提示浮层 ==================== */
+            .kb-drop-toast {
+                position: fixed;
+                bottom: 32px;
+                left: 50%;
+                transform: translateX(-50%) translateY(80px);
+                background: rgba(30, 30, 60, 0.92);
+                color: #fff;
+                padding: 10px 24px;
+                border-radius: 12px;
+                font-size: 13px;
+                font-weight: 500;
+                z-index: 9999;
+                pointer-events: none;
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(.4,0,.2,1);
+                white-space: nowrap;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            }
+            .kb-drop-toast.show {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        </style>
+        
+        <!-- 页面头部 -->
+        <div class="kb-page-header">
+            <h1>📚 个人知识库</h1>
+            <p>上传您的学习资料，AI 将帮您智能整理和检索。公开的文档将共享给所有人。</p>
         </div>
         
-        <!-- <div class="agents-grid">
-            {% if agents %}
-                {% for agent in agents %}
-                <div class="agent-card">
-                    <div class="agent-image">
-                        <img src="{{ agent.image_url }}" alt="{{ agent.name }}">
+        <!-- 主布局 -->
+        <div class="kb-main-layout">
+            <!-- 左侧面板 -->
+            <div class="kb-left-panel">
+                <!-- 上传区域 -->
+                <div class="kb-card">
+                    <div class="kb-upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" hidden accept=".pdf,.txt,.md,.doc,.docx">
+                        <div class="kb-upload-icon">📄</div>
+                        <div class="kb-upload-text">拖拽文件到此处，或点击上传</div>
+                        <div class="kb-upload-hint">支持 PDF、TXT、MD、DOC、DOCX（最大 50MB）</div>
+                        <button class="kb-upload-btn" onclick="document.getElementById('fileInput').click()">
+                            选择文件
+                        </button>
                     </div>
-                    <div class="agent-content">
-                        <h3>{{ agent.name }}</h3>
-                        <p>{{ agent.description }}</p>
-                        <div class="agent-actions">
-                            <a href="{{ url_for('view_agent', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>
-                            <button class="btn btn-favorite active" data-agent-id="{{ agent.id }}">
-                                <span class="icon">★</span> 取消收藏
+                </div>
+                
+                <!-- ① 统计卡片已删除 -->
+                
+                <!-- 文档列表 -->
+                <div class="kb-card kb-docs-card">
+                    <div class="kb-card-header">
+                        <span class="kb-card-title">
+                            <span>📁</span> 我的文档
+                        </span>
+                        <div class="kb-header-actions">
+                            <button class="kb-new-folder-btn" onclick="showNewFolderModal()">
+                                <span>➕</span> 新建文件夹
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- 面包屑导航 -->
+                    <div class="kb-breadcrumb" id="breadcrumb">
+                        <span class="kb-breadcrumb-item active" data-folder-id="">📂 根目录</span>
+                    </div>
+                    
+                    <!-- 文件夹和文档列表 -->
+                    <ul class="kb-doc-list" id="docList">
+                        <li class="kb-empty-docs">加载中...</li>
+                    </ul>
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">⭐</div>
-                    <h3>暂无收藏</h3>
-                    <p>您还没有收藏任何智能体，可以在"课程智能体"页面找到并收藏感兴趣的智能体。</p>
-                    <a href="{{ url_for('course_agents') }}" class="btn btn-primary">浏览智能体</a>
+            </div>
+            
+            <!-- 右侧 FastGPT 聊天面板 -->
+            <div class="kb-right-panel">
+                <div class="kb-chat-card">
+                    <div class="kb-chat-header">
+                        <div class="kb-chat-header-title">
+                            <span class="icon">🤖</span>
+                            <span>知识库问答助手</span>
+                        </div>
+                        <span class="kb-chat-header-badge">RAG 增强</span>
+                    </div>
+                    
+                    <div class="kb-chat-tips">
+                        <span class="tip-icon">💡</span>
+                        <span>基于您上传的文档进行智能问答，支持多文档关联检索</span>
+                    </div>
+                    
+                    <div class="kb-fastgpt-container">
+                        <div class="kb-iframe-loading" id="iframeLoading">
+                            <div class="kb-loading-spinner"></div>
+                            <div class="kb-loading-text">正在加载问答助手...</div>
+                            <div class="kb-loading-hint">首次加载可能需要几秒钟</div>
+                        </div>
+                        <iframe 
+                            id="fastgptIframe"
+                            class="kb-fastgpt-iframe"
+                            src="about:blank"
+                            allow="microphone"
+                        ></iframe>
+                    </div>
                 </div>
-            {% endif %}
-        </div> -->
+            </div>
+        </div>
+        
+        <!-- 新建文件夹弹窗 -->
+        <div class="kb-modal-overlay" id="newFolderModal">
+            <div class="kb-modal">
+                <div class="kb-modal-header">
+                    <div class="kb-modal-title">
+                        <span>📁</span> 新建文件夹
+                    </div>
+                    <button class="kb-modal-close" onclick="hideNewFolderModal()">&times;</button>
+                </div>
+                <div class="kb-modal-body">
+                    <input type="text" class="kb-modal-input" id="newFolderName" 
+                           placeholder="请输入文件夹名称" maxlength="50">
+                </div>
+                <div class="kb-modal-footer">
+                    <button class="kb-modal-btn cancel" onclick="hideNewFolderModal()">取消</button>
+                    <button class="kb-modal-btn confirm" id="confirmNewFolder" onclick="createFolder()">创建</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 重命名弹窗 -->
+        <div class="kb-modal-overlay" id="renameModal">
+            <div class="kb-modal">
+                <div class="kb-modal-header">
+                    <div class="kb-modal-title">
+                        <span>✏️</span> 重命名
+                    </div>
+                    <button class="kb-modal-close" onclick="hideRenameModal()">&times;</button>
+                </div>
+                <div class="kb-modal-body">
+                    <input type="text" class="kb-modal-input" id="renameInput" 
+                           placeholder="请输入新名称" maxlength="100">
+                </div>
+                <div class="kb-modal-footer">
+                    <button class="kb-modal-btn cancel" onclick="hideRenameModal()">取消</button>
+                    <button class="kb-modal-btn confirm" id="confirmRename" onclick="confirmRename()">确定</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动文档弹窗 -->
+        <div class="kb-modal-overlay" id="moveDocModal">
+            <div class="kb-modal">
+                <div class="kb-modal-header">
+                    <div class="kb-modal-title">
+                        <span>📦</span> 移动文档
+                    </div>
+                    <button class="kb-modal-close" onclick="hideMoveDocModal()">&times;</button>
+                </div>
+                <div class="kb-modal-body">
+                    <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">选择目标文件夹：</p>
+                    <div class="kb-folder-select-list" id="folderSelectList">
+                        <!-- 动态填充 -->
+                    </div>
+                </div>
+                <div class="kb-modal-footer">
+                    <button class="kb-modal-btn cancel" onclick="hideMoveDocModal()">取消</button>
+                    <button class="kb-modal-btn confirm" id="confirmMoveDoc" onclick="confirmMoveDoc()">移动</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 拖放提示浮层 -->
+        <div class="kb-drop-toast" id="dropToast"></div>
     </div>
 </div>
+
+<script>
+    // ==================== 全局状态 ====================
+    let currentFolderId = null;  // 当前所在文件夹
+    let folderPath = [];         // 文件夹路径栈
+    let allFolders = [];         // 所有文件夹列表（用于移动）
+    let renameTarget = null;     // 重命名目标 { type: 'folder'|'doc', id: '' }
+    let moveDocId = null;        // 要移动的文档ID
+    let selectedMoveTarget = null; // 选中的移动目标文件夹
+    
+    // 拖拽状态
+    let draggedDocId = null;     // 当前正在拖拽的文档 ID
+    let draggedDocName = '';     // 当前正在拖拽的文档名称
+    
+    const currentUsername = '{{ username }}';
+    
+    // ==================== 页面加载 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDocuments();
+        initUploadZone();
+        initFastGPTIframe();
+        
+        setInterval(checkProcessingDocs, 10000);
+        
+        document.getElementById('newFolderName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') createFolder();
+        });
+        document.getElementById('renameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') confirmRename();
+        });
+    });
+    
+    // ==================== FastGPT iframe ====================
+    function initFastGPTIframe() {
+        const iframe = document.getElementById('fastgptIframe');
+        const loading = document.getElementById('iframeLoading');
+        
+        fetch('/api/kb/chat-url')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.chat_url) {
+                    let chatUrl = data.chat_url;
+                    chatUrl += `&用户学号=${encodeURIComponent(currentUsername)}`;
+                    
+                    console.log('📱 加载 FastGPT 聊天:', chatUrl);
+                    console.log('📱 当前用户:', currentUsername);
+                    
+                    iframe.src = chatUrl;
+                } else {
+                    iframe.src = 'about:blank';
+                    loading.innerHTML = `
+                        <div style="color: #d97706; font-size: 14px;">⚠️ 暂无可用的问答助手</div>
+                        <div style="color: #9ca3af; font-size: 12px; margin-top: 8px;">请先上传文档</div>
+                    `;
+                }
+            })
+            .catch(err => {
+                console.error('获取聊天URL失败:', err);
+                loading.innerHTML = `
+                    <div style="color: #dc2626; font-size: 14px;">❌ 加载失败</div>
+                    <div style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${err.message}</div>
+                `;
+            });
+        
+        iframe.onload = function() {
+            setTimeout(() => {
+                loading.classList.add('hidden');
+            }, 500);
+        };
+    }
+
+    
+    // ==================== 上传功能 ====================
+    function initUploadZone() {
+        const zone = document.getElementById('uploadZone');
+        const input = document.getElementById('fileInput');
+        
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            // 只对外部文件拖入高亮，内部文档拖拽不触发上传区
+            if (!draggedDocId) {
+                zone.classList.add('dragover');
+            }
+        });
+        
+        zone.addEventListener('dragleave', e => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+        });
+        
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            // 只对外部文件上传，内部拖拽忽略
+            if (!draggedDocId && e.dataTransfer.files.length > 0) {
+                uploadFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        input.addEventListener('change', e => {
+            if (e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+                input.value = '';
+            }
+        });
+    }
+    
+    function uploadFile(file) {
+        const maxSize = 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('文件过大，最大支持 50MB');
+            return;
+        }
+        
+        const allowedExt = ['pdf', 'txt', 'md', 'doc', 'docx'];
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!allowedExt.includes(ext)) {
+            alert('不支持的文件类型');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        if (currentFolderId) {
+            formData.append('folder_id', currentFolderId);
+        }
+        
+        const btn = document.querySelector('.kb-upload-btn');
+        const originalText = btn.textContent;
+        btn.textContent = '上传中...';
+        btn.disabled = true;
+        
+        fetch('/api/kb/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            
+            if (data.success) {
+                _hadProcessing = true;
+                loadDocuments();
+            } else {
+                alert('上传失败: ' + (data.error || '未知错误'));
+            }
+        })
+        .catch(err => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            alert('上传出错: ' + err.message);
+        });
+    }
+
+    
+    // ==================== 文档和文件夹加载 ====================
+    function loadDocuments() {
+        const folderUrl = currentFolderId 
+            ? `/api/kb/folders?parent_id=${currentFolderId}`
+            : '/api/kb/folders';
+            
+        const docUrl = currentFolderId
+            ? `/api/kb/folder/${currentFolderId}/documents`
+            : '/api/kb/folder/root/documents';
+        
+        Promise.all([
+            fetch(folderUrl).then(r => r.json()),
+            fetch(docUrl).then(r => r.json()),
+            fetch('/api/kb/folders/tree').then(r => r.json())
+        ])
+        .then(([folderData, docData, treeData]) => {
+            const folders = folderData.folders || [];
+            const documents = docData.documents || [];
+            allFolders = flattenFolderTree(treeData.tree || []);
+            
+            renderList(folders, documents);
+            updateBreadcrumb();
+        })
+        .catch(err => {
+            console.error('加载失败:', err);
+            document.getElementById('docList').innerHTML = 
+                '<li class="kb-empty-docs">加载失败，请刷新重试</li>';
+        });
+    }
+    
+    function flattenFolderTree(tree, result = [], level = 0) {
+        for (const folder of tree) {
+            result.push({ ...folder, level });
+            if (folder.children && folder.children.length > 0) {
+                flattenFolderTree(folder.children, result, level + 1);
+            }
+        }
+        return result;
+    }
+    
+    // ==================== ② ③ 核心渲染（删除状态文字，新增共享 Toggle） ====================
+    function renderList(folders, documents) {
+        const list = document.getElementById('docList');
+        
+        if (folders.length === 0 && documents.length === 0) {
+            list.innerHTML = '<li class="kb-empty-docs">📭 当前文件夹为空</li>';
+            return;
+        }
+        
+        let html = '';
+        
+        // 渲染文件夹（作为拖放目标）
+        for (const folder of folders) {
+            html += `
+                <li class="kb-folder-item" 
+                    data-folder-id="${folder.folder_id}"
+                    onclick="enterFolder('${folder.folder_id}', '${escapeHtml(folder.name)}')"
+                    ondragover="onFolderDragOver(event)"
+                    ondragenter="onFolderDragEnter(event)"
+                    ondragleave="onFolderDragLeave(event)"
+                    ondrop="onFolderDrop(event, '${folder.folder_id}', '${escapeHtml(folder.name)}')">
+                    <div class="kb-folder-info">
+                        <span class="kb-folder-icon">📁</span>
+                        <div>
+                            <div class="kb-folder-name">${escapeHtml(folder.name)}</div>
+                            <div class="kb-folder-meta">${folder.document_count || 0} 个文档 · ${folder.subfolder_count || 0} 个子文件夹</div>
+                        </div>
+                    </div>
+                    <div class="kb-folder-actions-inline" onclick="event.stopPropagation()">
+                        <button class="kb-folder-action-btn" onclick="showRenameFolderModal('${folder.folder_id}', '${escapeHtml(folder.name)}')">✏️</button>
+                        <button class="kb-folder-action-btn delete" onclick="deleteFolder('${folder.folder_id}', '${escapeHtml(folder.name)}')">🗑️</button>
+                    </div>
+                </li>
+            `;
+        }
+        
+        // 渲染文档（可拖拽 + 共享Toggle）
+        for (const doc of documents) {
+            const icon = getFileIcon(doc.file_type);
+            const size = formatFileSize(doc.file_size);
+            const isProcessing = (doc.status === 'processing');
+            const isReady = (doc.status === 'ready');
+            const isFailed = (doc.status === 'failed');
+            const isShared = doc.shared || false;
+
+            const trainingCount = doc.training_count || 0;
+            const dataCount = doc.data_count || 0;
+            const totalCount = dataCount + trainingCount;
+            let progressPct = 0;
+            if (isProcessing && totalCount > 0) {
+                progressPct = Math.round(dataCount / totalCount * 100);
+            }
+
+            let metaText = `${size} · ${doc.chunk_count || 0} 块`;
+            if (isProcessing && totalCount > 0) {
+                metaText = `${size} · 已索引 ${dataCount}/${totalCount}`;
+            }
+
+            // 进度条（仅处理中显示）
+            let progressHtml = '';
+            if (isProcessing && totalCount > 0) {
+                progressHtml = `
+                    <div class="kb-doc-progress-fill" style="width:${progressPct}%"></div>
+                    <div class="kb-doc-progress-bar" style="width:${progressPct}%"></div>
+                `;
+            }
+
+            // 进度百分比（仅处理中显示）
+            let pctHtml = '';
+            if (isProcessing && totalCount > 0) {
+                pctHtml = `<span class="kb-progress-pct">${progressPct}%</span>`;
+            }
+
+            // ② ③ 替代旧状态文字：就绪 → 共享Toggle，其他 → 小图标
+            let shareOrStatusHtml = '';
+            if (isReady) {
+                shareOrStatusHtml = `
+                    <label class="kb-share-toggle" onclick="event.stopPropagation()">
+                        <input type="checkbox" ${isShared ? 'checked' : ''}
+                               onchange="toggleShare('${doc.doc_id}', this.checked)">
+                        <span class="kb-share-slider"></span>
+                        <span class="kb-share-label">${isShared ? '公开' : '私有'}</span>
+                    </label>`;
+            } else if (isFailed) {
+                shareOrStatusHtml = '<span class="kb-doc-status-icon" title="处理失败">❌</span>';
+            } else if (isProcessing) {
+                // 进度条 + 百分比已经显示，不需要额外状态
+            } else {
+                shareOrStatusHtml = '<span class="kb-doc-status-icon" title="等待处理">⏳</span>';
+            }
+
+            html += `
+                <li class="kb-doc-item" 
+                    data-doc-id="${doc.doc_id}"
+                    draggable="true"
+                    ondragstart="onDocDragStart(event, '${doc.doc_id}', '${escapeHtml(doc.filename)}')"
+                    ondragend="onDocDragEnd(event)">
+                    ${progressHtml}
+                    <div class="kb-doc-info">
+                        <span class="kb-doc-icon">${icon}</span>
+                        <div>
+                            <div class="kb-doc-name" title="${escapeHtml(doc.filename)}">${escapeHtml(doc.filename)}</div>
+                            <div class="kb-doc-meta">${metaText}</div>
+                        </div>
+                    </div>
+                    ${shareOrStatusHtml}
+                    ${pctHtml}
+                    <div class="kb-doc-actions">
+                        <button class="kb-folder-action-btn" onclick="event.stopPropagation(); showMoveDocModal('${doc.doc_id}', '${escapeHtml(doc.filename)}')" title="移动">📦</button>
+                        <button class="kb-doc-delete" onclick="event.stopPropagation(); deleteDoc('${doc.doc_id}')">删除</button>
+                    </div>
+                </li>
+            `;
+        }
+        
+        list.innerHTML = html;
+    }
+    
+    // ==================== ④ 公开/取消公开 ====================
+    function toggleShare(docId, isShared) {
+        const toggle = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"] .kb-share-toggle input`);
+        const label = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"] .kb-share-label`);
+        
+        // 禁用 + 提示
+        if (toggle) toggle.disabled = true;
+        if (label) label.textContent = isShared ? '共享中…' : '取消中…';
+        
+        const url = isShared
+            ? `/api/kb/document/${docId}/share`
+            : `/api/kb/document/${docId}/unshare`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (toggle) toggle.disabled = false;
+            
+            if (data.success) {
+                if (label) label.textContent = isShared ? '公开' : '私有';
+                showDropToast(isShared ? '✅ 已公开到共享知识库' : '🔒 已取消公开');
+                setTimeout(() => hideDropToast(), 2000);
+            } else {
+                // 回退
+                if (toggle) toggle.checked = !isShared;
+                if (label) label.textContent = !isShared ? '公开' : '私有';
+                alert('操作失败: ' + (data.error || '未知错误'));
+            }
+        })
+        .catch(err => {
+            if (toggle) toggle.disabled = false;
+            if (toggle) toggle.checked = !isShared;
+            if (label) label.textContent = !isShared ? '公开' : '私有';
+            alert('操作出错: ' + err.message);
+        });
+    }
+    
+    // ==================== 面包屑 ====================
+    function updateBreadcrumb() {
+        const breadcrumb = document.getElementById('breadcrumb');
+        
+        // 根目录面包屑：始终可放置
+        let html = `<span class="kb-breadcrumb-item ${folderPath.length === 0 ? 'active' : ''}" 
+                         data-folder-id=""
+                         onclick="navigateToRoot()"
+                         ondragover="onBreadcrumbDragOver(event)"
+                         ondragenter="onBreadcrumbDragEnter(event)"
+                         ondragleave="onBreadcrumbDragLeave(event)"
+                         ondrop="onBreadcrumbDrop(event, null)">📂 根目录</span>`;
+        
+        // 每一层面包屑都可放置
+        for (let i = 0; i < folderPath.length; i++) {
+            const isLast = i === folderPath.length - 1;
+            const fid = folderPath[i].id;
+            html += `<span class="kb-breadcrumb-separator">/</span>`;
+            html += `<span class="kb-breadcrumb-item ${isLast ? 'active' : ''}" 
+                          data-folder-id="${fid}"
+                          onclick="navigateToPath(${i})"
+                          ondragover="onBreadcrumbDragOver(event)"
+                          ondragenter="onBreadcrumbDragEnter(event)"
+                          ondragleave="onBreadcrumbDragLeave(event)"
+                          ondrop="onBreadcrumbDrop(event, '${fid}')">${escapeHtml(folderPath[i].name)}</span>`;
+        }
+        
+        breadcrumb.innerHTML = html;
+    }
+    
+    // ==================== 文件夹导航 ====================
+    function enterFolder(folderId, folderName) {
+        folderPath.push({ id: folderId, name: folderName });
+        currentFolderId = folderId;
+        loadDocuments();
+    }
+    
+    function navigateToRoot() {
+        folderPath = [];
+        currentFolderId = null;
+        loadDocuments();
+    }
+    
+    function navigateToPath(index) {
+        folderPath = folderPath.slice(0, index + 1);
+        currentFolderId = folderPath[index].id;
+        loadDocuments();
+    }
+    
+    // ==================== 拖拽相关事件处理 ====================
+    
+    /**
+     * 文档开始拖拽
+     */
+    function onDocDragStart(event, docId, docName) {
+        draggedDocId = docId;
+        draggedDocName = docName;
+        
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', docId);
+        
+        setTimeout(() => {
+            const el = event.target.closest('.kb-doc-item');
+            if (el) el.classList.add('dragging');
+        }, 0);
+        
+        showDropToast(`📄 正在拖拽「${docName}」— 放到文件夹或面包屑上`);
+        console.log(`🖱️ 开始拖拽文档: ${docName} (${docId})`);
+    }
+    
+    /**
+     * 文档拖拽结束
+     */
+    function onDocDragEnd(event) {
+        document.querySelectorAll('.kb-doc-item.dragging').forEach(el => {
+            el.classList.remove('dragging');
+        });
+        
+        document.querySelectorAll('.drop-target').forEach(el => {
+            el.classList.remove('drop-target');
+        });
+        
+        hideDropToast();
+        draggedDocId = null;
+        draggedDocName = '';
+    }
+    
+    /**
+     * 文件夹：dragover
+     */
+    function onFolderDragOver(event) {
+        if (!draggedDocId) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }
+    
+    /**
+     * 文件夹：dragenter
+     */
+    function onFolderDragEnter(event) {
+        if (!draggedDocId) return;
+        event.preventDefault();
+        const folder = event.target.closest('.kb-folder-item');
+        if (folder) {
+            folder.classList.add('drop-target');
+        }
+    }
+    
+    /**
+     * 文件夹：dragleave
+     */
+    function onFolderDragLeave(event) {
+        const folder = event.target.closest('.kb-folder-item');
+        if (folder) {
+            const related = event.relatedTarget;
+            if (!folder.contains(related)) {
+                folder.classList.remove('drop-target');
+            }
+        }
+    }
+    
+    /**
+     * 文件夹：drop
+     */
+    function onFolderDrop(event, folderId, folderName) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const folder = event.target.closest('.kb-folder-item');
+        if (folder) folder.classList.remove('drop-target');
+        
+        if (!draggedDocId) return;
+        
+        console.log(`📦 拖放移动: ${draggedDocName} → 文件夹「${folderName}」`);
+        executeDragMove(draggedDocId, folderId, `文件夹「${folderName}」`);
+    }
+    
+    /**
+     * 面包屑：dragover
+     */
+    function onBreadcrumbDragOver(event) {
+        if (!draggedDocId) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }
+    
+    /**
+     * 面包屑：dragenter
+     */
+    function onBreadcrumbDragEnter(event) {
+        if (!draggedDocId) return;
+        event.preventDefault();
+        const item = event.target.closest('.kb-breadcrumb-item');
+        if (item) {
+            item.classList.add('drop-target');
+        }
+    }
+    
+    /**
+     * 面包屑：dragleave
+     */
+    function onBreadcrumbDragLeave(event) {
+        const item = event.target.closest('.kb-breadcrumb-item');
+        if (item) {
+            const related = event.relatedTarget;
+            if (!item.contains(related)) {
+                item.classList.remove('drop-target');
+            }
+        }
+    }
+    
+    /**
+     * 面包屑：drop
+     */
+    function onBreadcrumbDrop(event, folderId) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const item = event.target.closest('.kb-breadcrumb-item');
+        if (item) item.classList.remove('drop-target');
+        
+        if (!draggedDocId) return;
+        
+        const targetName = folderId ? '上级文件夹' : '根目录';
+        console.log(`📦 拖放移动: ${draggedDocName} → ${targetName}`);
+        executeDragMove(draggedDocId, folderId, targetName);
+    }
+    
+    /**
+     * 执行拖拽移动
+     */
+    function executeDragMove(docId, targetFolderId, targetLabel) {
+        const docEl = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"]`);
+        if (docEl) {
+            docEl.style.transition = 'all 0.3s';
+            docEl.style.opacity = '0.3';
+            docEl.style.transform = 'translateX(40px)';
+        }
+        
+        fetch(`/api/kb/document/${docId}/move`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folder_id: targetFolderId || null })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showDropToast(`✅ 已移动到${targetLabel}`);
+                setTimeout(() => hideDropToast(), 1500);
+                loadDocuments();
+            } else {
+                showDropToast(`❌ 移动失败: ${data.error || '未知错误'}`);
+                setTimeout(() => hideDropToast(), 2000);
+                if (docEl) {
+                    docEl.style.opacity = '1';
+                    docEl.style.transform = '';
+                }
+            }
+        })
+        .catch(err => {
+            showDropToast(`❌ 移动出错: ${err.message}`);
+            setTimeout(() => hideDropToast(), 2000);
+            if (docEl) {
+                docEl.style.opacity = '1';
+                docEl.style.transform = '';
+            }
+        });
+    }
+    
+    /**
+     * 显示底部拖放提示
+     */
+    function showDropToast(message) {
+        const toast = document.getElementById('dropToast');
+        toast.textContent = message;
+        toast.classList.add('show');
+    }
+    
+    /**
+     * 隐藏底部拖放提示
+     */
+    function hideDropToast() {
+        const toast = document.getElementById('dropToast');
+        toast.classList.remove('show');
+    }
+    
+    // ==================== 文件夹操作 ====================
+    function showNewFolderModal() {
+        document.getElementById('newFolderModal').classList.add('show');
+        document.getElementById('newFolderName').value = '';
+        document.getElementById('newFolderName').focus();
+    }
+    
+    function hideNewFolderModal() {
+        document.getElementById('newFolderModal').classList.remove('show');
+    }
+    
+    function createFolder() {
+        const name = document.getElementById('newFolderName').value.trim();
+        if (!name) {
+            alert('请输入文件夹名称');
+            return;
+        }
+        
+        const btn = document.getElementById('confirmNewFolder');
+        btn.disabled = true;
+        btn.textContent = '创建中...';
+        
+        fetch('/api/kb/folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                parent_id: currentFolderId
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = '创建';
+            
+            if (data.success) {
+                hideNewFolderModal();
+                loadDocuments();
+            } else {
+                alert('创建失败: ' + (data.error || '未知错误'));
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = '创建';
+            alert('创建出错: ' + err.message);
+        });
+    }
+    
+    function deleteFolder(folderId, folderName) {
+        if (!confirm(`确定要删除文件夹「${folderName}」吗？\n\n注意：如果文件夹内有内容，将一并删除！`)) {
+            return;
+        }
+        
+        fetch(`/api/kb/folder/${folderId}?recursive=true`, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    loadDocuments();
+                } else {
+                    alert('删除失败: ' + (data.error || '未知错误'));
+                }
+            })
+            .catch(err => {
+                alert('删除出错: ' + err.message);
+            });
+    }
+    
+    function showRenameFolderModal(folderId, currentName) {
+        renameTarget = { type: 'folder', id: folderId };
+        document.getElementById('renameInput').value = currentName;
+        document.getElementById('renameModal').classList.add('show');
+        document.getElementById('renameInput').focus();
+        document.getElementById('renameInput').select();
+    }
+    
+    function hideRenameModal() {
+        document.getElementById('renameModal').classList.remove('show');
+        renameTarget = null;
+    }
+    
+    function confirmRename() {
+        if (!renameTarget) return;
+        
+        const newName = document.getElementById('renameInput').value.trim();
+        if (!newName) {
+            alert('名称不能为空');
+            return;
+        }
+        
+        const btn = document.getElementById('confirmRename');
+        btn.disabled = true;
+        btn.textContent = '保存中...';
+        
+        let url, body;
+        if (renameTarget.type === 'folder') {
+            url = `/api/kb/folder/${renameTarget.id}/rename`;
+            body = { name: newName };
+        } else {
+            url = `/api/kb/rename/${renameTarget.id}`;
+            body = { new_name: newName };
+        }
+        
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = '确定';
+            
+            if (data.success) {
+                hideRenameModal();
+                loadDocuments();
+            } else {
+                alert('重命名失败: ' + (data.error || '未知错误'));
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = '确定';
+            alert('重命名出错: ' + err.message);
+        });
+    }
+    
+    // ==================== 文档操作 ====================
+    function deleteDoc(docId) {
+        if (!confirm('确定要删除这个文档吗？')) return;
+        
+        fetch(`/api/kb/document/${docId}`, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    loadDocuments();
+                } else {
+                    alert('删除失败: ' + (data.error || '未知错误'));
+                }
+            })
+            .catch(err => {
+                alert('删除出错: ' + err.message);
+            });
+    }
+    
+    function showMoveDocModal(docId, filename) {
+        moveDocId = docId;
+        selectedMoveTarget = null;
+        
+        const list = document.getElementById('folderSelectList');
+        let html = `
+            <div class="kb-folder-select-item root-folder" data-folder-id="" onclick="selectMoveTarget(this, null)">
+                <span class="folder-icon">📂</span>
+                <span class="folder-name">根目录</span>
+            </div>
+        `;
+        
+        for (const folder of allFolders) {
+            const indent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(folder.level);
+            html += `
+                <div class="kb-folder-select-item" data-folder-id="${folder.folder_id}" 
+                     onclick="selectMoveTarget(this, '${folder.folder_id}')">
+                    <span class="folder-icon">${indent}📁</span>
+                    <span class="folder-name">${escapeHtml(folder.name)}</span>
+                </div>
+            `;
+        }
+        
+        list.innerHTML = html;
+        document.getElementById('moveDocModal').classList.add('show');
+    }
+    
+    function hideMoveDocModal() {
+        document.getElementById('moveDocModal').classList.remove('show');
+        moveDocId = null;
+        selectedMoveTarget = null;
+    }
+    
+    function selectMoveTarget(element, folderId) {
+        document.querySelectorAll('.kb-folder-select-item').forEach(el => {
+            el.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        selectedMoveTarget = folderId;
+    }
+    
+    function confirmMoveDoc() {
+        if (!moveDocId) return;
+        
+        const btn = document.getElementById('confirmMoveDoc');
+        btn.disabled = true;
+        btn.textContent = '移动中...';
+        
+        fetch(`/api/kb/document/${moveDocId}/move`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folder_id: selectedMoveTarget })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = '移动';
+            
+            if (data.success) {
+                hideMoveDocModal();
+                loadDocuments();
+            } else {
+                alert('移动失败: ' + (data.error || '未知错误'));
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = '移动';
+            alert('移动出错: ' + err.message);
+        });
+    }
+    
+    // ==================== 自动刷新处理中的文档 ====================
+    let _hadProcessing = false;
+    
+    function checkProcessingDocs() {
+        fetch('/api/kb/documents')
+            .then(r => r.json())
+            .then(data => {
+                const hasProcessing = data.has_processing || false;
+                
+                if (hasProcessing) {
+                    _hadProcessing = true;
+                    loadDocuments();
+                } else if (_hadProcessing) {
+                    _hadProcessing = false;
+                    loadDocuments();
+                }
+            });
+    }
+
+    
+    // ==================== 工具函数 ====================
+    function getFileIcon(type) {
+        const icons = {
+            'pdf': '📕',
+            'txt': '📄',
+            'md': '📝',
+            'doc': '📘',
+            'docx': '📘'
+        };
+        return icons[type] || '📄';
+    }
+    
+    function formatFileSize(bytes) {
+        if (!bytes) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let i = 0;
+        while (bytes >= 1024 && i < units.length - 1) {
+            bytes /= 1024;
+            i++;
+        }
+        return bytes.toFixed(1) + ' ' + units[i];
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
 {% endblock %}

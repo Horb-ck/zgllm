@@ -68,3 +68,43 @@
 //        window.addEventListener('resize', adjustIframeHeight);
 //    }
 //});
+
+document.addEventListener('DOMContentLoaded', function() {
+    function unloadHeavyIframes() {
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach(function(iframe) {
+            try {
+                iframe.src = 'about:blank';
+            } catch (error) {
+                console.warn('Failed to unload iframe before navigation:', error);
+            }
+        });
+    }
+
+    function isSameWindowNavigation(link, event) {
+        if (!link || !link.href) {
+            return false;
+        }
+        if (link.target && link.target !== '_self') {
+            return false;
+        }
+        if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return false;
+        }
+        return true;
+    }
+
+    const sidebarLinks = document.querySelectorAll('.sidebar a[href], .sidebar-footer a[href]');
+    sidebarLinks.forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            if (!isSameWindowNavigation(link, event)) {
+                return;
+            }
+
+            const destination = link.href;
+            unloadHeavyIframes();
+            event.preventDefault();
+            window.location.href = destination;
+        });
+    });
+});
