@@ -1,0 +1,956 @@
+{% extends "layout.html" %}
+
+{% block title %}首页 - 明月科创教育大模型{% endblock %}
+
+{% block content %}
+<div class="spark-home">
+    <header class="spark-topbar">
+        <div class="spark-brand">
+            <div class="spark-brand-mark">M</div>
+            <div class="spark-brand-copy">
+                <strong>明月科创教育大模型</strong>
+                <span>Large Model Learning Platform</span>
+            </div>
+        </div>
+
+        <nav class="spark-nav">
+            <a href="{{ url_for('home') }}" class="active">首页</a>
+            <a href="{{ url_for('course_agents') }}">课程广场</a>
+            <a href="{{ url_for('app_comp.course_kd') }}">智能体广场</a>
+            <a href="{{ url_for('his') }}">个人知识库</a>
+            <a href="{{ url_for('chat') }}">学情分析</a>
+        </nav>
+
+        <div class="spark-userbar">
+            <div class="spark-user-pill">
+                <span class="spark-avatar">{{ username[0].upper() }}</span>
+                <span>{{ username }}</span>
+            </div>
+            <a href="{{ url_for('logout') }}" class="spark-link">退出</a>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="spark-flashes">
+        {% for category, message in messages %}
+        <div class="spark-flash {{ category or 'info' }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <main class="spark-main">
+        <section class="spark-hero">
+            <div class="spark-hero-copy">
+                <span class="spark-kicker">课程学习 · 智能体 · 知识图谱 · 学情分析</span>
+                <h1>明月科创教育大模型</h1>
+                <p>
+                    首页不再使用大量厚重卡片堆叠，而是改成更展开、更连续的平铺式布局。
+                    在同一页面中快速进入课程广场、智能问答、知识图谱和实验空间。
+                </p>
+
+                <div class="spark-actions">
+                    <a href="{{ url_for('course_agents') }}" class="spark-btn spark-btn-primary">进入课程广场</a>
+                    <a href="#ai-workspace" class="spark-btn spark-btn-secondary">进入 AI 对话</a>
+                    <a href="#kg-showcase" class="spark-btn spark-btn-secondary">查看知识图谱</a>
+                </div>
+            </div>
+
+            <div class="spark-hero-visual">
+                <div class="orbit orbit-one"></div>
+                <div class="orbit orbit-two"></div>
+                <div class="crystal-core">
+                    <div class="crystal-shape"></div>
+                </div>
+
+                <div class="kg-cluster kg-cluster-course">
+                    <button class="kg-node" type="button">课程</button>
+                    <div class="kg-children">
+                        <span>工程原理</span>
+                        <span>控制原理</span>
+                        <span>产品设计</span>
+                        <span>软件设计</span>
+                        <span>信号与系统</span>
+                    </div>
+                </div>
+
+                <div class="kg-cluster kg-cluster-ai">
+                    <button class="kg-node" type="button">人工智能</button>
+                    <div class="kg-children">
+                        <span>抓取原语</span>
+                        <span>强化学习</span>
+                        <span>具身智能</span>
+                        <span>Transformer</span>
+                        <span>PyTorch</span>
+                    </div>
+                </div>
+
+                <div class="kg-cluster kg-cluster-me">
+                    <button class="kg-node" type="button">机电</button>
+                    <div class="kg-children">
+                        <span>3D打印</span>
+                        <span>SolidWorks</span>
+                        <span>传感器</span>
+                        <span>PCB设计</span>
+                        <span>系统集成</span>
+                    </div>
+                </div>
+
+                <div class="kg-cluster kg-cluster-other">
+                    <button class="kg-node" type="button">其他</button>
+                    <div class="kg-children">
+                        <span>基础</span>
+                        <span>IMU</span>
+                        <span>PID控制</span>
+                        <span>状态机</span>
+                        <span>传感器融合</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="spark-strip">
+            <article class="strip-item">
+                <strong>课程广场</strong>
+                <span>统一展示课程与教学入口</span>
+            </article>
+            <article class="strip-item">
+                <strong>智能体广场</strong>
+                <span>聚合问答、辅学与任务代理</span>
+            </article>
+            <article class="strip-item">
+                <strong>知识图谱</strong>
+                <span>关联知识点、资源与案例链路</span>
+            </article>
+            <article class="strip-item">
+                <strong>实验空间</strong>
+                <span>保留开放探索和扩展能力</span>
+            </article>
+        </section>
+
+        <section class="spark-section spark-feature-section" id="feature-showcase">
+            <div class="spark-section-heading">
+                <span class="spark-kicker">核心能力</span>
+                <h2>用平铺式分区介绍平台功能</h2>
+                <p>每一块都直接展开，不再用厚边框卡片把页面切得太碎。</p>
+            </div>
+
+            <div class="spark-tabs" role="tablist" aria-label="平台功能切换">
+                <button class="spark-tab active" type="button" data-feature-target="feature-agents">课程广场</button>
+                <button class="spark-tab" type="button" data-feature-target="feature-course">智能体广场</button>
+                <button class="spark-tab" type="button" data-feature-target="feature-kg">知识图谱</button>
+                <button class="spark-tab" type="button" data-feature-target="feature-analysis">学情分析</button>
+                <button class="spark-tab" type="button" data-feature-target="feature-lab">实验空间</button>
+            </div>
+
+            <div class="spark-feature-stage">
+                <article class="spark-feature active" id="feature-agents">
+                    <div class="spark-feature-copy">
+                        <span class="spark-feature-tag">课程广场</span>
+                        <h3>面向课程入口的统一展示页</h3>
+                        <p>用于承接课程主页、资源导航、课程说明和课堂相关的 AI 助手入口。</p>
+                        <ul>
+                            <li>适合作为课程主页的总入口。</li>
+                            <li>支持把课程资源、任务和智能体集中展示。</li>
+                            <li>便于学生先浏览，再决定进入具体模块。</li>
+                        </ul>
+                        <a href="{{ url_for('course_agents') }}" class="spark-inline-link">进入课程广场</a>
+                    </div>
+                    <div class="spark-feature-media spark-gradient-agents"></div>
+                </article>
+
+                <article class="spark-feature" id="feature-course">
+                    <div class="spark-feature-copy">
+                        <span class="spark-feature-tag">智能体广场</span>
+                        <h3>适合聚合不同场景的学习助手</h3>
+                        <p>把课程问答、任务协作、个性化辅学和专题助手整合到同一个展示区中。</p>
+                        <ul>
+                            <li>减少用户在多个页面之间来回切换。</li>
+                            <li>让不同类型的智能体统一曝光。</li>
+                            <li>适合作为教学活动的能力入口层。</li>
+                        </ul>
+                        <a href="{{ url_for('app_comp.course_kd') }}" class="spark-inline-link">进入智能体广场</a>
+                    </div>
+                    <div class="spark-feature-media spark-gradient-course"></div>
+                </article>
+
+                <article class="spark-feature" id="feature-kg">
+                    <div class="spark-feature-copy">
+                        <span class="spark-feature-tag">知识图谱</span>
+                        <h3>把知识点关系直接带到首页</h3>
+                        <p>支持课程知识点、概念依赖、案例链路和教学内容的结构化展示。</p>
+                        <ul>
+                            <li>适合作为首页里的重点能力展示区。</li>
+                            <li>帮助学生更快理解课程知识结构。</li>
+                            <li>也方便教师串联资源与教学设计。</li>
+                        </ul>
+                        <a href="#kg-showcase" class="spark-inline-link">查看知识图谱</a>
+                    </div>
+                    <div class="spark-feature-media spark-gradient-kg"></div>
+                </article>
+
+                <article class="spark-feature" id="feature-analysis">
+                    <div class="spark-feature-copy">
+                        <h3>把数据分析能力作为教学支持层</h3>
+                        <p>支持从行为、作业、知识掌握和互动情况中提炼可视化分析结果。</p>
+                        <ul>
+                            <li>兼顾教师侧洞察与学生侧反馈。</li>
+                            <li>支持结合课程过程数据做分析。</li>
+                            <li>让首页不只是展示，也能承接分析入口。</li>
+                        </ul>
+                        <a href="{{ url_for('chat') }}" class="spark-inline-link">进入学情分析</a>
+                    </div>
+                    <div class="spark-feature-media spark-feature-video">
+                        <video controls preload="metadata" playsinline poster="{{ url_for('static', filename='img/welcome.c39845a1.png') }}">
+                            <source src="{{ url_for('static', filename='video/明月科创大模型视频.mp4') }}" type="video/mp4">
+                        </video>
+                    </div>
+                </article>
+
+                <article class="spark-feature" id="feature-lab">
+                    <div class="spark-feature-copy">
+                        <span class="spark-feature-tag">实验空间</span>
+                        <h3>保留探索式学习和扩展实验能力</h3>
+                        <p>用于承接自由实验、个性化探索、作品尝试和非标准学习流程。</p>
+                        <ul>
+                            <li>让平台具备更开放的延展空间。</li>
+                            <li>支持面向研究和创新的场景扩展。</li>
+                            <li>形成展示区之外的实践闭环。</li>
+                        </ul>
+                        <a href="{{ url_for('his') }}" class="spark-inline-link">进入实验空间</a>
+                    </div>
+                    <div class="spark-feature-media spark-gradient-lab"></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="spark-section spark-workspace-section" id="ai-workspace">
+            <div class="spark-section-heading">
+                <span class="spark-kicker">AI 对话</span>
+                <h2>直接在首页继续交互</h2>
+                <p>保留对话工作区，但整体放进平铺布局里，不再单独做厚重边框包裹。</p>
+            </div>
+            <div class="spark-embed-frame spark-embed-frame-chat">
+                <iframe
+                    src="{{ embed_url }}"
+                    frameborder="0"
+                    allowfullscreen
+                    loading="lazy"
+                    title="AI 对话工作区"
+                ></iframe>
+            </div>
+        </section>
+
+        <section class="spark-section spark-kg-section" id="kg-showcase">
+            <div class="spark-section-heading">
+                <span class="spark-kicker">知识图谱</span>
+                <h2>首页中的课程知识图谱展示</h2>
+                <p>继续保留知识图谱嵌入，但视觉上改成更轻的平铺结构，弱化“框中框”的感觉。</p>
+            </div>
+            <div class="spark-embed-frame spark-embed-frame-kg">
+                <iframe
+                    src="{{ kg_embed_url }}"
+                    frameborder="0"
+                    allowfullscreen
+                    loading="lazy"
+                    title="课程知识图谱展示区"
+                ></iframe>
+            </div>
+        </section>
+    </main>
+</div>
+
+<style>
+.spark-home {
+    --bg: #f3f6ff;
+    --bg-soft: #eef3ff;
+    --surface: rgba(255, 255, 255, 0.68);
+    --line: rgba(132, 152, 214, 0.18);
+    --line-strong: rgba(111, 131, 197, 0.28);
+    --text: #1f2c44;
+    --muted: #66738f;
+    --primary: #5b6cff;
+    --primary-deep: #4250db;
+    --shadow-soft: 0 18px 50px rgba(73, 97, 153, 0.08);
+    min-height: 100vh;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 18% 10%, rgba(103, 115, 255, 0.15), transparent 24%),
+        radial-gradient(circle at 78% 18%, rgba(62, 212, 244, 0.12), transparent 20%),
+        linear-gradient(180deg, #fcfdff 0%, var(--bg) 100%);
+}
+
+.spark-topbar,
+.spark-main,
+.spark-flashes {
+    width: min(1600px, calc(100% - 64px));
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.spark-topbar {
+    min-height: 84px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 28px;
+    align-items: center;
+    padding: 0 6px;
+    border-bottom: 1px solid rgba(132, 152, 214, 0.14);
+}
+
+.spark-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.spark-brand-mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #4b78ff, #36d3d8);
+}
+
+.spark-brand-copy strong {
+    display: block;
+    font-size: 20px;
+}
+
+.spark-brand-copy span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.spark-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 28px;
+}
+
+.spark-nav a,
+.spark-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s ease;
+}
+
+.spark-nav a.active,
+.spark-nav a:hover,
+.spark-link:hover {
+    color: var(--primary-deep);
+}
+
+.spark-userbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.spark-user-pill {
+    min-height: 44px;
+    padding: 0 16px 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--line);
+}
+
+.spark-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #6a76ff, #4bc6ef);
+}
+
+.spark-flashes {
+    padding-top: 12px;
+}
+
+.spark-flash {
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+}
+
+.spark-main {
+    padding: 26px 0 72px;
+}
+
+.spark-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 620px);
+    gap: 48px;
+    align-items: center;
+    min-height: 520px;
+}
+
+.spark-kicker,
+.spark-feature-tag {
+    min-height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(91, 108, 255, 0.08);
+    color: var(--primary-deep);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.spark-hero-copy h1,
+.spark-section-heading h2,
+.spark-feature-copy h3 {
+    margin: 18px 0 0;
+    letter-spacing: -0.04em;
+}
+
+.spark-hero-copy h1 {
+    font-size: clamp(44px, 6vw, 76px);
+    line-height: 1.02;
+}
+
+.spark-hero-copy p,
+.spark-section-heading p,
+.spark-feature-copy p,
+.strip-item span,
+.spark-feature-copy li {
+    color: var(--muted);
+}
+
+.spark-hero-copy p {
+    max-width: 760px;
+    margin: 20px 0 0;
+    font-size: 19px;
+    line-height: 1.85;
+}
+
+.spark-actions {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.spark-btn {
+    min-height: 52px;
+    padding: 0 24px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.spark-btn-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+    box-shadow: 0 18px 34px rgba(91, 108, 255, 0.22);
+}
+
+.spark-btn-secondary {
+    color: var(--primary-deep);
+    background: rgba(255, 255, 255, 0.66);
+    border: 1px solid var(--line-strong);
+}
+
+.spark-hero-visual {
+    position: relative;
+    min-height: 460px;
+}
+
+.orbit,
+.crystal-core,
+.kg-cluster {
+    position: absolute;
+}
+
+.orbit {
+    border-radius: 50%;
+    border: 1px solid rgba(124, 142, 235, 0.16);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 70%);
+}
+
+.orbit-one {
+    inset: 20px 80px 20px 80px;
+}
+
+.orbit-two {
+    inset: 68px 132px 68px 132px;
+}
+
+.crystal-core {
+    inset: 92px 170px 92px 170px;
+    display: grid;
+    place-items: center;
+}
+
+.crystal-shape {
+    width: 220px;
+    height: 220px;
+    border-radius: 34% 66% 58% 42% / 42% 32% 68% 58%;
+    transform: rotate(18deg);
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.2)),
+        linear-gradient(135deg, #32d9e8, #6d67ff 46%, #d04fff 72%, #ffffff);
+    box-shadow:
+        inset 0 0 22px rgba(255,255,255,0.4),
+        0 30px 60px rgba(111, 103, 255, 0.24);
+}
+
+.kg-cluster {
+    z-index: 2;
+}
+
+.kg-node {
+    min-height: 54px;
+    padding: 0 24px;
+    border: 1px solid rgba(140, 157, 219, 0.24);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: var(--shadow-soft);
+    color: var(--primary-deep);
+    font: inherit;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.kg-children {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 240px;
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.kg-cluster:hover .kg-children,
+.kg-cluster:focus-within .kg-children {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.kg-children span {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(140, 157, 219, 0.2);
+    box-shadow: 0 12px 28px rgba(83, 103, 164, 0.1);
+    color: var(--text);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.kg-cluster-course {
+    top: 46px;
+    left: 18px;
+}
+
+.kg-cluster-course .kg-children {
+    top: 72px;
+    left: 10px;
+}
+
+.kg-cluster-ai {
+    top: 46px;
+    right: 2px;
+}
+
+.kg-cluster-ai .kg-children {
+    top: 72px;
+    right: 0;
+    justify-content: flex-end;
+}
+
+.kg-cluster-me {
+    bottom: 112px;
+    left: 2px;
+}
+
+.kg-cluster-me .kg-children {
+    top: 72px;
+    left: 0;
+}
+
+.kg-cluster-other {
+    right: 28px;
+    bottom: 32px;
+}
+
+.kg-cluster-other .kg-children {
+    right: 0;
+    bottom: 72px;
+    justify-content: flex-end;
+}
+
+.spark-strip {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(132, 152, 214, 0.16);
+    border-radius: 26px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+
+.strip-item {
+    min-height: 104px;
+    padding: 24px 26px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid rgba(132, 152, 214, 0.14);
+}
+
+.strip-item:last-child {
+    border-right: none;
+}
+
+.strip-item strong {
+    font-size: 20px;
+}
+
+.strip-item span {
+    margin-top: 8px;
+    line-height: 1.7;
+}
+
+.spark-section {
+    margin-top: 74px;
+}
+
+.spark-section-heading {
+    max-width: 780px;
+}
+
+.spark-section-heading h2 {
+    font-size: clamp(34px, 4vw, 56px);
+    line-height: 1.08;
+}
+
+.spark-section-heading p {
+    margin: 18px 0 0;
+    font-size: 18px;
+    line-height: 1.8;
+}
+
+.spark-tabs {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.spark-tab {
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid rgba(132, 152, 214, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--muted);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.spark-tab.active {
+    color: var(--primary-deep);
+    border-color: rgba(91, 108, 255, 0.2);
+    background: rgba(91, 108, 255, 0.08);
+}
+
+.spark-feature-stage {
+    margin-top: 30px;
+}
+
+.spark-feature {
+    display: none;
+    grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+    gap: 36px;
+    align-items: stretch;
+    padding: 18px 0 10px;
+}
+
+.spark-feature.active {
+    display: grid;
+}
+
+.spark-feature-copy {
+    padding: 14px 0;
+}
+
+.spark-feature-copy h3 {
+    font-size: clamp(28px, 3vw, 42px);
+    line-height: 1.15;
+}
+
+.spark-feature-copy p {
+    margin: 16px 0 0;
+    font-size: 18px;
+    line-height: 1.8;
+}
+
+.spark-feature-copy ul {
+    margin: 20px 0 0;
+    padding-left: 20px;
+}
+
+.spark-feature-copy li {
+    margin-top: 10px;
+    line-height: 1.8;
+}
+
+.spark-inline-link {
+    display: inline-flex;
+    margin-top: 20px;
+    color: var(--primary-deep);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.spark-feature-media {
+    min-height: 320px;
+    border-radius: 36px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+
+.spark-feature-video {
+    background: rgba(255, 255, 255, 0.66);
+    border: 1px solid rgba(132, 152, 214, 0.14);
+}
+
+.spark-feature-video video {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+    display: block;
+    object-fit: cover;
+    background: #000;
+}
+
+.spark-gradient-agents {
+    background:
+        radial-gradient(circle at 20% 20%, rgba(92, 110, 255, 0.35), transparent 24%),
+        linear-gradient(135deg, rgba(230, 236, 255, 0.9), rgba(245, 251, 255, 0.98));
+}
+
+.spark-gradient-course {
+    background:
+        radial-gradient(circle at 78% 26%, rgba(72, 220, 245, 0.26), transparent 18%),
+        linear-gradient(135deg, rgba(238, 243, 255, 0.94), rgba(247, 250, 255, 0.98));
+}
+
+.spark-gradient-kg {
+    background:
+        radial-gradient(circle at 50% 50%, rgba(91, 108, 255, 0.24), transparent 22%),
+        linear-gradient(135deg, rgba(237, 242, 255, 0.95), rgba(247, 252, 255, 0.98));
+}
+
+.spark-gradient-analysis {
+    background:
+        radial-gradient(circle at 18% 76%, rgba(100, 211, 255, 0.28), transparent 24%),
+        linear-gradient(135deg, rgba(239, 247, 255, 0.95), rgba(248, 250, 255, 0.98));
+}
+
+.spark-gradient-lab {
+    background:
+        radial-gradient(circle at 78% 22%, rgba(151, 110, 255, 0.22), transparent 20%),
+        linear-gradient(135deg, rgba(241, 244, 255, 0.94), rgba(250, 252, 255, 0.98));
+}
+
+.spark-embed-frame {
+    margin-top: 28px;
+    overflow: hidden;
+    border-radius: 30px;
+    border: 1px solid rgba(132, 152, 214, 0.14);
+    background: rgba(255, 255, 255, 0.52);
+    box-shadow: var(--shadow-soft);
+}
+
+.spark-embed-frame iframe {
+    width: 100%;
+    display: block;
+    background: #fff;
+}
+
+.spark-embed-frame-chat iframe {
+    height: 760px;
+}
+
+.spark-embed-frame-kg iframe {
+    height: 760px;
+}
+
+@media (max-width: 1280px) {
+    .spark-hero,
+    .spark-feature {
+        grid-template-columns: 1fr;
+    }
+
+    .spark-hero-visual {
+        max-width: 620px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .spark-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 920px) {
+    .spark-topbar {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 18px 0;
+    }
+
+    .spark-nav {
+        justify-content: flex-start;
+        gap: 18px;
+    }
+
+    .spark-userbar {
+        justify-content: space-between;
+    }
+
+    .spark-main,
+    .spark-topbar,
+    .spark-flashes {
+        width: min(100% - 28px, 1600px);
+    }
+}
+
+@media (max-width: 720px) {
+    .spark-main {
+        padding-top: 12px;
+    }
+
+    .spark-hero {
+        min-height: auto;
+        gap: 24px;
+    }
+
+    .spark-hero-copy p,
+    .spark-section-heading p,
+    .spark-feature-copy p {
+        font-size: 16px;
+    }
+
+    .spark-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .strip-item {
+        border-right: none;
+        border-bottom: 1px solid rgba(132, 152, 214, 0.14);
+    }
+
+    .strip-item:last-child {
+        border-bottom: none;
+    }
+
+    .spark-hero-visual {
+        min-height: 360px;
+    }
+
+    .crystal-core {
+        inset: 88px 112px 92px 112px;
+    }
+
+    .crystal-shape {
+        width: 168px;
+        height: 168px;
+    }
+
+    .kg-cluster {
+        position: static;
+        width: 100%;
+    }
+
+    .spark-hero-visual {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+    }
+
+    .kg-node {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .kg-children {
+        position: static;
+        width: 100%;
+        margin-top: 10px;
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+    }
+
+    .spark-embed-frame-chat iframe,
+    .spark-embed-frame-kg iframe {
+        height: 560px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabs = document.querySelectorAll('.spark-tab');
+    const cards = document.querySelectorAll('.spark-feature');
+
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', function () {
+            const targetId = this.getAttribute('data-feature-target');
+
+            tabs.forEach((item) => item.classList.remove('active'));
+            cards.forEach((card) => card.classList.remove('active'));
+
+            this.classList.add('active');
+            const targetCard = document.getElementById(targetId);
+            if (targetCard) {
+                targetCard.classList.add('active');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
