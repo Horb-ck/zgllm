@@ -1807,1389 +1807,419 @@
 </style>
 
 <script>
-// 定义固定链接和用户名（从模板传递）
-const FIXED_AI_ASSISTANT_URL = "http://180.85.206.30:3000/chat/share?shareId=eUW8D23nZjeiq2OzkCpcS1Eg";
-const CURRENT_USERNAME = "{{ username }}";
-
-// 全局变量
-let currentCourseData = null;
-let mockData = null;
-
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-    // 初始化AI助手链接
-    initializeAIAssistant();
+    // 定义固定链接和用户名（从模板传递）
+    const FIXED_AI_ASSISTANT_URL = "http://180.85.206.30:3000/chat/share?shareId=eUW8D23nZjeiq2OzkCpcS1Eg";
+    const CURRENT_USERNAME = "{{ username }}";
+    const CURRENT_SIS_ID = "{{ sis_id }}";
     
-    // 初始化事件监听器
-    initEventListeners();
+    // 全局变量：存储当前课程的真实数据
+    let currentCourseData = null;
     
-    // 从后端加载课程数据
-    loadCourseData();
-});
-
-// 从后端加载课程数据
-async function loadCourseData() {
-    try {
-        showLoading(true);
-        
-        const response = await fetch('/dashboard/study_situation/comprehensive/overview');
-        const data = await response.json();
-        
-        if (data.error) {
-            console.error('加载课程数据失败:', data.error);
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeAIAssistant();
+        initEventListeners();
+        loadCourseData();
+    });
+    
+    /**
+     * 1. 数据加载核心逻辑
+     */
+    
+    // 初次加载或默认加载
+    async function loadCourseData() {
+        try {
+            showLoading(true);
+            const response = await fetch('/dashboard/study_situation/comprehensive/overview');
+            const data = await response.json();
+            
+            if (data.error || !data.course_info) {
+                console.error('加载课程数据失败:', data.error);
+                showNoCoursesWarning();
+                return;
+            }
+            
+            const courses = data.course_info.user_course || [];
+            if (courses.length === 0) {
+                showNoCoursesWarning();
+                return;
+            }
+            
+            // 存储并更新UI
+            currentCourseData = data;
+            toggleNoCourseWarning(false);
+            updateCourseSelector(data.course_info);
+            updateDashboardData(data);
+            showLoading(false);
+            
+        } catch (error) {
+            console.error('加载课程数据过程出错:', error);
             showNoCoursesWarning();
-            return;
         }
-        
-        // 存储课程数据
-        currentCourseData = data;
-        
-        // 检查是否有课程
-        const courses = data.course_info?.user_course || [];
-        if (courses.length === 0) {
-            showNoCoursesWarning();
-            return;
-        }
-        
-        // 有课程，显示课程页面
-        toggleNoCourseWarning(false);
-        
-        // 更新课程选择器
-        updateCourseSelector(data.course_info);
-        
-        // 生成假数据并更新仪表板
-        generateMockData(data);
-        updateDashboardData(mockData);
-        
-        showLoading(false);
-        
-    } catch (error) {
-        console.error('加载课程数据失败:', error);
-        showNoCoursesWarning();
-    }
-}
-
-// 显示无课程警告
-function showNoCoursesWarning() {
-    toggleNoCourseWarning(true);
-    showLoading(false);
-}
-
-// 显示/隐藏无课程提示
-function toggleNoCourseWarning(show) {
-    const noCourseWarning = document.getElementById('noCourseWarning');
-    const coursePageContent = document.getElementById('coursePageContent');
-    
-    if (show) {
-        noCourseWarning.style.display = 'flex';
-        coursePageContent.style.display = 'none';
-    } else {
-        noCourseWarning.style.display = 'none';
-        coursePageContent.style.display = 'block';
-    }
-}
-
-// 根据真实数据生成假数据 - 完善所有数据
-function generateMockData(realData) {
-    const courseInfo = realData.course_info || {};
-    const courseOverview = realData.course_overview || {};
-    const assignmentAnalysis = realData.assignment_analysis || {};
-    const quizAnalysis = realData.quiz_analysis || {};
-    const studentPerformance = realData.student_performance || {};
-    const moduleAnalysis = realData.module_analysis || {};
-    
-    // 学生姓名生成器
-    const studentNames = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十', 
-                         '郑十一', '王十二', '李十三', '张十四', '刘十五', '陈十六', '杨十七', '黄十八'];
-    
-    // 生成需要关注的学生数据
-    const needAttentionStudents = [];
-    const needAttentionCount = 8; // 固定生成8个需要关注的学生
-    
-    for (let i = 0; i < needAttentionCount; i++) {
-        const score = Math.floor(Math.random() * 30) + 30; // 30-60分
-        needAttentionStudents.push({
-            name: studentNames[i % studentNames.length],
-            student_id: `202301${String(i+1).padStart(3, '0')}`,
-            average_score: score,
-            score: score
-        });
     }
     
-    // 生成模块进度数据
-    const moduleProgress = [];
-    const totalModules = 9; // 固定9个模块
-    
-    for (let i = 0; i < totalModules; i++) {
-        let state, completionRate;
-        
-        if (i < 2) {
-            state = 'completed';
-            completionRate = 100;
-        } else if (i < 5) {
-            state = 'in-progress';
-            completionRate = Math.floor(Math.random() * 50) + 10; // 10-60%
-        } else {
-            state = 'locked';
-            completionRate = 0;
-        }
-        
-        moduleProgress.push({
-            id: `M${String(i+1).padStart(3, '0')}`,
-            module_name: `第${i+1}章：课程内容模块${i+1}`,
-            items_count: Math.floor(Math.random() * 15) + 8, // 8-23个项目
-            completion_rate: completionRate,
-            state: state
-        });
-    }
-    
-    // 生成作业数据
-    const assignments = [];
-    const assignmentCount = 6; // 生成6个作业
-    
-    const assignmentNames = [
-        '编程基础练习',
-        '数据结构作业',
-        '算法设计实践',
-        '数据库系统项目',
-        '网络编程实验',
-        '软件工程报告'
-    ];
-    
-    for (let i = 0; i < assignmentCount; i++) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + (i * 7)); // 每周一个作业
-        const isExpired = i < 2; // 前两个作业已过期
-        const submissionRate = Math.floor(Math.random() * 30) + 70; // 70-100%
-        const unsubmittedCount = Math.floor(Math.random() * 5) + 1; // 1-5人未提交
-        
-        assignments.push({
-            id: `A${String(i+1).padStart(3, '0')}`,
-            name: assignmentNames[i % assignmentNames.length],
-            due_at: dueDate.toISOString(),
-            points_possible: 100,
-            submission_analysis: {
-                total_students: 42,
-                not_submitted_count: isExpired ? unsubmittedCount : 0,
-                submission_rate: submissionRate,
-                has_ungraded_submissions: i < 4, // 前4个作业有待评分
-                submitted_count: 42 - unsubmittedCount
+    // 切换课程时加载
+    async function loadCourseDataByCourseId(courseId) {
+        try {
+            showLoading(true);
+            const response = await fetch(`/dashboard/study_situation/comprehensive/overview?course_id=${courseId}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                showError('加载该课程数据失败');
+                return;
             }
-        });
+            
+            currentCourseData = data;
+            updateDashboardData(data);
+            showLoading(false);
+        } catch (error) {
+            console.error('切换课程失败:', error);
+            showError('网络请求失败，请重试');
+            showLoading(false);
+        }
     }
     
-    // 生成测验数据
-    const quizzes = [];
-    const quizCount = 4; // 生成4个测验
-    
-    const quizNames = [
-        '期中测验：算法与数据结构',
-        '网络基础知识测试',
-        '数据库系统小测',
-        '期末综合测验'
-    ];
-    
-    for (let i = 0; i < quizCount; i++) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + (i * 14)); // 每两周一个测验
-        const avgScore = Math.floor(Math.random() * 30) + 60; // 60-90分
-        
-        quizzes.push({
-            id: `Q${String(i+1).padStart(3, '0')}`,
-            quiz_title: quizNames[i % quizNames.length],
-            due_at: dueDate.toISOString(),
-            points_possible: 100,
-            submission_analysis: {
-                average_score: avgScore,
-                max_score: avgScore + 10,
-                min_score: avgScore - 20
-            },
-            quiz_reports_available: i > 0 // 除第一个外都有报告
-        });
+    /**
+     * 2. 仪表板更新主函数
+     */
+    function updateDashboardData(data) {
+        updateOverviewStats(data);
+        updateStudentsNeedAttentionUI(data);
+        updateActivitiesListUI(data);
+        updateModuleProgressUI(data);
     }
     
-    // 创建完整的假数据
-    mockData = {
-        course_info: courseInfo,
-        course_overview: {
-            total_students: 42,
-            total_assignments: assignmentCount,
-            total_quizzes: quizCount,
-            active_students: 38
-        },
-        assignment_analysis: {
-            total_assignments: assignmentCount,
-            published_assignments: assignmentCount,
-            graded_assignments: 2, // 2个已评分
-            submission_stats: {
-                total_submitted: 240,
-                total_graded: 120,
-                average_submission_rate: 85.7
-            },
-            assignment_categories: {
-                individual: assignments,
-                group: [],
-                late_submissions: 3,
-                upcoming_deadlines: assignments.slice(2, 4) // 第3、4个作业即将截止
-            },
-            ungraded_analysis: {
-                total_ungraded_submissions: 120,
-                assignments_with_ungraded: assignments.slice(0, 4),
-                count_assignments_with_ungraded: 4
-            }
-        },
-        quiz_analysis: {
-            total_quizzes: quizCount,
-            published_quizzes: quizCount,
-            quiz_types: {
-                practice_quiz: 2,
-                graded_survey: 1,
-                assignment: 1
-            },
-            quiz_analysis: quizzes,
-            completion_stats: {
-                completed_quizzes: 2,
-                incomplete_quizzes: 1,
-                expired_quizzes: 1,
-                not_started_quizzes: 0
-            },
-            score_analysis: {
-                average_score_all_quizzes: 78.5,
-                highest_score: 95,
-                lowest_score: 55,
-                score_distribution: {"A": 1, "B": 2, "C": 1, "D": 0, "F": 0}
-            }
-        },
-        student_performance: {
-            need_attention: needAttentionStudents,
-            score_distribution: {"A": 10, "B": 15, "C": 12, "D": 3, "F": 2},
-            average_score: 78.5,
-            submission_rate: 92.3,
-            top_performers: [
-                {
-                    name: '优秀学生1',
-                    student_id: '202301050',
-                    score: 96
-                },
-                {
-                    name: '优秀学生2',
-                    student_id: '202301012',
-                    score: 94
-                }
-            ]
-        },
-        module_analysis: {
-            total_modules: totalModules,
-            published_modules: 5,
-            locked_modules: 4,
-            completed_modules: 2,
-            in_progress_modules: 3,
-            total_items: 128,
-            module_progress: moduleProgress,
-            average_completion_rate: 45.6
-        }
-    };
-}
-
-// 初始化AI助手链接
-function initializeAIAssistant() {
-    const iframe = document.getElementById('aiAssistantIframe');
-    const descElement = document.getElementById('ai-assistant-desc');
-    
-    if (!iframe) return;
-    
-    // 构建完整的URL，添加用户名参数
-    let fullUrl = FIXED_AI_ASSISTANT_URL;
-    if (CURRENT_USERNAME) {
-        fullUrl += `&studentUid=${encodeURIComponent(CURRENT_USERNAME)}`;
-    }
-    
-    // 更新iframe的src
-    iframe.src = fullUrl;
-}
-
-// 初始化事件监听器
-function initEventListeners() {
-    // 初始化课程选择器
-    initCourseSelector();
-    
-    // 初始化标签页事件
-    initTabEvents();
-    
-    // 初始化各个模块的下拉框
-    initModuleDropdown();
-    initStudentDropdown();
-    initActivityDropdown();
-    
-    // 窗口大小变化时整体缩放
-    window.addEventListener('resize', handleResizeWithScaling);
-    
-}
-
-// 窗口大小变化处理 - 整体缩放
-let resizeTimer;
-function handleResizeWithScaling() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-        const mainGrid = document.querySelector('.main-grid');
-        const windowWidth = window.innerWidth;
-        
-        // 根据窗口宽度调整缩放比例
-        let scale = 1;
-        if (windowWidth <= 1400 && windowWidth > 1200) {
-            scale = 0.95;
-        } else if (windowWidth <= 1200 && windowWidth > 992) {
-            scale = 0.9;
-        } else if (windowWidth <= 992 && windowWidth > 768) {
-            scale = 0.85;
-        } else if (windowWidth <= 768 && windowWidth > 576) {
-            scale = 0.8;
-        } else if (windowWidth <= 576) {
-            scale = 0.75;
-        }
-        
-        // 应用缩放
-        mainGrid.style.transform = `scale(${scale})`;
-        mainGrid.style.transformOrigin = 'top center';
-        
-        // 显示缩放提示
-        showScaleHint(scale);
-    }, 150);
-}
-
-// 显示缩放提示
-function showScaleHint(scale) {
-    const hint = document.createElement('div');
-    hint.className = 'scale-hint';
-    hint.textContent = `页面已缩放至 ${Math.round(scale * 100)}%`;
-    hint.id = 'scaleHint';
-    
-    // 移除旧的提示
-    const oldHint = document.getElementById('scaleHint');
-    if (oldHint) {
-        oldHint.remove();
-    }
-    
-    document.body.appendChild(hint);
-    
-    // 显示提示
-    setTimeout(() => {
-        hint.classList.add('show');
-    }, 10);
-    
-    // 2秒后隐藏提示
-    setTimeout(() => {
-        hint.classList.remove('show');
-        setTimeout(() => {
-            if (hint.parentNode) {
-                hint.remove();
-            }
-        }, 300);
-    }, 2000);
-}
-
-
-// 初始化单元模块下拉框
-function initModuleDropdown() {
-    const moduleDropdownBtn = document.getElementById('moduleDropdownBtn');
-    const moduleDropdown = document.getElementById('moduleDropdown');
-    
-    if (!moduleDropdownBtn || !moduleDropdown) return;
-    
-    // 切换下拉框显示/隐藏
-    moduleDropdownBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        moduleDropdown.classList.toggle('show');
-        moduleDropdownBtn.classList.toggle('active');
-    });
-    
-    // 点击页面其他区域关闭下拉框
-    document.addEventListener('click', function(e) {
-        if (!moduleDropdownBtn.contains(e.target) && !moduleDropdown.contains(e.target)) {
-            moduleDropdown.classList.remove('show');
-            moduleDropdownBtn.classList.remove('active');
-        }
-    });
-    
-    // 下拉项选择
-    moduleDropdown.addEventListener('click', function(e) {
-        const dropdownItem = e.target.closest('.dropdown-item');
-        if (dropdownItem) {
-            const filter = dropdownItem.dataset.filter;
-            const modeText = dropdownItem.textContent;
-            
-            // 更新显示文本
-            document.getElementById('moduleViewMode').textContent = modeText;
-            
-            // 更新选中状态
-            moduleDropdown.querySelectorAll('.dropdown-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            dropdownItem.classList.add('active');
-            
-            // 关闭下拉框
-            moduleDropdown.classList.remove('show');
-            moduleDropdownBtn.classList.remove('active');
-            
-            // 根据筛选条件过滤模块数据
-            filterModuleProgress(filter);
-        }
-    });
-}
-
-// 初始化学生模块下拉框
-function initStudentDropdown() {
-    const studentDropdownBtn = document.getElementById('studentDropdownBtn');
-    const studentDropdown = document.getElementById('studentDropdown');
-    
-    if (!studentDropdownBtn || !studentDropdown) return;
-    
-    // 切换下拉框显示/隐藏
-    studentDropdownBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        studentDropdown.classList.toggle('show');
-        studentDropdownBtn.classList.toggle('active');
-    });
-    
-    // 点击页面其他区域关闭下拉框
-    document.addEventListener('click', function(e) {
-        if (!studentDropdownBtn.contains(e.target) && !studentDropdown.contains(e.target)) {
-            studentDropdown.classList.remove('show');
-            studentDropdownBtn.classList.remove('active');
-        }
-    });
-    
-    // 下拉项选择
-    studentDropdown.addEventListener('click', function(e) {
-        const dropdownItem = e.target.closest('.dropdown-item');
-        if (dropdownItem) {
-            const sortMode = dropdownItem.dataset.sort;
-            const modeText = dropdownItem.textContent;
-            
-            // 更新显示文本
-            document.getElementById('studentSortMode').textContent = modeText;
-            
-            // 更新选中状态
-            studentDropdown.querySelectorAll('.dropdown-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            dropdownItem.classList.add('active');
-            
-            // 关闭下拉框
-            studentDropdown.classList.remove('show');
-            studentDropdownBtn.classList.remove('active');
-            
-            // 根据排序条件重新排序学生数据
-            sortStudents(sortMode);
-        }
-    });
-}
-
-// 初始化活动模块下拉框
-function initActivityDropdown() {
-    const activityDropdownBtn = document.getElementById('activityDropdownBtn');
-    const activityDropdown = document.getElementById('activityDropdown');
-    
-    if (!activityDropdownBtn || !activityDropdown) return;
-    
-    // 切换下拉框显示/隐藏
-    activityDropdownBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        activityDropdown.classList.toggle('show');
-        activityDropdownBtn.classList.toggle('active');
-    });
-    
-    // 点击页面其他区域关闭下拉框
-    document.addEventListener('click', function(e) {
-        if (!activityDropdownBtn.contains(e.target) && !activityDropdown.contains(e.target)) {
-            activityDropdown.classList.remove('show');
-            activityDropdownBtn.classList.remove('active');
-        }
-    });
-    
-    // 下拉项选择
-    activityDropdown.addEventListener('click', function(e) {
-        const dropdownItem = e.target.closest('.dropdown-item');
-        if (dropdownItem) {
-            const sortMode = dropdownItem.dataset.sort;
-            const modeText = dropdownItem.textContent;
-            
-            // 更新显示文本
-            document.getElementById('activitySortMode').textContent = modeText;
-            
-            // 更新选中状态
-            activityDropdown.querySelectorAll('.dropdown-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            dropdownItem.classList.add('active');
-            
-            // 关闭下拉框
-            activityDropdown.classList.remove('show');
-            activityDropdownBtn.classList.remove('active');
-            
-            // 根据排序条件重新排序活动数据
-            sortActivities(sortMode);
-        }
-    });
-}
-
-// 初始化课程选择器
-function initCourseSelector() {
-    const courseSelectorBtn = document.getElementById('courseSelectorBtn');
-    const courseDropdown = document.getElementById('courseDropdown');
-    
-    if (!courseSelectorBtn || !courseDropdown) return;
-    
-    // 如果已经初始化过事件监听器，直接返回
-    if (courseSelectorBtn.dataset.initialized === 'true') return;
-    
-    // 标记为已初始化
-    courseSelectorBtn.dataset.initialized = 'true';
-    
-    // 切换下拉框显示/隐藏
-    courseSelectorBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        courseDropdown.classList.toggle('show');
-        courseSelectorBtn.classList.toggle('active');
-    });
-    
-    // 点击页面其他区域关闭下拉框
-    document.addEventListener('click', function(e) {
-        if (!courseSelectorBtn.contains(e.target) && !courseDropdown.contains(e.target)) {
-            courseDropdown.classList.remove('show');
-            courseSelectorBtn.classList.remove('active');
-        }
-    });
-    
-    // 课程选择事件监听器（修改后）
-courseDropdown.addEventListener('click', function(e) {
-    const courseItem = e.target.closest('.course-item');
-    if (courseItem) {
-        const courseId = courseItem.dataset.courseId;
-        const courseName = courseItem.dataset.courseName;
-        const sisCourseId = courseItem.dataset.sisCourseId || '';
-        const enrollmentTermId = courseItem.dataset.enrollmentTermId || '';
-        const workflowState = courseItem.dataset.workflowState || '';
-        
-        // 更新选中状态
-        document.querySelectorAll('.course-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        courseItem.classList.add('active');
-        
-        // 更新显示
-        document.getElementById('selectedCourseName').textContent = courseName;
-        
-        // 关闭下拉框
-        courseDropdown.classList.remove('show');
-        courseSelectorBtn.classList.remove('active');
-        
-        // 显示加载状态
-        showLoading(true);
-        
-        // 先更新当前课程，然后重新加载数据
-        updateCurrentCourse(courseId, courseName, sisCourseId, enrollmentTermId, workflowState)
-            .then((success) => {
-                if (success) {
-                    console.log(`当前课程已切换为: ${courseName} (${courseId})`);
-                    // 重新初始化AI助手
-                    initializeAIAssistant();
-                    // 显示成功提示
-                    showSuccess(`已切换到课程: ${courseName}`);
-                }
-                // 无论成功与否，都继续加载数据
-                return loadCourseDataByCourseId(courseId);
-            })
-            .catch(error => {
-                console.error('更新当前课程失败:', error);
-                // 即使更新失败，仍然继续加载数据
-                return loadCourseDataByCourseId(courseId);
-            })
-            .finally(() => {
-                showLoading(false);
-            });
-    }
-});
-}
-
-// 根据课程ID加载数据
-async function loadCourseDataByCourseId(courseId) {
-    try {
-        showLoading(true);
-        
-        const response = await fetch(`/dashboard/study_situation/comprehensive/overview?course_id=${courseId}`);
-        const data = await response.json();
-        
-        if (data.error) {
-            console.error('加载课程数据失败:', data.error);
-            return;
-        }
-        
-        // 存储课程数据
-        currentCourseData = data;
-        
-        // 生成假数据并更新仪表板
-        generateMockData(data);
-        updateDashboardData(mockData);
-        
-        showLoading(false);
-        
-    } catch (error) {
-        console.error('加载课程数据失败:', error);
-        showError('加载数据失败，请重试');
-        showLoading(false);
-    }
-}
-
-//更新当前选中的课程
-async function updateCurrentCourse(courseId, courseName, sisCourseId = '', enrollmentTermId = '', workflowState = '') {
-    try {
-        const response = await fetch('/dashboard/study_situation/update_current_course', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                course_id: courseId,
-                course_name: courseName,
-                sis_course_id: sisCourseId,
-                enrollment_term_id: enrollmentTermId,
-                workflow_state: workflowState
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            console.warn('更新当前课程时出错:', data.error);
-            return false;
-        }
-        
-        console.log('当前课程已更新:', data);
-        return true;
-        
-    } catch (error) {
-        console.error('更新当前课程失败:', error);
-        return false;
-    }
-}
-// 初始化标签页事件
-function initTabEvents() {
-    document.querySelectorAll('.tab-buttons').forEach(tabButtons => {
-        // 如果已经初始化过事件监听器，直接返回
-        if (tabButtons.dataset.initialized === 'true') return;
-        
-        // 标记为已初始化
-        tabButtons.dataset.initialized = 'true';
-        
-        tabButtons.addEventListener('click', function(e) {
-            const tabButton = e.target.closest('.tab-button');
-            if (!tabButton) return;
-            
-            const tabName = tabButton.getAttribute('data-tab');
-            const tabsContainer = tabButtons.closest('[class*="-tabs"]');
-            
-            if (!tabsContainer) return;
-            
-            // 更新当前标签页组内的按钮状态
-            tabButtons.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            tabButton.classList.add('active');
-            
-            // 更新当前标签页组内的内容显示
-            const tabContent = tabsContainer.querySelector('.tab-content');
-            if (!tabContent) return;
-            
-            tabContent.querySelectorAll('.tab-pane').forEach(pane => {
-                pane.classList.remove('active');
-            });
-            
-            // 根据tabName找到对应的tab-pane并激活
-            const tabPane = document.getElementById(tabName + '-tab');
-            if (tabPane) {
-                tabPane.classList.add('active');
-            }
-        });
-    });
-}
-
-// 更新课程选择器
-function updateCourseSelector(courseInfo) {
-    const courseList = document.getElementById('courseList');
-    const courses = courseInfo.user_course || [];
-    const currentCourseId = courseInfo.current_course_id;
-    
-    if (courses.length === 0) {
-        courseList.innerHTML = `
-            <div class="course-empty">
-                <i class="fas fa-folder-open"></i>
-                <p>暂无课程信息</p>
-            </div>
-        `;
-        
-        document.getElementById('selectedCourseName').textContent = '选择课程...';
-        return;
-    }
-    
-    // 更新当前选中的课程名称
-    let currentCourseName = '选择课程...';
-    let currentCourseSisId = '';
-    
-    if (currentCourseId) {
-        const currentCourse = courses.find(course => String(course.course_id) === String(currentCourseId));
-        if (currentCourse) {
-            currentCourseName = currentCourse.course_name || currentCourse.name || '未命名课程';
-            currentCourseSisId = currentCourse.sis_course_id || '';
-        }
-    } else if (courses.length > 0) {
-        const firstCourse = courses[0];
-        currentCourseName = firstCourse.course_name || firstCourse.name || '未命名课程';
-        currentCourseSisId = firstCourse.sis_course_id || '';
-    }
-    
-    document.getElementById('selectedCourseName').textContent = currentCourseName;
-    
-    // 生成课程列表
-    courseList.innerHTML = courses.map(course => {
-        const courseId = course.course_id;
-        const courseName = course.course_name || course.name || '未命名课程';
-        const sisCourseId = course.sis_course_id || '';
-        const isActive = String(courseId) === String(currentCourseId);
-        
-        return `
-            <div class="course-item ${isActive ? 'active' : ''}" 
-                 data-course-id="${courseId}" 
-                 data-course-name="${courseName}"
-                 data-sis-course-id="${sisCourseId}">
-                <div class="course-name">${courseName}</div>
-                <div class="course-id">课程ID: ${courseId}</div>
-                ${sisCourseId ? `<div class="course-sis-id">教务编号: ${sisCourseId}</div>` : ''}
-            </div>
-        `;
-    }).join('');
-}
-
-// 更新仪表板数据
-function updateDashboardData(data) {
     // 更新概览统计
-    updateOverviewStats(data);
-    
-    // 更新需要关注的学生
-    updateStudentsNeedAttention(data);
-    
-    // 更新作业和测验列表
-    updateActivitiesList(data);
-    
-    // 更新单元进度
-    updateModuleProgress(data);
-}
-
-// 更新概览统计 - 使用假数据
-function updateOverviewStats(data) {
-    const overview = data.course_overview || {};
-    
-    // 更新班级总人数
-    document.getElementById('total-students').textContent = 
-        overview.total_students ? overview.total_students : '42';
-    
-    // 更新已发布作业数量
-    document.getElementById('total-assignments').textContent = 
-        data.assignment_analysis?.total_assignments || '6';
-    
-    // 更新测验数量
-    document.getElementById('total-quizzes').textContent = 
-        data.quiz_analysis?.total_quizzes || '4';
-    
-    // 更新平均提交率
-    const avgRate = data.assignment_analysis?.submission_stats?.average_submission_rate || 85.7;
-    document.getElementById('avg-submission-rate').textContent = avgRate > 0 ? avgRate.toFixed(1) + '%' : '85.7%';
-}
-
-// 更新需要关注的学生
-function updateStudentsNeedAttention(data) {
-    const container = document.getElementById('students-need-attention');
-    
-    const students = data.student_performance?.need_attention || [];
-    
-    document.getElementById('attention-count').textContent = students.length;
-    
-    if (students.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-user-check"></i>
-                <p>暂无需要特别关注的学生</p>
-            </div>
-        `;
-        return;
+    function updateOverviewStats(data) {
+        const overview = data.course_overview || {};
+        const assignmentStats = data.assignment_analysis?.submission_stats || {};
+        
+        document.getElementById('total-students').textContent = overview.total_students ?? '--';
+        document.getElementById('total-assignments').textContent = data.assignment_analysis?.total_assignments ?? '--';
+        document.getElementById('total-quizzes').textContent = data.quiz_analysis?.total_quizzes ?? '--';
+        
+        const avgRate = assignmentStats.average_submission_rate;
+        document.getElementById('avg-submission-rate').textContent = 
+            (avgRate != null && !isNaN(avgRate)) ? avgRate.toFixed(1) + '%' : '--%';
     }
     
-    // 按成绩排序（默认）
-    const sortedStudents = [...students].sort((a, b) => (a.average_score || 0) - (b.average_score || 0));
-    
-    container.innerHTML = sortedStudents.map(student => {
-        const name = student.name || student.student_name || '未知学生';
-        const id = student.student_id || student.sis_user_id || '--';
-        const score = student.average_score || student.score || 0;
-        
-        return `
-            <div class="student-item">
-                <div class="student-avatar">
-                    <span>${name[0] || '?'}</span>
-                </div>
-                <div class="student-info">
-                    <h3>${name}</h3>
-                    <p>学号: ${id}</p>
-                </div>
-                <div class="student-score">${Math.round(score)}分</div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 更新活动列表
-function updateActivitiesList(data) {
-    // 更新总计数
-    const assignments = data.assignment_analysis?.assignment_categories?.individual || [];
-    const groupAssignments = data.assignment_analysis?.assignment_categories?.group || [];
-    const quizzes = data.quiz_analysis?.quiz_analysis || [];
-    const totalCount = assignments.length + groupAssignments.length + quizzes.length;
-    
-    document.getElementById('published-count').textContent = totalCount;
-    
-    // 更新作业和测验列表
-    updateAssignmentsList(data);
-    updateQuizzesList(data);
-}
-
-// 更新作业列表 - 使用假数据
-function updateAssignmentsList(data) {
-    const container = document.getElementById('published-assignments');
-    
-    const assignments = data.assignment_analysis?.assignment_categories?.individual || [];
-    const groupAssignments = data.assignment_analysis?.assignment_categories?.group || [];
-    const allAssignments = [...assignments, ...groupAssignments];
-    
-    if (allAssignments.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <p>暂无已发布作业</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // 按截止时间排序
-    const sortedAssignments = allAssignments.sort((a, b) => {
-        const aDue = a.due_at || a.due_date || '9999-12-31';
-        const bDue = b.due_at || b.due_date || '9999-12-31';
-        const aDate = new Date(aDue);
-        const bDate = new Date(bDue);
-        const now = new Date();
-        
-        if (aDate < now && bDate >= now) return 1;
-        if (aDate >= now && bDate < now) return -1;
-        
-        return aDate - bDate;
-    });
-    
-    container.innerHTML = sortedAssignments.map(assignment => {
-        const analysis = assignment.submission_analysis || {};
-        const dueAt = assignment.due_at || assignment.due_date;
-        const now = new Date();
-        const dueDate = dueAt ? new Date(dueAt) : null;
-        
-        let statusClass = 'upcoming';
-        let statusText = '进行中';
-        
-        if (dueDate && dueDate < now) {
-            statusClass = 'expired';
-            statusText = '已截止';
+    /**
+     * 3. 排序逻辑 (工具函数 - 防止递归报错的关键)
+     */
+    function getSortedAssignmentsLogic(assignments, mode = 'time') {
+        if (mode === 'name') {
+            return [...assignments].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         }
+        // 默认按时间
+        return [...assignments].sort((a, b) => {
+            const aDue = a.due_at || a.due_date || '9999-12-31';
+            const bDue = b.due_at || b.due_date || '9999-12-31';
+            return new Date(aDue) - new Date(bDue);
+        });
+    }
+    
+    function getSortedQuizzesLogic(quizzes, mode = 'time') {
+        if (mode === 'name') {
+            return [...quizzes].sort((a, b) => (a.quiz_title || '').localeCompare(b.quiz_title || ''));
+        }
+        return [...quizzes].sort((a, b) => {
+            const aDue = a.due_at || a.due_date || '9999-12-31';
+            const bDue = b.due_at || b.due_date || '9999-12-31';
+            return new Date(aDue) - new Date(bDue);
+        });
+    }
+    
+    /**
+     * 4. UI 渲染函数
+     */
+    
+    // 渲染需要关注的学生
+    function updateStudentsNeedAttentionUI(data, sortMode = 'score') {
+        const container = document.getElementById('students-need-attention');
+        let students = data.student_performance?.need_attention || [];
+        document.getElementById('attention-count').textContent = students.length;
+    
+        if (students.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-user-check"></i><p>暂无需要特别关注的学生</p></div>';
+            return;
+        }
+    
+        // 排序逻辑
+        const sorted = [...students].sort((a, b) => {
+            if (sortMode === 'id') return (a.student_id || '').localeCompare(b.student_id || '');
+            return (a.average_score || 0) - (b.average_score || 0);
+        });
+    
+        container.innerHTML = sorted.map(s => `
+            <div class="student-item">
+                <div class="student-avatar"><span>${escapeHtml((s.name||'?')[0])}</span></div>
+                <div class="student-info">
+                    <h3>${escapeHtml(s.name || '未知学生')}</h3>
+                    <p>学号: ${escapeHtml(s.student_id || '--')}</p>
+                </div>
+                <div class="student-score">${Math.round(s.average_score || s.score || 0)}分</div>
+            </div>
+        `).join('');
+    }
+    
+    // 渲染作业和测验列表
+    function updateActivitiesListUI(data, sortMode = 'time') {
+        const ind = data.assignment_analysis?.assignment_categories?.individual || [];
+        const grp = data.assignment_analysis?.assignment_categories?.group || [];
+        const allA = [...ind, ...grp];
+        const allQ = data.quiz_analysis?.quiz_analysis || [];
         
-        const unsubmittedCount = analysis.not_submitted_count || 0;
-        const totalStudents = analysis.total_students || 42;
-        const submissionRate = analysis.submission_rate || 85;
-        const points = assignment.points_possible || 100;
-        const assignmentName = assignment.name || assignment.title || '未命名作业';
-        
+        document.getElementById('published-count').textContent = allA.length + allQ.length;
+    
+        // 渲染作业标签页
+        const aContainer = document.getElementById('published-assignments');
+        const sortedA = getSortedAssignmentsLogic(allA, sortMode);
+        aContainer.innerHTML = sortedA.length ? sortedA.map(a => renderAssignmentItem(a)).join('') : '<div class="empty-state">暂无作业</div>';
+    
+        // 渲染测验标签页
+        const qContainer = document.getElementById('published-quizzes');
+        const sortedQ = getSortedQuizzesLogic(allQ, sortMode);
+        qContainer.innerHTML = sortedQ.length ? sortedQ.map(q => renderQuizItem(q)).join('') : '<div class="empty-state">暂无测验</div>';
+    }
+    
+    function renderAssignmentItem(a) {
+        const analysis = a.submission_analysis || {};
+        const dueAt = a.due_at || a.due_date;
+        const now = new Date();
+        const isExpired = dueAt && new Date(dueAt) < now;
+        const statusClass = isExpired ? 'expired' : 'upcoming';
+        const statusText = isExpired ? '已截止' : '进行中';
+        const subRate = analysis.submission_rate ?? 0;
+    
         return `
             <div class="activity-item assignment ${statusClass}">
                 <div class="activity-info">
-                    <h3>${assignmentName}</h3>
-                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
+                    <h3>${escapeHtml(a.name || '未命名作业')}</h3>
+                    <p>${a.points_possible || 0}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
                     <div class="activity-meta">
-                        <span class="submission-count">
-                            提交率: ${submissionRate.toFixed(1)}%
-                        </span>
-                        <span class="status status-${statusClass}">
-                            ${statusText}
-                        </span>
+                        <span class="submission-count">提交率: ${subRate.toFixed(1)}%</span>
+                        <span class="status status-${statusClass}">${statusText}</span>
                         ${analysis.has_ungraded_submissions ? '<span class="status status-pending">待评分</span>' : ''}
                     </div>
-                    ${unsubmittedCount > 0 && statusClass === 'expired' ? `
-                        <div class="unsubmitted-list">
-                            <div class="unsubmitted-title">未提交: ${unsubmittedCount}人</div>
-                            <div class="unsubmitted-names">${totalStudents - unsubmittedCount}/${totalStudents} 人已提交</div>
-                        </div>
-                    ` : ''}
                 </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 更新测验列表 - 使用假数据
-function updateQuizzesList(data) {
-    const container = document.getElementById('published-quizzes');
-    
-    const quizzes = data.quiz_analysis?.quiz_analysis || [];
-    
-    if (quizzes.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-question-circle"></i>
-                <p>暂无已发布测验</p>
-            </div>
-        `;
-        return;
+            </div>`;
     }
     
-    const sortedQuizzes = quizzes.sort((a, b) => {
-        const aDue = a.due_at || a.due_date || '9999-12-31';
-        const bDue = b.due_at || b.due_date || '9999-12-31';
-        const aDate = new Date(aDue);
-        const bDate = new Date(bDue);
+    function renderQuizItem(q) {
+        const dueAt = q.due_at || q.due_date;
         const now = new Date();
-        
-        if (aDate < now && bDate >= now) return 1;
-        if (aDate >= now && bDate < now) return -1;
-        
-        return aDate - bDate;
-    });
+        const isExpired = dueAt && new Date(dueAt) < now;
+        const statusClass = isExpired ? 'expired' : 'upcoming';
+        const subAna = q.submission_analysis || {};
     
-    container.innerHTML = sortedQuizzes.map(quiz => {
-        const dueAt = quiz.due_at || quiz.due_date;
-        const now = new Date();
-        const dueDate = dueAt ? new Date(dueAt) : null;
-        
-        let statusClass = 'upcoming';
-        let statusText = '进行中';
-        
-        if (dueDate && dueDate < now) {
-            statusClass = 'expired';
-            statusText = '已截止';
-        }
-        
-        const submissionAnalysis = quiz.submission_analysis || {};
-        const avgScore = submissionAnalysis.average_score || 78.5;
-        const points = quiz.points_possible || 100;
-        const title = quiz.quiz_title || quiz.name || '未命名测验';
-        
         return `
             <div class="activity-item quiz ${statusClass}">
                 <div class="activity-info">
-                    <h3>${title}</h3>
-                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
+                    <h3>${escapeHtml(q.quiz_title || q.name || '未命名测验')}</h3>
+                    <p>${q.points_possible || 0}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
                     <div class="activity-meta">
-                        <span class="submission-count">
-                            平均分: ${avgScore.toFixed(1)}分
-                        </span>
-                        <span class="status status-${statusClass}">
-                            ${statusText}
-                        </span>
-                        ${quiz.quiz_reports_available ? '<span class="status status-completed">有报告</span>' : ''}
+                        <span class="submission-count">平均分: ${(subAna.average_score || 0).toFixed(1)}分</span>
+                        <span class="status status-${statusClass}">${isExpired ? '已截止' : '进行中'}</span>
                     </div>
                 </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 更新单元进度
-function updateModuleProgress(data) {
-    const container = document.getElementById('module-progress-list');
-    
-    const modules = data.module_analysis?.module_progress || [];
-    
-    if (modules.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-folder-open"></i>
-                <p>暂无单元数据</p>
-            </div>
-        `;
-        return;
+            </div>`;
     }
     
-    container.innerHTML = modules.map(module => {
-        const completionRate = module.completion_rate || 0;
-        const itemsCount = module.items_count || 0;
-        const moduleName = module.module_name || module.name || '未命名单元';
-        const moduleState = module.state || 'in-progress';
+    // 渲染单元进度
+    function updateModuleProgressUI(data, filter = 'all') {
+        const container = document.getElementById('module-progress-list');
+        let modules = data.module_analysis?.module_progress || [];
         
-        let statusClass = 'in-progress';
-        let statusText = '进行中';
-        
-        if (moduleState === 'completed') {
-            statusClass = 'completed';
-            statusText = '已完成';
-        } else if (moduleState === 'locked') {
-            statusClass = 'locked';
-            statusText = '已锁定';
+        if (filter !== 'all') {
+            modules = modules.filter(m => m.state === filter);
         }
-        
-        return `
-            <div class="module-progress-item ${statusClass}">
-                <div class="module-header">
-                    <span class="module-name">${moduleName}</span>
-                    <span class="module-status status-${statusClass}">${statusText}</span>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: ${completionRate}%"></div>
-                </div>
-                <div class="progress-info">
-                    <span>${itemsCount} 个项目</span>
-                    <span>${completionRate}% 完成</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 过滤单元进度
-function filterModuleProgress(filter) {
-    const modules = mockData.module_analysis.module_progress || [];
-    let filteredModules = [...modules];
     
-    switch(filter) {
-        case 'completed':
-            filteredModules = modules.filter(module => module.state === 'completed');
-            break;
-        case 'in-progress':
-            filteredModules = modules.filter(module => module.state === 'in-progress');
-            break;
-        case 'locked':
-            filteredModules = modules.filter(module => module.state === 'locked');
-            break;
-        default:
-            filteredModules = modules;
-    }
-    
-    const container = document.getElementById('module-progress-list');
-    
-    if (filteredModules.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-filter"></i>
-                <p>没有符合条件的单元</p>
-            </div>
-        `;
-        container.style.minHeight = '200px';
-        return;
-    } else {
-        container.style.minHeight = '';
-    }
-    
-    container.innerHTML = filteredModules.map(module => {
-        const completionRate = module.completion_rate || 0;
-        const itemsCount = module.items_count || 0;
-        const moduleName = module.module_name || module.name || '未命名单元';
-        const moduleState = module.state || 'in-progress';
-        
-        let statusClass = 'in-progress';
-        let statusText = '进行中';
-        
-        if (moduleState === 'completed') {
-            statusClass = 'completed';
-            statusText = '已完成';
-        } else if (moduleState === 'locked') {
-            statusClass = 'locked';
-            statusText = '已锁定';
+        if (!modules.length) {
+            container.innerHTML = '<div class="empty-state">暂无符合条件的单元</div>';
+            return;
         }
-        
-        return `
-            <div class="module-progress-item ${statusClass}">
-                <div class="module-header">
-                    <span class="module-name">${moduleName}</span>
-                    <span class="module-status status-${statusClass}">${statusText}</span>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: ${completionRate}%"></div>
-                </div>
-                <div class="progress-info">
-                    <span>${itemsCount} 个项目</span>
-                    <span>${completionRate}% 完成</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 排序学生数据
-function sortStudents(sortMode) {
-    const students = [...(mockData.student_performance?.need_attention || [])];
-    let sortedStudents = [...students];
     
-    switch(sortMode) {
-        case 'id':
-            sortedStudents.sort((a, b) => (a.student_id || '').localeCompare(b.student_id || ''));
-            break;
-        case 'score':
-        default:
-            sortedStudents.sort((a, b) => (a.average_score || 0) - (b.average_score || 0));
+        container.innerHTML = modules.map(m => {
+            const rate = m.completion_rate || 0;
+            const state = m.state || 'in-progress';
+            let stateText = '进行中';
+            if(state === 'completed') stateText = '已完成';
+            if(state === 'locked') stateText = '已锁定';
+    
+            return `
+                <div class="module-progress-item ${state}">
+                    <div class="module-header">
+                        <span class="module-name">${escapeHtml(m.module_name || m.name)}</span>
+                        <span class="module-status status-${state}">${stateText}</span>
+                    </div>
+                    <div class="progress-bar-container"><div class="progress-bar" style="width: ${rate}%"></div></div>
+                    <div class="progress-info"><span>${m.items_count || 0} 个项目</span><span>${rate}% 完成</span></div>
+                </div>`;
+        }).join('');
     }
     
-    const container = document.getElementById('students-need-attention');
+    /**
+     * 5. 事件监听器初始化
+     */
+    function initEventListeners() {
+        // 1. 课程选择器
+        const courseBtn = document.getElementById('courseSelectorBtn');
+        const courseDropdown = document.getElementById('courseDropdown');
+        courseBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            courseDropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', () => courseDropdown?.classList.remove('show'));
     
-    container.innerHTML = sortedStudents.map(student => {
-        const name = student.name || student.student_name || '未知学生';
-        const id = student.student_id || student.sis_user_id || '--';
-        const score = student.average_score || student.score || 0;
-        
-        return `
-            <div class="student-item">
-                <div class="student-avatar">
-                    <span>${name[0] || '?'}</span>
-                </div>
-                <div class="student-info">
-                    <h3>${name}</h3>
-                    <p>学号: ${id}</p>
-                </div>
-                <div class="student-score">${Math.round(score)}分</div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 排序活动数据
-function sortActivities(sortMode) {
-    // 更新两个标签页的内容
-    updateAssignmentsListWithSort(sortMode);
-    updateQuizzesListWithSort(sortMode);
-}
-
-// 按指定排序方式更新作业列表
-function updateAssignmentsListWithSort(sortMode) {
-    const container = document.getElementById('published-assignments');
+        courseDropdown?.addEventListener('click', async (e) => {
+            const item = e.target.closest('.course-item');
+            if (item) {
+                const { courseId, courseName, sisCourseId } = item.dataset;
+                document.getElementById('selectedCourseName').textContent = courseName;
+                await updateCurrentCourse(courseId, courseName, sisCourseId);
+                loadCourseDataByCourseId(courseId);
+            }
+        });
     
-    const assignments = mockData.assignment_analysis?.assignment_categories?.individual || [];
-    const groupAssignments = mockData.assignment_analysis?.assignment_categories?.group || [];
-    const allAssignments = [...assignments, ...groupAssignments];
-    
-    if (allAssignments.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <p>暂无已发布作业</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let sortedAssignments = [...allAssignments];
-    
-    switch(sortMode) {
-        case 'name':
-            sortedAssignments.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-            break;
-        case 'time':
-        default:
-            sortedAssignments.sort((a, b) => {
-                const aDue = a.due_at || a.due_date || '9999-12-31';
-                const bDue = b.due_at || b.due_date || '9999-12-31';
-                const aDate = new Date(aDue);
-                const bDate = new Date(bDue);
-                const now = new Date();
+        // 2. 标签页切换
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const parent = this.parentElement;
+                parent.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
                 
-                if (aDate < now && bDate >= now) return 1;
-                if (aDate >= now && bDate < now) return -1;
-                
-                return aDate - bDate;
+                const targetTab = this.dataset.tab;
+                const container = this.closest('.activities-tabs');
+                container.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                document.getElementById(targetTab + '-tab').classList.add('active');
             });
+        });
+    
+        // 3. 各板块下拉筛选/排序
+        document.getElementById('moduleDropdown')?.addEventListener('click', (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                const filter = item.dataset.filter;
+                document.getElementById('moduleViewMode').textContent = item.textContent;
+                updateModuleProgressUI(currentCourseData, filter);
+            }
+        });
+    
+        document.getElementById('studentDropdown')?.addEventListener('click', (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                document.getElementById('studentSortMode').textContent = item.textContent;
+                updateStudentsNeedAttentionUI(currentCourseData, item.dataset.sort);
+            }
+        });
+    
+        document.getElementById('activityDropdown')?.addEventListener('click', (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                document.getElementById('activitySortMode').textContent = item.textContent;
+                updateActivitiesListUI(currentCourseData, item.dataset.sort);
+            }
+        });
+    
+        window.addEventListener('resize', handleResizeWithScaling);
     }
     
-    container.innerHTML = sortedAssignments.map(assignment => {
-        const analysis = assignment.submission_analysis || {};
-        const dueAt = assignment.due_at || assignment.due_date;
-        const now = new Date();
-        const dueDate = dueAt ? new Date(dueAt) : null;
-        
-        let statusClass = 'upcoming';
-        let statusText = '进行中';
-        
-        if (dueDate && dueDate < now) {
-            statusClass = 'expired';
-            statusText = '已截止';
-        }
-        
-        const unsubmittedCount = analysis.not_submitted_count || 0;
-        const totalStudents = analysis.total_students || 42;
-        const submissionRate = analysis.submission_rate || 85;
-        const points = assignment.points_possible || 100;
-        const assignmentName = assignment.name || assignment.title || '未命名作业';
-        
-        return `
-            <div class="activity-item assignment ${statusClass}">
-                <div class="activity-info">
-                    <h3>${assignmentName}</h3>
-                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
-                    <div class="activity-meta">
-                        <span class="submission-count">
-                            提交率: ${submissionRate.toFixed(1)}%
-                        </span>
-                        <span class="status status-${statusClass}">
-                            ${statusText}
-                        </span>
-                        ${analysis.has_ungraded_submissions ? '<span class="status status-pending">待评分</span>' : ''}
-                    </div>
-                    ${unsubmittedCount > 0 && statusClass === 'expired' ? `
-                        <div class="unsubmitted-list">
-                            <div class="unsubmitted-title">未提交: ${unsubmittedCount}人</div>
-                            <div class="unsubmitted-names">${totalStudents - unsubmittedCount}/${totalStudents} 人已提交</div>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
+    /**
+     * 6. 辅助工具函数
+     */
+    function updateCourseSelector(info) {
+        const list = document.getElementById('courseList');
+        const selectedNameSpan = document.getElementById('selectedCourseName');
+        const courses = info.user_course || [];
+        const currentId = String(info.current_course_id);
 
-// 按指定排序方式更新测验列表
-function updateQuizzesListWithSort(sortMode) {
-    const container = document.getElementById('published-quizzes');
-    
-    const quizzes = mockData.quiz_analysis?.quiz_analysis || [];
-    
-    if (quizzes.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-question-circle"></i>
-                <p>暂无已发布测验</p>
-            </div>
-        `;
-        return;
+        // 1. 更新下拉列表内容：包含课程名、ID和教务编号
+        list.innerHTML = courses.map(c => {
+            const isActive = String(c.course_id) === currentId;
+            // 这里的 c.sis_course_id 需要对应后端返回的字段名
+            const sisId = c.sis_course_id || '无教务编号'; 
+            
+            return `
+                <div class="course-item ${isActive ? 'active' : ''}" 
+                     data-course-id="${c.course_id}" 
+                     data-course-name="${escapeHtml(c.course_name)}"
+                     data-sis-course-id="${escapeHtml(sisId)}">
+                    <div class="course-name" style="font-weight: 600; color: #2c3e50;">
+                        ${escapeHtml(c.course_name)}
+                    </div>
+                    <div class="course-id" style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">
+                        课程ID: ${c.course_id}
+                    </div>
+                    <div class="course-sis-id" style="font-size: 11px; color: #95a5a6; font-style: italic;">
+                        教务编号: ${escapeHtml(sisId)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // 2. 更新按钮上显示的课程名称（保持逻辑一致）
+        if (courses.length > 0) {
+            const currentCourse = courses.find(c => String(c.course_id) === currentId);
+            if (currentCourse) {
+                selectedNameSpan.textContent = currentCourse.course_name;
+            } else {
+                selectedNameSpan.textContent = courses[0].course_name;
+            }
+        } else {
+            selectedNameSpan.textContent = '暂无课程';
+        }
     }
     
-    let sortedQuizzes = [...quizzes];
-    
-    switch(sortMode) {
-        case 'name':
-            sortedQuizzes.sort((a, b) => (a.quiz_title || '').localeCompare(b.quiz_title || ''));
-            break;
-        case 'time':
-        default:
-            sortedQuizzes.sort((a, b) => {
-                const aDue = a.due_at || a.due_date || '9999-12-31';
-                const bDue = b.due_at || b.due_date || '9999-12-31';
-                const aDate = new Date(aDue);
-                const bDate = new Date(bDue);
-                const now = new Date();
-                
-                if (aDate < now && bDate >= now) return 1;
-                if (aDate >= now && bDate < now) return -1;
-                
-                return aDate - bDate;
+    async function updateCurrentCourse(courseId, courseName, sisCourseId = '') {
+        try {
+            await fetch('/dashboard/study_situation/update_current_course', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ course_id: courseId, course_name: courseName, sis_course_id: sisCourseId })
             });
+            initializeAIAssistant(); // 刷新AI助手
+        } catch (e) { console.error('更新Session课程失败', e); }
     }
     
-    container.innerHTML = sortedQuizzes.map(quiz => {
-        const dueAt = quiz.due_at || quiz.due_date;
-        const now = new Date();
-        const dueDate = dueAt ? new Date(dueAt) : null;
-        
-        let statusClass = 'upcoming';
-        let statusText = '进行中';
-        
-        if (dueDate && dueDate < now) {
-            statusClass = 'expired';
-            statusText = '已截止';
-        }
-        
-        const submissionAnalysis = quiz.submission_analysis || {};
-        const avgScore = submissionAnalysis.average_score || 78.5;
-        const points = quiz.points_possible || 100;
-        const title = quiz.quiz_title || quiz.name || '未命名测验';
-        
-        return `
-            <div class="activity-item quiz ${statusClass}">
-                <div class="activity-info">
-                    <h3>${title}</h3>
-                    <p>${points}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
-                    <div class="activity-meta">
-                        <span class="submission-count">
-                            平均分: ${avgScore.toFixed(1)}分
-                        </span>
-                        <span class="status status-${statusClass}">
-                            ${statusText}
-                        </span>
-                        ${quiz.quiz_reports_available ? '<span class="status status-completed">有报告</span>' : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 日期格式化函数
-function formatDate(dateString) {
-    if (!dateString) return '无';
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
-    } catch (e) {
-        return dateString;
+    function initializeAIAssistant() {
+        const iframe = document.getElementById('aiAssistantIframe');
+        if (!iframe) return;
+        let url = FIXED_AI_ASSISTANT_URL;
+        if (CURRENT_SIS_ID) url += `&studentUid=${encodeURIComponent(CURRENT_SIS_ID)}`;
+        iframe.src = url;
     }
-}
-
-// 显示/隐藏加载状态
-function showLoading(isLoading) {
-    if (isLoading) {
-        console.log('正在加载数据...');
-    } else {
-        console.log('数据加载完成');
+    
+    function toggleNoCourseWarning(show) {
+        document.getElementById('noCourseWarning').style.display = show ? 'flex' : 'none';
+        document.getElementById('coursePageContent').style.display = show ? 'none' : 'block';
     }
-}
-
-// 显示错误信息
-function showError(message) {
-    console.warn('数据加载错误:', message);
     
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-notification';
-    errorDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 10000;
-        background: #f8d7da;
-        color: #721c24;
-        padding: 12px 20px;
-        border-radius: 8px;
-        border: 1px solid #f5c6cb;
-        font-size: 14px;
-        max-width: 300px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    `;
-    errorDiv.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    document.body.appendChild(errorDiv);
+    function formatDate(ds) {
+        if(!ds) return '--';
+        const d = new Date(ds);
+        return `${d.getMonth()+1}月${d.getDate()}日 ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    }
     
-    setTimeout(() => {
-        if (errorDiv.parentNode) {
-            errorDiv.parentNode.removeChild(errorDiv);
-        }
-    }, 5000);
-}
-
-// 模拟定期刷新数据
-setInterval(() => {
-    console.log('自动刷新数据...');
-}, 5 * 60 * 1000);
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    }
+    
+    function showLoading(show) { /* 控制台日志或增加一个全局Loading遮罩 */ console.log(show ? 'Loading...' : 'Done'); }
+    
+    function showError(msg) { alert(msg); }
+    
+    function handleResizeWithScaling() {
+        const grid = document.querySelector('.main-grid');
+        if(!grid) return;
+        const w = window.innerWidth;
+        let s = 1;
+        if (w <= 1400) s = 0.95;
+        if (w <= 1200) s = 0.9;
+        if (w <= 768) s = 0.8;
+        grid.style.transform = `scale(${s})`;
+        grid.style.transformOrigin = 'top center';
+    }
 </script>
 {% endblock %}

@@ -109,7 +109,7 @@ def get_courses_by_teacher_id(sis_id: str, timeout: int = 10):
             })
     return unique_courses
 
-def get_courses_by_student_id(sis_id: str, timeout: int = 10, base_url: str = "https://eiecanvas.cqu.edu.cn"):
+def get_courses_by_student_id(sis_id: str, timeout: int = 10):
     """
     根据SIS ID获取用户的所有课程列表（已去重）
 
@@ -122,11 +122,11 @@ def get_courses_by_student_id(sis_id: str, timeout: int = 10, base_url: str = "h
         去重后的课程列表，每个课程包含course_id, name, sis_course_id
     """
     # 构建API请求URL
-    url = f"{base_url}/api/v1/users/sis_user_id:{sis_id}/courses"
+    url = f"{BASE_URL}/users/sis_user_id:{sis_id}/courses"
     
     # 设置请求参数
     params = {
-        "state": "unpublished",  # 获取未发布的课程
+        # "state": "unpublished",  # 获取未发布的课程
         "per_page": 100 
     }
     
@@ -518,9 +518,9 @@ def get_quiz_submissions(course_id, quiz_id, per_page=100):
         print(f"获取测验提交失败: {e}")
         return []
     
-def get_student_assignment_submission(course_id, assignment_id, user_id):
+def get_student_assignment_submission(course_id, assignment_id, sis_user_id):
     """获取学生单个作业提交详情"""
-    url = f"{BASE_URL}/courses/{course_id}/assignments/{assignment_id}/submissions/{user_id}"
+    url = f"{BASE_URL}/courses/{course_id}/assignments/{assignment_id}/submissions/sis_user_id:{sis_user_id}"
     try:
         response = requests.get(url, headers=HEADERS)
         response.raise_for_status()

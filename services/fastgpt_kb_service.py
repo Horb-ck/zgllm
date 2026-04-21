@@ -1,4 +1,3 @@
-# /home/zgllm/test_server/services/fastgpt_kb_service.py
 # -*- coding: utf-8 -*-
 """
 FastGPT 知识库服务
@@ -22,6 +21,9 @@ FastGPT 知识库服务
 🔧 修复：批量插入使用 pushData 优先 + insertData 回退
 🔒 隐私：共享知识库使用匿名文件名，不暴露学号/姓名
 🔒 隐私：搜索结果中共享文档仅对所有者显示原始文件名
+🔧 新增：每个 chunk 注入文件名，支持按文件名检索
+🔧 新增：搜索增加文件名匹配回退（覆盖新旧文档）
+🔧 新增：上传/写入耗时统计，控制台输出详细报告
 """
 
 import os
@@ -69,6 +71,7 @@ class FastGPTKBService:
         print(f"   🔧 修复: 使用 list API 获取真实 trainingAmount")
         print(f"   🔧 新增: 共享知识库 + 无文件共享（多级回退）")
         print(f"   🔒 隐私: 共享知识库匿名化，不暴露学号/姓名")
+        print(f"   🔧 新增: chunk注入文件名 + 文件名匹配回退搜索")
 
     def _reset_old_bindings(self):
         try:
@@ -98,9 +101,6 @@ class FastGPTKBService:
     # ================== 🔒 隐私工具方法 ==================
 
     def _generate_shared_anonymous_name(self, doc_id: str, filename: str) -> str:
-        """
-        🔒 为共享知识库生成匿名文件名
-        """
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'txt'
         anonymous_hash = hashlib.sha256(
             f"shared_{doc_id}_pkb_anonymous_salt_v1".encode()
@@ -108,16 +108,10 @@ class FastGPTKBService:
         return f"shared_{anonymous_hash}.{ext}"
 
     def _generate_shared_doc_id(self, doc_id: str) -> str:
-        """
-        🔒 为共享知识库生成匿名 doc_id
-        """
         return f"shared_{hashlib.sha256(doc_id.encode()).hexdigest()[:16]}"
 
     def _resolve_shared_source(self, username: str, source_name: str,
                                 collection_id: str) -> str:
-        """
-        🔒 解析共享知识库搜索结果的来源名称
-        """
         if not collection_id:
             return "共享文档"
 
@@ -1259,15 +1253,6 @@ class FastGPTKBService:
             return None
 
     def share_document(self, username: str, doc_id: str) -> Dict[str, Any]:
-        """
-        将文档公开到共享知识库
-        通过从 FastGPT 内部复制 Collection 数据实现
-
-        🔒 隐私保护：
-           - 共享知识库中使用匿名文件名（SHA256 hash），不暴露学号/姓名
-           - 匿名映射关系仅存于 MongoDB 服务端
-           - 搜索结果中仅文档所有者可见原始文件名
-        """
         print(f"\n🌐 共享文档: doc_id={doc_id}, user={username}")
 
         doc = self.db.kb_documents.find_one({'username': username, 'doc_id': doc_id})
@@ -1288,7 +1273,6 @@ class FastGPTKBService:
         if not shared_dataset_id:
             return {'success': False, 'error': '无法获取共享知识库'}
 
-        # 🔒 生成匿名文件名和匿名 doc_id
         anonymous_filename = self._generate_shared_anonymous_name(doc_id, filename)
         anonymous_doc_id = self._generate_shared_doc_id(doc_id)
 
@@ -1298,7 +1282,6 @@ class FastGPTKBService:
         shared_collection_id = None
         share_method = None
 
-        # 从 FastGPT 拉取数据块重建到共享知识库（使用匿名名称）
         collection_id = doc.get('collection_id')
         if collection_id:
             print(f"   📤 从 FastGPT 数据块复制到共享知识库（匿名）")
@@ -1315,7 +1298,6 @@ class FastGPTKBService:
             else:
                 print(f"   ⚠️ 数据复制失败: {result.get('error')}")
 
-        # 兜底：仅标记
         if not shared_collection_id:
             print(f"   ⚠️ 复制失败，仅标记共享状态")
             self.db.kb_documents.update_one(
@@ -1334,7 +1316,6 @@ class FastGPTKBService:
                 'warning': 'no_content_available'
             }
 
-        # 更新 MongoDB（服务端存完整映射关系）
         self.db.kb_documents.update_one(
             {'doc_id': doc_id},
             {'$set': {
@@ -1347,7 +1328,6 @@ class FastGPTKBService:
             }}
         )
 
-        # 🔒 Collection 名称使用匿名文件名，不加 [username] 前缀
         if shared_collection_id:
             time.sleep(0.5)
             self.update_collection_name(shared_collection_id, anonymous_filename)
@@ -1369,27 +1349,14 @@ class FastGPTKBService:
                                          filename: str,
                                          doc_id: str,
                                          username: str) -> Dict[str, Any]:
-        """
-        从 FastGPT 中读取源 Collection 的所有数据块，
-        重新写入到共享知识库 Dataset 中。
-
-        🔒 filename 和 doc_id 参数由调用方传入，已经是匿名化的。
-
-        方案A - data/list 拉取数据块
-        方案B - searchTest 搜索提取内容
-        方案C - collection/detail 提取 rawText
-        """
         print(f"      源 collection_id: {source_collection_id}")
 
-        # 方案A：data/list
         all_data = self._fetch_all_collection_data(source_collection_id)
 
-        # 方案B：searchTest
         if not all_data:
             print(f"      方案A 无数据，尝试方案B: searchTest")
             all_data = self._extract_data_via_search(source_collection_id, username)
 
-        # 方案C：rawText
         if not all_data:
             print(f"      方案B 无数据，尝试方案C: rawText")
             all_data = self._extract_data_from_detail(source_collection_id)
@@ -1399,7 +1366,6 @@ class FastGPTKBService:
 
         print(f"      📊 获取到 {len(all_data)} 个数据块，开始复制...")
 
-        # 🔒 在共享 Dataset 中创建 Collection（使用匿名名称，不含用户名）
         shared_collection_id = self._create_text_collection(
             shared_dataset_id,
             filename,
@@ -1417,7 +1383,6 @@ class FastGPTKBService:
         if not shared_collection_id:
             return {'success': False, 'error': '在共享知识库中创建 Collection 失败'}
 
-        # 批量写入
         success_count = self._batch_insert_data(shared_collection_id, all_data)
 
         print(f"      ✅ 复制完成: {success_count}/{len(all_data)} 个数据块")
@@ -1437,9 +1402,6 @@ class FastGPTKBService:
         }
 
     def _fetch_all_collection_data(self, collection_id: str) -> List[Dict]:
-        """
-        分页获取 Collection 下的所有数据块（q/a 对）
-        """
         all_data = []
         page_num = 1
         page_size = 30
@@ -1547,7 +1509,6 @@ class FastGPTKBService:
         return all_data
 
     def _fetch_collection_data_get(self, collection_id: str) -> List[Dict]:
-        """使用 GET 方法回退获取 Collection 数据"""
         url = f"{self.base_url}/core/dataset/data/list"
         try:
             response = requests.get(
@@ -1583,9 +1544,6 @@ class FastGPTKBService:
         return []
 
     def _extract_data_via_search(self, collection_id: str, username: str) -> List[Dict]:
-        """
-        方案B：用 searchTest 从用户 Dataset 中搜索该 collection 的内容
-        """
         try:
             doc_record = self.db.kb_documents.find_one(
                 {'collection_id': collection_id},
@@ -1654,9 +1612,6 @@ class FastGPTKBService:
             return []
 
     def _extract_data_from_detail(self, collection_id: str) -> List[Dict]:
-        """
-        方案C：从 collection/detail 的 rawText 字段提取内容
-        """
         try:
             url = f"{self.base_url}/core/dataset/collection/detail"
             response = requests.get(
@@ -1718,7 +1673,6 @@ class FastGPTKBService:
     def _create_text_collection(self, dataset_id: str,
                                  name: str,
                                  doc_id: str) -> Optional[str]:
-        """在指定 Dataset 中创建一个空的文本类型 Collection"""
         url = f"{self.base_url}/core/dataset/collection/create"
 
         payload = {
@@ -1763,7 +1717,6 @@ class FastGPTKBService:
     def _create_virtual_collection_v2(self, dataset_id: str,
                                        name: str,
                                        doc_id: str) -> Optional[str]:
-        """备选方式创建 Collection"""
         url = f"{self.base_url}/core/dataset/collection/create"
 
         for coll_type in ['virtual', 'file', 'link']:
@@ -1808,10 +1761,6 @@ class FastGPTKBService:
 
     def _batch_insert_data(self, collection_id: str,
                             data_list: List[Dict]) -> int:
-        """
-        批量插入数据块到指定 Collection
-        使用 pushData 优先 + insertData 回退
-        """
         push_url = f"{self.base_url}/core/dataset/data/pushData"
         insert_url = f"{self.base_url}/core/dataset/data/insertData"
 
@@ -2281,9 +2230,12 @@ class FastGPTKBService:
         if cache_key in self._folder_cache:
             del self._folder_cache[cache_key]
 
-    # ================== 文件上传 ==================
+    # ================== 文件上传（★ 已添加耗时统计） ==================
 
     def upload_file(self, username: str, file, filename: str, folder_id: str = None) -> Dict[str, Any]:
+        # ★ 总计时
+        total_start = time.time()
+
         print(f"\n{'='*50}")
         print(f"📤 开始上传文件: {filename}")
         print(f"👤 用户: {username}")
@@ -2336,7 +2288,10 @@ class FastGPTKBService:
         self._clear_filename_cache(username)
 
         try:
+            # ★ FastGPT 上传计时
+            t_upload_start = time.time()
             result = self._upload_file_to_fastgpt(dataset_id, file_content, filename, doc_id)
+            t_upload_elapsed = time.time() - t_upload_start                # ★
 
             if result.get('success'):
                 collection_id = result.get('collection_id')
@@ -2358,13 +2313,30 @@ class FastGPTKBService:
                 if username in self._last_sync_time:
                     del self._last_sync_time[username]
 
+                # ★ 打印耗时报告
+                total_elapsed = time.time() - total_start
+                file_size_mb = file_size / 1024 / 1024
+                print(f"\n{'─'*60}")
+                print(f"⏱️  文件上传耗时报告")
+                print(f"   📄 文件名:      {filename}")
+                print(f"   👤 用户:        {username}")
+                print(f"   📦 大小:        {file_size_mb:.2f} MB")
+                print(f"   🔧 类型:        文档直传 (FastGPT 处理)")
+                print(f"   ⏱️  FastGPT上传: {t_upload_elapsed:.2f}s")
+                print(f"   ⏱️  总处理耗时:  {total_elapsed:.2f}s")
+                if file_size_mb > 0 and t_upload_elapsed > 0:
+                    print(f"   📊 上传速度:    {file_size_mb / t_upload_elapsed:.2f} MB/s")
+                print(f"   ✅ 上传成功，等待 FastGPT 索引")
+                print(f"{'─'*60}")
+
                 return {
                     'success': True,
                     'doc_id': doc_id,
                     'collection_id': collection_id,
                     'folder_id': folder_id,
                     'status': 'processing',
-                    'message': '文件上传成功，正在处理中...'
+                    'message': '文件上传成功，正在处理中...',
+                    'upload_time_seconds': round(total_elapsed, 2),         # ★
                 }
             else:
                 error_msg = result.get('error', '上传失败')
@@ -2372,6 +2344,14 @@ class FastGPTKBService:
                     {'doc_id': doc_id},
                     {'$set': {'status': 'failed', 'error_message': error_msg}}
                 )
+
+                # ★ 失败也打印耗时
+                total_elapsed = time.time() - total_start
+                print(f"\n{'─'*60}")
+                print(f"⏱️  文件上传耗时报告 (失败)")
+                print(f"   📄 文件名: {filename} | ⏱️ {total_elapsed:.2f}s | ❌ {error_msg}")
+                print(f"{'─'*60}")
+
                 return {'success': False, 'doc_id': doc_id, 'error': error_msg}
 
         except Exception as e:
@@ -2380,8 +2360,258 @@ class FastGPTKBService:
                 {'doc_id': doc_id},
                 {'$set': {'status': 'failed', 'error_message': error_msg}}
             )
+            # ★ 异常也打印耗时
+            total_elapsed = time.time() - total_start
+            print(f"   ⏱️  异常耗时: {total_elapsed:.2f}s | ❌ {error_msg}")
             traceback.print_exc()
             return {'success': False, 'doc_id': doc_id, 'error': error_msg}
+
+    # ================== 解析文本上传（★ 已添加耗时统计） ==================
+
+    def upload_parsed_text(
+        self,
+        username: str,
+        text_content: str,
+        original_filename: str,
+        folder_id: str = None,
+        metadata: Dict = None,
+    ) -> Dict[str, Any]:
+        """
+        将解析后的纯文本上传到知识库
+        用于多媒体文件（图片/视频/PPT）解析后的文本入库
+        """
+        # ★ 总计时
+        total_start = time.time()
+
+        print(f"\n{'='*50}")
+        print(f"📤 上传解析文本到知识库")
+        print(f"👤 用户: {username}")
+        print(f"📄 原始文件: {original_filename}")
+        print(f"📝 文本长度: {len(text_content)}")
+
+        if not text_content or not text_content.strip():
+            return {'success': False, 'error': '解析文本为空'}
+
+        if folder_id:
+            folder = self.db.kb_folders.find_one({
+                'username': username,
+                'folder_id': folder_id
+            })
+            if not folder:
+                return {'success': False, 'error': '目标文件夹不存在'}
+
+        dataset_id = self.get_or_create_user_dataset(username)
+        if not dataset_id:
+            return {'success': False, 'error': '无法获取或创建知识库'}
+
+        # 生成文档 ID
+        doc_id = self._generate_doc_id(username, original_filename)
+
+        # 记录到 MongoDB
+        media_type = (metadata or {}).get('media_type', 'unknown')
+        self.db.kb_documents.update_one(
+            {'doc_id': doc_id},
+            {
+                '$set': {
+                    'doc_id': doc_id,
+                    'username': username,
+                    'filename': original_filename,
+                    'file_type': original_filename.rsplit('.', 1)[-1].lower()
+                                 if '.' in original_filename else '',
+                    'dataset_id': dataset_id,
+                    'folder_id': folder_id,
+                    'status': 'processing',
+                    'upload_time': datetime.now(),
+                    'file_size': len(text_content.encode('utf-8')),
+                    'name_synced': False,
+                    'shared': False,
+                    'parsed_from_media': True,
+                    'media_type': media_type,
+                    'parse_metadata': metadata or {},
+                    'parsed_text': text_content[:5000],
+                }
+            },
+            upsert=True
+        )
+
+        self._clear_filename_cache(username)
+
+        try:
+            # ★ 创建 Collection 计时
+            t_create_start = time.time()
+            collection_id = self._create_text_collection(
+                dataset_id, original_filename, doc_id)
+
+            if not collection_id:
+                collection_id = self._create_virtual_collection_v2(
+                    dataset_id, original_filename, doc_id)
+
+            t_create_elapsed = time.time() - t_create_start                # ★
+            print(f"   ⏱️  创建 Collection: {t_create_elapsed:.2f}s")
+
+            if not collection_id:
+                self.db.kb_documents.update_one(
+                    {'doc_id': doc_id},
+                    {'$set': {'status': 'failed',
+                              'error_message': '在 FastGPT 中创建 Collection 失败'}}
+                )
+                return {'success': False, 'error': '在 FastGPT 中创建文档容器失败'}
+
+            # ★ 文本切分计时
+            t_split_start = time.time()
+            chunks = self._split_text_to_chunks(text_content, filename=original_filename)
+            t_split_elapsed = time.time() - t_split_start                  # ★
+            print(f"   ⏱️  文本切分: {t_split_elapsed:.2f}s ({len(chunks)} 个数据块)")
+
+            # ★ 批量写入计时
+            t_insert_start = time.time()
+            success_count = self._batch_insert_data(collection_id, chunks)
+            t_insert_elapsed = time.time() - t_insert_start                # ★
+            print(f"   ⏱️  批量写入: {t_insert_elapsed:.2f}s ({success_count}/{len(chunks)} 块)")
+
+            if success_count == 0:
+                self.db.kb_documents.update_one(
+                    {'doc_id': doc_id},
+                    {'$set': {'status': 'failed',
+                              'error_message': '数据块写入失败'}}
+                )
+                return {'success': False, 'error': '数据块写入 FastGPT 失败'}
+
+            # 更新状态
+            self.db.kb_documents.update_one(
+                {'doc_id': doc_id},
+                {'$set': {
+                    'status': 'ready',
+                    'collection_id': collection_id,
+                    'chunk_count': success_count,
+                    'processed_at': datetime.now(),
+                    'name_synced': False,
+                }}
+            )
+
+            # 同步文件名
+            time.sleep(0.5)
+            name_result = self.update_collection_name(
+                collection_id, original_filename)
+            if name_result.get('success'):
+                self.db.kb_documents.update_one(
+                    {'doc_id': doc_id},
+                    {'$set': {'name_synced': True,
+                              'name_synced_at': datetime.now()}}
+                )
+
+            self._clear_filename_cache(username)
+
+            if username in self._last_sync_time:
+                del self._last_sync_time[username]
+
+            # ★ 打印完整耗时报告
+            total_elapsed = time.time() - total_start
+            text_size_kb = len(text_content.encode('utf-8')) / 1024
+            print(f"\n{'─'*60}")
+            print(f"⏱️  知识库写入耗时报告")
+            print(f"   📄 文件名:        {original_filename}")
+            print(f"   👤 用户:          {username}")
+            print(f"   🔧 媒体类型:      {media_type}")
+            print(f"   📝 文本大小:      {text_size_kb:.1f} KB")
+            print(f"   📊 数据块:        {success_count} 个")
+            print(f"   ⏱️  创建Collection: {t_create_elapsed:.2f}s")
+            print(f"   ⏱️  文本切分:      {t_split_elapsed:.2f}s")
+            print(f"   ⏱️  批量写入:      {t_insert_elapsed:.2f}s")
+            print(f"   ⏱️  总写入耗时:    {total_elapsed:.2f}s")
+            print(f"   ✅ 写入完成")
+            print(f"{'─'*60}")
+
+            return {
+                'success': True,
+                'doc_id': doc_id,
+                'collection_id': collection_id,
+                'folder_id': folder_id,
+                'status': 'ready',
+                'chunk_count': success_count,
+                'message': f'多媒体文件解析完成，已生成 {success_count} 个知识块',
+                'upload_time_seconds': round(total_elapsed, 2),            # ★
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            self.db.kb_documents.update_one(
+                {'doc_id': doc_id},
+                {'$set': {'status': 'failed', 'error_message': error_msg}}
+            )
+            # ★ 异常也打印耗时
+            total_elapsed = time.time() - total_start
+            print(f"   ⏱️  异常耗时: {total_elapsed:.2f}s | ❌ {error_msg}")
+            traceback.print_exc()
+            return {'success': False, 'doc_id': doc_id, 'error': error_msg}
+
+    # ★★★ 修改点① _split_text_to_chunks — 每个 chunk 前注入文件名 ★★★
+    def _split_text_to_chunks(
+        self,
+        text: str,
+        chunk_size: int = 500,
+        overlap: int = 50,
+        filename: str = None,
+    ) -> List[Dict]:
+        """
+        将长文本切分为 q/a 数据块
+        优先按段落/章节切分，保持语义完整性
+        ★ 每个 chunk 前注入文件名，确保按文件名搜索也能命中
+        """
+        chunks = []
+
+        # 按 Markdown 标题切分
+        sections = re.split(r'\n(?=##?\s)', text)
+
+        for section in sections:
+            section = section.strip()
+            if not section:
+                continue
+
+            if len(section) <= chunk_size:
+                chunks.append({'q': section, 'a': '', 'indexes': []})
+            else:
+                # 按段落进一步切分
+                paragraphs = section.split('\n\n')
+                current = ''
+                for para in paragraphs:
+                    para = para.strip()
+                    if not para:
+                        continue
+
+                    if len(current) + len(para) + 2 > chunk_size and current:
+                        chunks.append(
+                            {'q': current.strip(), 'a': '', 'indexes': []})
+                        # 保留 overlap
+                        if overlap > 0 and len(current) > overlap:
+                            current = current[-overlap:] + '\n\n' + para
+                        else:
+                            current = para
+                    else:
+                        current = (current + '\n\n' + para).strip()
+
+                if current.strip():
+                    chunks.append(
+                        {'q': current.strip(), 'a': '', 'indexes': []})
+
+        # 如果没切出来，强制按字符数切分
+        if not chunks and text.strip():
+            for i in range(0, len(text), chunk_size - overlap):
+                chunk = text[i:i + chunk_size].strip()
+                if chunk:
+                    chunks.append({'q': chunk, 'a': '', 'indexes': []})
+
+        # ★★★ 每个 chunk 注入文件名标签，确保按文件名搜索能命中 ★★★
+        if filename and chunks:
+            # 去掉扩展名部分作为关键词（如 "凶巴巴的猪猪.jpg" → "凶巴巴的猪猪"）
+            name_no_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            prefix = f"[文件：{filename}] [关键词：{name_no_ext}]\n"
+            for chunk in chunks:
+                # 只对不包含文件名的 chunk 添加（第1个chunk通常已含文件名）
+                if filename not in chunk['q'][:100]:
+                    chunk['q'] = prefix + chunk['q']
+
+        return chunks
 
     def _upload_file_to_fastgpt(self, dataset_id: str, file_content: bytes,
                                  filename: str, doc_id: str) -> Dict:
@@ -2593,8 +2823,15 @@ class FastGPTKBService:
                include_shared: bool = True) -> Dict[str, Any]:
         """
         搜索用户知识库
+        ★ 增加文件名匹配回退：当用户按文件名搜索时也能命中
         """
         all_results = []
+
+        # ★★★ 新增：文件名模糊匹配（覆盖历史文档） ★★★
+        filename_results = self._search_by_filename(username, query)
+        if filename_results:
+            print(f"🔍 文件名匹配: {len(filename_results)} 条结果")
+            all_results.extend(filename_results)
 
         # ① 搜索个人知识库
         dataset_id = self.get_or_create_user_dataset(username)
@@ -2652,6 +2889,69 @@ class FastGPTKBService:
             'results': final,
             'total': len(final)
         }
+
+    def _search_by_filename(self, username: str, query: str, max_results: int = 3) -> List[Dict]:
+        """
+        ★ 按文件名模糊匹配搜索（覆盖历史文档和新文档）
+        当用户输入的 query 与某个文件名匹配时，返回该文件的摘要内容
+        """
+        if not query or len(query) < 2:
+            return []
+
+        try:
+            # 在 MongoDB 中按文件名模糊匹配
+            docs = list(self.db.kb_documents.find(
+                {
+                    'username': username,
+                    'status': 'ready',
+                    'filename': {'$regex': re.escape(query), '$options': 'i'}
+                },
+                {
+                    'collection_id': 1, 'filename': 1, 'dataset_id': 1,
+                    'parsed_text': 1, 'doc_id': 1, 'media_type': 1,
+                    'file_type': 1, 'chunk_count': 1
+                }
+            ).limit(max_results))
+
+            if not docs:
+                return []
+
+            results = []
+            for doc in docs:
+                filename = doc.get('filename', '')
+                collection_id = doc.get('collection_id', '')
+
+                # 优先使用已解析的文本摘要
+                parsed_text = doc.get('parsed_text', '')
+                if parsed_text:
+                    # 取前1500字作为内容摘要
+                    content = parsed_text[:1500]
+                    if len(parsed_text) > 1500:
+                        content += '\n\n...（内容较长，已截断）'
+                else:
+                    content = f"文件：{filename}（共 {doc.get('chunk_count', 0)} 个知识块）"
+
+                results.append({
+                    'content': content,
+                    'q': content[:500],
+                    'a': '',
+                    'score': 1.0,  # 文件名精确匹配给高分
+                    'source': filename,
+                    'data_id': doc.get('doc_id', ''),
+                    'collection_id': collection_id,
+                    'dataset_id': doc.get('dataset_id', ''),
+                    'fastgpt_source': filename,
+                    'source_type': 'personal',
+                    'match_type': 'filename',
+                })
+
+                print(f"   📎 文件名命中: {filename} (collection={collection_id[:8] if collection_id else 'N/A'}...)")
+
+            return results
+
+        except Exception as e:
+            print(f"⚠️ 文件名搜索失败: {e}")
+            return []
 
     def chat(self, username: str, question: str, top_k: int = 5,
              chat_id: str = None) -> Dict[str, Any]:
@@ -2913,9 +3213,6 @@ class FastGPTKBService:
         return True
 
     def rename_document(self, username: str, doc_id: str, new_name: str) -> Dict[str, Any]:
-        """
-        重命名文档
-        """
         doc = self.db.kb_documents.find_one({
             'username': username,
             'doc_id': doc_id

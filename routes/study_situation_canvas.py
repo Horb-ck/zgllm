@@ -6,13 +6,13 @@ study_situation_canvas = Blueprint('study_situation_canvas', __name__)
 # 定义课程白名单
 COURSES_LIST = [
     "定量工程设计方法", "自动控制原理", "程序设计实践", 
-    "软件系统构架技术", "移动机器人应用与开发", "线性代数",
-    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史"
+    "移动机器人应用与开发", "线性代数",
+    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计","机器人动力学与控制"
 ]
 
 # 允许的学期ID列表
-ALLOWED_TERM_IDS = [3, 5, 11, 12]
-
+# ALLOWED_TERM_IDS = [3, 5, 11, 12]
+ALLOWED_TERM_IDS = [13]
  #教师版学情分析   
 
 @study_situation_canvas.route('/dashboard/study_situation/comprehensive/overview')

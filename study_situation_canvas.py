@@ -1,18 +1,19 @@
 from flask import request, Blueprint,jsonify,session
 import os
 import json
+from datetime import datetime, timedelta, timezone
 from utils.canvas_utils import get_courses_by_teacher_id,get_courses_by_student_id,get_course_assignments,get_assignment_submissions,get_assignment_submission_summary,get_gradeable_students,get_course_enrollments,get_course_quizzes,get_course_modules,get_module_items,get_quiz_submissions,get_student_assignment_submission,get_student_quiz_submissions
 study_situation_canvas = Blueprint('study_situation_canvas', __name__)
 # 定义课程白名单
 COURSES_LIST = [
     "定量工程设计方法", "自动控制原理", "程序设计实践", 
-    "软件系统构架技术", "移动机器人应用与开发", "线性代数",
-    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史"
+    "移动机器人应用与开发", "线性代数",
+    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计","机器人动力学与控制"
 ]
 
 # 允许的学期ID列表
-ALLOWED_TERM_IDS = [3, 5, 11, 12]
-
+# ALLOWED_TERM_IDS = [3, 5, 11, 12]
+ALLOWED_TERM_IDS = [13]
  #教师版学情分析   
 
 @study_situation_canvas.route('/dashboard/study_situation/comprehensive/overview')
@@ -645,7 +646,7 @@ def calculate_score_distribution_class(students):
 def get_student_overview():
     """获取学生个人学情综合分析"""
     # 获取学生基本信息
-    sis_user_id = session.get('username')
+    sis_user_id = session.get('sis_id')
     if not sis_user_id:
         return jsonify({"error": "未登录或session信息不完整"}), 401
     
@@ -724,12 +725,14 @@ def get_student_overview():
     
     # 获取基础数据
     assignments = get_course_assignments(course_id)
+    print(f"作业：{assignments}")
     quizzes = get_course_quizzes(course_id)
+    print(f"作业：{quizzes}")
     modules = get_course_modules(course_id, include_items=True, include_content_details=True)
     enrollments = get_course_enrollments(course_id)
     
     # 学生个人数据分析
-    student_assignments = analyze_student_assignments(user_id, course_id, assignments)
+    student_assignments = analyze_student_assignments(sis_user_id, course_id, assignments)
     student_quizzes = analyze_student_quizzes(user_id, course_id, quizzes)
     student_modules = analyze_student_modules(user_id, course_id, modules)
     student_ranking = analyze_student_ranking(user_id, course_id, enrollments)
@@ -788,7 +791,7 @@ def get_student_by_sis_id_in_course(sis_user_id, course_id):
             }
     return None
 
-def analyze_student_assignments(user_id, course_id, assignments):
+def analyze_student_assignments(sis_user_id, course_id, assignments):
     """分析学生作业完成情况"""
     student_assignments = {
         "pending_assignments": [],
@@ -825,7 +828,7 @@ def analyze_student_assignments(user_id, course_id, assignments):
             continue
             
         # 获取学生该作业的提交情况
-        submission = get_student_assignment_submission(course_id, assignment_id, user_id)
+        submission = get_student_assignment_submission(course_id, assignment_id, sis_user_id)
         
         assignment_data = {
             "assignment_id": assignment_id,

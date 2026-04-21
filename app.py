@@ -55,6 +55,10 @@ from app_kg import app_kg
 from app_comp import app_comp
 from study_situation_LLM import study_situation_LLM
 from study_situation_canvas import study_situation_canvas
+
+# from server import server_bp
+# from serverKG import serverKG
+
 import sys
 
 EXTERNAL_URL="https://mingyueai.cqu.edu.cn"
@@ -69,6 +73,8 @@ CORS_WHITELIST = [
 CORS(app,
      resources={r"/*": {"origins": CORS_WHITELIST}},
      vary_header=True)
+# app.register_blueprint(server_bp, url_prefix='/server_api')
+# app.register_blueprint(server_bp, url_prefix='/kg_api')
 app.register_blueprint(app_kg)
 app.register_blueprint(app_comp)
 app.register_blueprint(study_situation_LLM)
@@ -253,12 +259,13 @@ agents = [
 # 定义课程白名单
 COURSES_LIST = [
     "定量工程设计方法", "自动控制原理", "程序设计实践", 
-    "软件系统构架技术", "移动机器人应用与开发", "线性代数",
-    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史"
+    "移动机器人应用与开发", "线性代数",
+    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计","机器人动力学与控制"
 ]
 
 # 允许的学期ID列表
-ALLOWED_TERM_IDS = [3, 5, 11, 12]
+# ALLOWED_TERM_IDS = [3, 5, 11, 12]
+ALLOWED_TERM_IDS = [13]
 
 # 定义KG服务相关的常量
 KG_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'KG')
@@ -490,7 +497,7 @@ def create_sample_images():
             with open(img_path, 'w') as f:
                 f.write('placeholder')
 
-def process_user_courses(username, role):
+def process_user_courses(username, role, sis_id):
     """
     处理用户课程：获取课程、应用白名单和学期筛选、设置当前课程
     将用户信息存储到 MongoDB 的 user_sessions 表中
@@ -500,16 +507,16 @@ def process_user_courses(username, role):
     user_courses = []
     if role == 'teacher':
         try:
-            user_courses = get_courses_by_teacher_id(username)
+            user_courses = get_courses_by_teacher_id(sis_id)
         except Exception as e:
             print(f"获取教师课程失败: {e}")
-            return None, None, True 
+            return None, None, False 
     else:
         try:
-            user_courses = get_courses_by_student_id(username)
+            user_courses = get_courses_by_student_id(sis_id)
         except Exception as e:
             print(f"获取学生课程失败: {e}")
-            return None, None, True
+            return None, None, False
     
     if not user_courses:
         print(f"用户 {username} 没有找到课程")
@@ -560,6 +567,7 @@ def process_user_courses(username, role):
     user_session_data = {
         'username': username,
         'role': role,
+        'sis_id': sis_id,
         'user_courses': semester_filtered_courses,
         'current_course': current_course,
     }
@@ -575,6 +583,7 @@ def process_user_courses(username, role):
                         'role': role,
                         'user_courses': semester_filtered_courses,
                         'current_course': current_course,
+                        'sis_id': sis_id,
                     },
                 },
                 upsert=True  # 不存在则插入
@@ -614,7 +623,7 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        sql = "SELECT `password`, `role` FROM `student` WHERE `sid` = %s"
+        sql = "SELECT `password`, `role`,`sis_id` FROM `student` WHERE `sid` = %s"
         
         # 每次请求都新建连接/游标；避免复用全局对象
         with closing(get_conn()) as conn, conn.cursor() as cursor:
@@ -624,9 +633,10 @@ def login():
             if result and result[0] == password:
                 session['username'] = username
                 session['role'] = result[1] or 'student'
+                session['sis_id'] = result[2]
                 session['user_courses'] = []
                 # 调用统一函数处理用户课程
-                user_courses, current_course, success = process_user_courses(session['username'], session['role'])
+                user_courses, current_course, success = process_user_courses(session['username'], session['role'],session['sis_id'])
                 if not success:
                     flash('获取课程信息失败，请联系管理员', 'danger')
                     return render_template('auth/login.html')
@@ -694,7 +704,8 @@ def register():
         password = request.form.get('password')
         role = request.form.get('role')
         verification_code = request.form.get('verification_code')
-
+        
+    
         if role not in ('student', 'teacher'):
             flash('身份信息错误')
             return render_template('auth/register.html', form_data=form_data)
@@ -702,6 +713,17 @@ def register():
             flash('请填写邮箱验证码')
             return render_template('auth/register.html', form_data=form_data)
         
+        # --- 新增逻辑：从 MongoDB persons 表查询 sis_user_id ---
+        sis_id_from_mongo = None
+        try:
+            # 假设你的 MongoDB 实例名为 mongo_db，集合名为 persons
+            # 匹配 login_id = 注册填写的 username
+            person_doc = user_sessions_collection.find_one({'login_id': str(username)})
+            if person_doc:
+                sis_id_from_mongo = person_doc.get('sis_user_id')
+                print(f"🔍 匹配到预存信息：{username} -> sis_id: {sis_id_from_mongo}")
+        except Exception as e:
+            print(f"⚠️ 查询 MongoDB persons 失败: {e}")
         with closing(get_conn()) as conn, conn.cursor() as cursor:
             cursor.execute(
                 "SELECT sid, email FROM student WHERE sid = %s OR email = %s",
@@ -725,17 +747,17 @@ def register():
                 return render_template('auth/register.html', form_data=form_data)
 
             cursor.execute(
-                "INSERT INTO student (sid, email, password, role) VALUES (%s, %s, %s, %s)",
-                (username, email, password, role)
+                "INSERT INTO student (sid, email, password, role, sis_id) VALUES (%s, %s, %s, %s)",
+                (username, email, password, role, sis_id_from_mongo)
             )
             conn.commit()
             flash('注册成功，正在登录', 'success')
             session['username'] = username
             session['role'] = role
-            
+            session['sis_id'] = sis_id_from_mongo  # 存入 Session
             session['user_courses'] = []
             # 调用统一函数处理用户课程和全局变量
-            user_courses, current_course, success = process_user_courses(session['username'], session['role'])
+            user_courses, current_course, success = process_user_courses(session['username'], session['role'],session['sis_id'])
             if not success:
                 flash('获取课程信息失败，请联系管理员', 'danger')
                 return render_template('auth/login.html')
@@ -839,9 +861,9 @@ def new_chat():
 def his():
     username = session.get('username', '用户')
     role = session.get('role', 'student')
-    # 获取知识库统计（kb 模块初始化后 _get_kb_stats_for_page 才可用）
+    sis_id = session.get('sis_id')  # ✅ 新增：从 session 获取 sis_id
     kb_stats = _get_kb_stats_for_page(username)
-    user_courses_info = process_user_courses(username, role)[0] or []
+    user_courses_info = process_user_courses(username, role, sis_id)[0] or []  # ✅ 补上 sis_id
     return render_template('dashboard/his.html',
                           username=username,
                           name=username,
@@ -849,6 +871,7 @@ def his():
                           courses_info=user_courses_info,
                           kb_stats=kb_stats,
                           page_title='个人知识库')
+
 
 
 @app.route('/dashboard/agents') 
@@ -1315,10 +1338,10 @@ def study_situation():
     role = session.get('role')
     if role == 'teacher':
         return render_template('dashboard/teacher_learning_analysis.html',embed_url=chat,
-                              username=session.get('username', '用户'))
+                              username=session.get('username', '用户'),sis_id = session.get('sis_id'))
     else:
         return render_template('dashboard/student_learning_analysis.html',embed_url=chat,
-                              username=session.get('username', '用户'))
+                              username=session.get('username', '用户'),sis_id = session.get('sis_id'))
     
 
 #获取某课程下“既未完成也未学习”的学生名单->基础功能    + （站内提醒功能 + 学生提问/答疑功能）->这两个涉及后端数据库，现在需要做吗
@@ -1462,6 +1485,67 @@ os.environ.setdefault('FASTGPT_APP_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3Hi
 os.environ.setdefault('FASTGPT_SHARE_ID',        'zDrmPPnh9rdi3WmnyWCFwDcb')
 os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  'http://180.85.206.30:3000')
 
+# ---- 1.5 多媒体解析 —— 多模型自动回退配置 ----
+# 📌 VLM 模型（视觉理解，用于图片/视频帧/PPT 页面分析）
+#    按优先级从高到低排列，第一个失败自动尝试下一个
+VLM_MODELS = [
+    {
+        'name':    'qwen3-vl-plus',
+        'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        'api_key': 'sk-f72cad3abb5a46d09dec2660948390ad',
+        'model':   'qwen3-vl-plus',
+    },
+    {
+        'name':    'sili-Qwen-72B-VL',
+        'api_url': 'https://api.siliconflow.cn/v1/chat/completions',
+        'api_key': 'sk-jsyegxvsmgntuxzstxtrcxlbwzoqtfffdldjwzzpoqgqtufc',
+        'model':   'Qwen/Qwen2.5-VL-72B-Instruct',
+    },
+]
+
+# 📌 LLM 模型（纯文本，用于内容整理/摘要）
+#    同样按优先级排列，自动回退
+LLM_MODELS = [
+    {
+        'name':    'qwen-plus',
+        'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        'api_key': 'sk-f72cad3abb5a46d09dec2660948390ad',
+        'model':   'qwen-plus',
+    },
+    {
+        'name':    'qwen3-max-preview',
+        'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        'api_key': 'sk-f72cad3abb5a46d09dec2660948390ad',
+        'model':   'qwen3-max-preview',
+    },
+    {
+        'name':    'qwen3-vl-plus',
+        'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        'api_key': 'sk-f72cad3abb5a46d09dec2660948390ad',
+        'model':   'qwen3-vl-plus',
+    },
+    {
+        'name':    'sili-Qwen-72B-VL',
+        'api_url': 'https://api.siliconflow.cn/v1/chat/completions',
+        'api_key': 'sk-jsyegxvsmgntuxzstxtrcxlbwzoqtfffdldjwzzpoqgqtufc',
+        'model':   'Qwen/Qwen2.5-VL-72B-Instruct',
+    },
+]
+
+# 📌 Whisper 语音转录（可选，视频中提取音频时使用）
+WHISPER_CONFIG = {
+    'api_url': 'http://180.85.206.30:3000/api/v1',
+    'model':   'whisper-1',
+    'api_key': os.environ.get('FASTGPT_API_KEY', ''),
+}
+
+# 向下兼容：旧环境变量仍保留以免其他模块依赖
+os.environ.setdefault('VLM_API_URL',    VLM_MODELS[0]['api_url'])
+os.environ.setdefault('VLM_API_KEY',    VLM_MODELS[0]['api_key'])
+os.environ.setdefault('VLM_MODEL',      VLM_MODELS[0]['model'])
+os.environ.setdefault('WHISPER_API_URL', WHISPER_CONFIG['api_url'])
+os.environ.setdefault('WHISPER_MODEL',   WHISPER_CONFIG['model'])
+
 # ---- 2. KB 服务初始化 ----
 fastgpt_kb_service = None
 try:
@@ -1473,7 +1557,22 @@ try:
     )
     print("✅ FastGPT 知识库服务初始化成功")
 except Exception as e:
-    print(f"⚠️ FastGPT 知识库服务初始化失败（KB 功能不可用）: {e}")
+    print(f"⚠️ FastGPT 知识库服务初始化失败: {e}")
+    traceback.print_exc()
+
+# ---- 2.5 多媒体解析服务初始化（带多模型回退） ----
+media_parser = None
+try:
+    from services.media_parser import MediaParser
+    media_parser = MediaParser(
+        vlm_models=VLM_MODELS,
+        llm_models=LLM_MODELS,
+        whisper_config=WHISPER_CONFIG,
+    )
+    print("✅ 多媒体解析服务初始化成功（多模型自动回退）")
+    print(f"   支持格式: {', '.join(sorted(media_parser.ALL_EXTENSIONS))}")
+except Exception as e:
+    print(f"⚠️ 多媒体解析服务初始化失败（多媒体上传不可用）: {e}")
     traceback.print_exc()
 
 # ---- 3. KB 辅助函数（供上方 his() 路由调用） ----
@@ -1509,7 +1608,8 @@ try:
         db=db,
         fastgpt_kb_service=fastgpt_kb_service,
         login_required_func=login_required,
-        process_user_courses_func=process_user_courses
+        process_user_courses_func=process_user_courses,
+        media_parser=media_parser,   # ← 注入多媒体解析器
     )
     app.register_blueprint(kb_bp)
     print("✅ 知识库路由蓝图注册成功（/api/kb/*）")
@@ -1520,6 +1620,7 @@ except Exception as e:
 # ╔════════════════════════════════════════════════════════════════════════╗
 # ║  📚 个人知识库 (KB) 模块结束                                          ║
 # ╚════════════════════════════════════════════════════════════════════════╝
+
 
 
 

@@ -23,7 +23,7 @@ mcp = FastMCP (name="study",
 LOCAL_API_BASE = "http://180.85.206.21:"+str(APP_PORT)+"/dashboard/study_situation"
 
 @mcp.tool()
-async def search_course(
+async def search_course_teacher(
     query: Any = None,
     studentUid: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -71,7 +71,105 @@ async def search_course(
     print(f"处理后的query参数: {query_str}")
     
     # 构建查询URL
-    url = f"{LOCAL_API_BASE}/course/search"
+    url = f"{LOCAL_API_BASE}/course/search_teacher"
+    
+    # 构建查询参数
+    params = {}
+    params['studentUid'] = studentUid
+    
+    # 如果提供了query参数且不为空字符串，添加到查询中
+    if query is not None and query_str != "":
+        params['query'] = query_str
+    
+    # 构建完整的URL
+    url_with_params = url
+    if params:
+        query_string = '&'.join([f"{key}={value}" for key, value in params.items()])
+        url_with_params = f"{url}?{query_string}"
+    
+    print(f"MCP工具调用URL: {url_with_params}")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            print(f"查询课程信息: {url_with_params}")
+            response = await client.get(url_with_params)
+            response.raise_for_status()
+            
+            result = response.json()
+            return result
+            
+        except httpx.HTTPError as e:
+            print(f"HTTP请求错误: {e}")
+            # 尝试获取更详细的错误信息
+            try:
+                error_detail = e.response.json() if e.response else str(e)
+            except:
+                error_detail = str(e)
+            
+            return {
+                "error": f"查询课程时发生错误: {str(e)}",
+                "detail": error_detail,
+                "studentUid": studentUid,
+                "query": query if query else "未提供"
+            }
+        except Exception as e:
+            print(f"其他错误: {e}")
+            return {
+                "error": f"处理请求时发生错误: {str(e)}",
+                "studentUid": studentUid,
+                "query": query if query else "未提供"
+            }
+
+@mcp.tool()
+async def search_course_student(
+    query: Any = None,
+    studentUid: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    This tool can query specific information about a course based on the course name or course ID.
+    IMPORTANT: This tool will only search within the currently selected course in the dashboard.
+    If no course is selected, it will use the teacher's first course.
+    
+    Args:
+    query: The query condition, which can be part of the course ID or course name (optional). If provided, it will be matched against the currently selected course.
+           If not provided or an empty string, it defaults to querying the currently selected course.
+    studentUid: User account (required), used to identify the user and retrieve their currently selected course.
+
+    Returns:
+        Returns detailed information about the currently selected course, including knowledge point learning statistics, etc.
+
+    Example:
+        search_course(query="Mathematics", studentUid="Zhang San") - Queries the current course containing "Mathematics"
+        search_course(studentUid="Zhang San") - Queries the currently selected course
+        search_course(query="", studentUid="Zhang San") - Queries the currently selected course (same as not providing query)
+    """
+    print(f"MCP工具接收参数 - query: {query}, studentUid: {studentUid}")
+    
+    # 检查必填参数
+    if not studentUid:
+        return {
+            "error": "studentUid是必填参数",
+            "message": "请提供用户账号(studentUid)以识别用户身份"
+        }
+    # 处理query参数：如果query是列表，则取第一个元素
+    query_str = None
+    if query is not None:
+        if isinstance(query, list):
+            # 如果是列表，取第一个非空元素
+            for item in query:
+                if item is not None and str(item).strip() != "":
+                    query_str = str(item).strip()
+                    break
+            if query_str is None:
+                query_str = ""
+        else:
+            # 如果不是列表，直接转换为字符串
+            query_str = str(query).strip()
+    
+    print(f"处理后的query参数: {query_str}")
+    
+    # 构建查询URL
+    url = f"{LOCAL_API_BASE}/course/search_student"
     
     # 构建查询参数
     params = {}
@@ -577,6 +675,296 @@ async def get_student_myprogress(
             print(f"其他错误: {e}")
             return {"error": f"处理请求时发生错误: {str(e)}"}
 
+
+@mcp.tool()
+async def get_chat_archive_status(
+    resource_name: str,
+    studentUid: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    获取学生在特定课程或资源来源下的详细交互档案。
+    返回内容包括原始对话记录、AI提取的知识点统计、用户意图分布以及相关资源的点击与反馈历史。
+
+    Args:
+        resource_name: 课程名称或资源来源名称。例如: "流程图", "科技发展史_98", "Python基础".
+        studentUid: (必填) 学生的用户账号/ID，用于识别身份。
+    """
+    
+    # 1. 参数验证
+    if not studentUid:
+        return {"error": "studentUid是必填参数，请提供学生ID"}
+    
+    if not resource_name or not resource_name.strip():
+        return {"error": "resource_name是必填参数，请输入要查询的课程或来源名称"}
+    
+    resource_name = resource_name.strip()
+
+    # 2. 构建请求 URL 和参数
+    # 对应 Flask 路由: @study_situation_LLM.route('/dashboard/study_situation/chat_archive')
+    url = f"{LOCAL_API_BASE}/chat_archive"
+    params = {
+        "studentUid": studentUid,
+        "resource_name": resource_name
+    }
+
+    # 3. 发起异步请求
+    async with httpx.AsyncClient() as client:
+        try:
+            print(f"查询用户交互档案 - URL: {url}")
+            print(f"查询参数: {params}")
+            
+            # 发送 GET 请求
+            response = await client.get(url, params=params)
+            
+            # 如果返回 404，说明该用户在该课程下还没产生数据
+            if response.status_code == 404:
+                return {
+                    "message": f"用户 {studentUid} 在来源 '{resource_name}' 下暂无交互记录。",
+                    "details": None
+                }
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            # 4. 返回处理后的结果
+            return result
+            
+        except httpx.HTTPError as e:
+            print(f"HTTP请求错误: {e}")
+            return {"error": f"连接学情分析服务器失败: {str(e)}"}
+        except Exception as e:
+            print(f"处理交互档案请求时发生其他错误: {e}")
+            return {"error": f"系统错误: {str(e)}"}
+
+@mcp.tool()
+async def search_assignments_detail(
+    query: Any = None,
+    course_query: Any = None,
+    studentUid: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Query detailed assignment information for the current course.
+    Provides data on publish/due dates, submission status, average scores, 
+    and lists of students who haven't submitted or received low scores.
+
+    Args:
+        query: (Optional) Assignment name or keyword for fuzzy matching. 
+               If empty, returns all assignments for the current course.
+               Example: "基础练习", "Assignment 1".
+        course_query: (Optional) Course ID or course name keyword. Defaults to current course.
+        studentUid: Mandatory. The user's account ID (SIS ID) to identify the user and course context.
+    """
+    # 1. 检查必填参数
+    if not studentUid:
+        return {"error": "studentUid是必填参数"}
+    
+    # 2. 构建查询URL
+    url = f"{LOCAL_API_BASE}/assignment/search"
+    params = {
+        "studentUid": studentUid
+    }
+    
+    # 3. 处理 query 参数（模糊匹配作业名）
+    query_str = None
+    if query is not None:
+        if isinstance(query, list):
+            for item in query:
+                if item is not None and str(item).strip() != "":
+                    query_str = str(item).strip()
+                    break
+        else:
+            query_str = str(query).strip()
+            
+    if query_str:
+        params['query'] = query_str
+
+    course_query_str = None
+    if course_query is not None:
+        if isinstance(course_query, list):
+            # 如果是列表，取第一个非空元素
+            for item in course_query:
+                if item is not None and str(item).strip() != "":
+                    course_query_str = str(item).strip()
+                    break
+            if course_query_str is None:
+                course_query_str = ""
+        else:
+            # 如果不是列表，直接转换为字符串
+            course_query_str = str(course_query).strip()
+    
+    print(f"处理后的course_query参数: {course_query_str}")
+    # 添加course_query参数（可选）
+    if course_query_str is not None and course_query_str != "":
+        params['course_query'] = course_query_str
+
+
+    # 4. 发起异步请求
+    async with httpx.AsyncClient() as client:
+        try:
+            print(f"查询作业详情 - URL: {url}, Params: {params}")
+            response = await client.get(url, params=params, timeout=30.0)
+            response.raise_for_status()
+            return response.json()
+            
+        except httpx.HTTPError as e:
+            print(f"HTTP请求错误: {e}")
+            return {"error": f"查询作业详情时发生错误: {str(e)}"}
+        except Exception as e:
+            print(f"其他错误: {e}")
+            return {"error": f"处理作业查询请求时发生错误: {str(e)}"}
+
+@mcp.tool()
+async def search_quizzes_detail(
+    query: Any = None,
+    course_query: Any = None,
+    studentUid: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Query detailed quiz information for the current course.
+    Provides data on publish/due dates, quiz descriptions, average class scores,
+    and identifies students who haven't attempted the quiz or scored poorly.
+
+    Args:
+        query: (Optional) Quiz title or keyword for fuzzy matching.
+               If empty, returns all quizzes for the current course.
+               Example: "期中测验", "Quiz 2".
+        course_query: (Optional) Course ID or course name keyword. Defaults to current course.
+        studentUid: Mandatory. The user's account ID (SIS ID) to identify the user and course context.
+    """
+    # 1. 检查必填参数
+    if not studentUid:
+        return {"error": "studentUid是必填参数"}
+    
+    # 2. 构建查询URL
+    url = f"{LOCAL_API_BASE}/quiz/search"
+    params = {
+        "studentUid": studentUid
+    }
+    
+    # 3. 处理 query 参数（模糊匹配测验名）
+    query_str = None
+    if query is not None:
+        if isinstance(query, list):
+            for item in query:
+                if item is not None and str(item).strip() != "":
+                    query_str = str(item).strip()
+                    break
+        else:
+            query_str = str(query).strip()
+            
+    if query_str:
+        params['query'] = query_str
+
+    course_query_str = None
+    if course_query is not None:
+        if isinstance(course_query, list):
+            # 如果是列表，取第一个非空元素
+            for item in course_query:
+                if item is not None and str(item).strip() != "":
+                    course_query_str = str(item).strip()
+                    break
+            if course_query_str is None:
+                course_query_str = ""
+        else:
+            # 如果不是列表，直接转换为字符串
+            course_query_str = str(course_query).strip()
+    
+    print(f"处理后的course_query参数: {course_query_str}")
+    # 添加course_query参数（可选）
+    if course_query_str is not None and course_query_str != "":
+        params['course_query'] = course_query_str
+        
+    # 4. 发起异步请求
+    async with httpx.AsyncClient() as client:
+        try:
+            print(f"查询测验详情 - URL: {url}, Params: {params}")
+            response = await client.get(url, params=params, timeout=30.0)
+            response.raise_for_status()
+            return response.json()
+            
+        except httpx.HTTPError as e:
+            print(f"HTTP请求错误: {e}")
+            return {"error": f"查询测验详情时发生错误: {str(e)}"}
+        except Exception as e:
+            print(f"其他错误: {e}")
+            return {"error": f"处理测验查询请求时发生错误: {str(e)}"}
+        
+@mcp.tool()
+async def search_assignments_student(
+    query: Any = None,
+    course_query: Any = None,
+    studentUid: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Query personal assignment status for a student in a course.
+    Shows all assignments, due dates, time remaining, and the student's personal submission details (score, grade, feedback).
+
+    Args:
+        query: (Optional) Assignment name keyword for fuzzy matching.
+        course_query: (Optional) Course ID or name keyword. Defaults to current course.
+        studentUid: Mandatory. The student's account ID (SIS ID).
+    """
+    if not studentUid: return {"error": "studentUid是必填参数"}
+    
+    url = f"{LOCAL_API_BASE}/assignment/search/student"
+    params = {"studentUid": studentUid}
+    
+    if query: params['query'] = query[0] if isinstance(query, list) else str(query).strip()
+    if course_query: params['course_query'] = course_query[0] if isinstance(course_query, list) else str(course_query).strip()
+
+    async with httpx.AsyncClient() as client:
+        try:
+            print(f"查询个人作业详情 - URL: {url}, Params: {params}")
+            response = await client.get(url, params=params, timeout=30.0)
+            
+            # 核心修改：如果 HTTP 状态码不是 2xx，解析 JSON 错误体并返回
+            if response.status_code >= 400:
+                try:
+                    error_json = response.json()
+                    return {
+                        "error": f"后端API请求失败 (HTTP {response.status_code})", 
+                        "backend_response": error_json
+                    }
+                except Exception:
+                    response.raise_for_status() # 如果不是JSON，退回到抛出异常
+                    
+            return response.json()
+            
+        except httpx.HTTPError as e:
+            return {"error": f"网络通信发生错误: {str(e)}"}
+        except Exception as e:
+            return {"error": f"工具执行异常: {str(e)}"}
+        
+@mcp.tool()
+async def search_quizzes_student(
+    query: Any = None,
+    course_query: Any = None,
+    studentUid: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Query personal quiz status for a student in a course.
+    Includes quiz titles, descriptions, due dates, and the student's attempt status and scores.
+
+    Args:
+        query: (Optional) Quiz title keyword for fuzzy matching.
+        course_query: (Optional) Course ID or name keyword. Defaults to current course.
+        studentUid: Mandatory. The student's account ID (SIS ID).
+    """
+    if not studentUid: return {"error": "studentUid是必填参数"}
+    
+    url = f"{LOCAL_API_BASE}/quiz/search/student"
+    params = {"studentUid": studentUid}
+    
+    if query: params['query'] = query[0] if isinstance(query, list) else str(query).strip()
+    if course_query: params['course_query'] = course_query[0] if isinstance(course_query, list) else str(course_query).strip()
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, params=params, timeout=30.0)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {"error": f"查询个人测验进度失败: {str(e)}"}        
 # import subprocess, threading, time, requests
 
 # def run_ngrok():

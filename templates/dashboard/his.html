@@ -163,7 +163,7 @@
             
             .kb-upload-icon { font-size: 32px; margin-bottom: 8px; }
             .kb-upload-text { color: #555; font-size: 13px; margin-bottom: 4px; }
-            .kb-upload-hint { color: #999; font-size: 11px; }
+            .kb-upload-hint { color: #999; font-size: 11px; line-height: 1.6; }
             
             .kb-upload-btn {
                 margin-top: 12px;
@@ -473,13 +473,8 @@
             }
 
             /* 隐藏旧同步按钮 */
-            .kb-sync-btn {
-                display: none;
-            }
-
-            .kb-doc-sync {
-                display: none;
-            }
+            .kb-sync-btn { display: none; }
+            .kb-doc-sync { display: none; }
             
             /* ==================== 右侧 FastGPT 聊天面板 ==================== */
             .kb-right-panel { 
@@ -517,9 +512,7 @@
                 gap: 10px;
             }
             
-            .kb-chat-header-title .icon {
-                font-size: 20px;
-            }
+            .kb-chat-header-title .icon { font-size: 20px; }
             
             .kb-chat-header-badge {
                 padding: 4px 12px;
@@ -530,7 +523,6 @@
                 backdrop-filter: blur(10px);
             }
             
-            /* FastGPT iframe 容器 */
             .kb-fastgpt-container {
                 flex: 1;
                 min-height: 0;
@@ -545,13 +537,9 @@
                 background: #fff;
             }
             
-            /* iframe 加载状态 */
             .kb-iframe-loading {
                 position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                top: 0; left: 0; right: 0; bottom: 0;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -567,17 +555,14 @@
             }
             
             .kb-loading-spinner {
-                width: 48px;
-                height: 48px;
+                width: 48px; height: 48px;
                 border: 4px solid #e9d5ff;
                 border-top-color: #7c3aed;
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
             }
             
-            @keyframes spin {
-                to { transform: rotate(360deg); }
-            }
+            @keyframes spin { to { transform: rotate(360deg); } }
             
             .kb-loading-text {
                 margin-top: 16px;
@@ -592,7 +577,6 @@
                 font-size: 12px;
             }
             
-            /* 提示条 */
             .kb-chat-tips {
                 padding: 10px 16px;
                 background: linear-gradient(90deg, #faf5ff 0%, #f3e8ff 50%, #faf5ff 100%);
@@ -605,15 +589,12 @@
                 flex-shrink: 0;
             }
             
-            .kb-chat-tips .tip-icon {
-                font-size: 14px;
-            }
+            .kb-chat-tips .tip-icon { font-size: 14px; }
 
             /* 处理中状态动画 */
             .processing-dot {
                 display: inline-block;
-                width: 6px;
-                height: 6px;
+                width: 6px; height: 6px;
                 background: #d97706;
                 border-radius: 50%;
                 margin-right: 4px;
@@ -625,12 +606,10 @@
                 50% { opacity: 0.5; transform: scale(0.8); }
             }
 
-            /* ==================== 文档行内进度条样式 ==================== */
+            /* ==================== 文档行内进度条 ==================== */
             .kb-doc-progress-fill {
                 position: absolute;
-                top: 0;
-                left: 0;
-                height: 100%;
+                top: 0; left: 0; height: 100%;
                 background: rgba(251, 191, 36, 0.15);
                 border-radius: 8px 0 0 8px;
                 transition: width 0.6s ease;
@@ -640,9 +619,7 @@
 
             .kb-doc-progress-bar {
                 position: absolute;
-                bottom: 0;
-                left: 0;
-                height: 3px;
+                bottom: 0; left: 0; height: 3px;
                 background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
                 background-size: 200% 100%;
                 border-radius: 0 0 0 8px;
@@ -657,287 +634,327 @@
             }
 
             .kb-progress-pct {
-                font-size: 10px;
-                font-weight: 600;
+                font-size: 10px; font-weight: 600;
                 color: #d97706;
                 font-variant-numeric: tabular-nums;
-                font-feature-settings: "tnum";
-                margin-left: 6px;
-                flex-shrink: 0;
-                z-index: 2;
-                position: relative;
-                min-width: 32px;
-                text-align: right;
+                margin-left: 6px; flex-shrink: 0;
+                z-index: 2; position: relative;
+                min-width: 32px; text-align: right;
             }
 
-            /* ==================== 公开/私有 Toggle 开关 ==================== */
+            /* ==================== 公开/私有 Toggle ==================== */
             .kb-share-toggle {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                cursor: pointer;
-                z-index: 2;
-                position: relative;
-                flex-shrink: 0;
-                user-select: none;
+                display: inline-flex; align-items: center; gap: 6px;
+                cursor: pointer; z-index: 2; position: relative;
+                flex-shrink: 0; user-select: none;
             }
             .kb-share-toggle input { display: none; }
             .kb-share-slider {
-                width: 34px;
-                height: 18px;
-                background: #d1d5db;
-                border-radius: 9px;
-                position: relative;
-                transition: all 0.3s;
-                flex-shrink: 0;
+                width: 34px; height: 18px;
+                background: #d1d5db; border-radius: 9px;
+                position: relative; transition: all 0.3s; flex-shrink: 0;
             }
             .kb-share-slider::after {
-                content: '';
-                position: absolute;
+                content: ''; position: absolute;
                 width: 14px; height: 14px;
-                background: #fff;
-                border-radius: 50%;
-                top: 2px; left: 2px;
-                transition: all 0.3s;
+                background: #fff; border-radius: 50%;
+                top: 2px; left: 2px; transition: all 0.3s;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.15);
             }
             .kb-share-toggle input:checked + .kb-share-slider {
                 background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             }
-            .kb-share-toggle input:checked + .kb-share-slider::after {
-                left: 18px;
-            }
-            .kb-share-toggle input:disabled + .kb-share-slider {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
+            .kb-share-toggle input:checked + .kb-share-slider::after { left: 18px; }
+            .kb-share-toggle input:disabled + .kb-share-slider { opacity: 0.5; cursor: not-allowed; }
             .kb-share-label {
-                font-size: 10px;
-                color: #9ca3af;
-                font-weight: 500;
-                min-width: 20px;
-                transition: color 0.2s;
+                font-size: 10px; color: #9ca3af; font-weight: 500;
+                min-width: 20px; transition: color 0.2s;
             }
-            .kb-share-toggle input:checked ~ .kb-share-label {
-                color: #059669;
+            .kb-share-toggle input:checked ~ .kb-share-label { color: #059669; }
+
+            .kb-doc-status-icon {
+                font-size: 12px; flex-shrink: 0;
+                z-index: 2; position: relative;
             }
 
-            /* 非 ready 文档的小状态图标 */
-            .kb-doc-status-icon {
-                font-size: 12px;
-                flex-shrink: 0;
-                z-index: 2;
-                position: relative;
+            /* ==================== 多媒体解析状态 ==================== */
+            .kb-doc-parsing-info {
+                display: flex; align-items: center; gap: 6px;
+                font-size: 10px; color: #7c3aed;
+                z-index: 2; position: relative; flex-shrink: 0;
             }
+            .parsing-spinner {
+                display: inline-block; width: 12px; height: 12px;
+                border: 2px solid #e9d5ff; border-top-color: #7c3aed;
+                border-radius: 50%; animation: spin 0.8s linear infinite;
+            }
+            .kb-media-badge {
+                display: inline-block; padding: 1px 6px;
+                border-radius: 4px; font-size: 9px; font-weight: 600;
+                color: #fff; margin-left: 4px; vertical-align: middle;
+            }
+            .kb-media-badge.image { background: #06b6d4; }
+            .kb-media-badge.video { background: #8b5cf6; }
+            .kb-media-badge.ppt   { background: #f59e0b; }
+
+            /* ★ 图片文件名可点击预览 */
+            .kb-doc-name-preview {
+                cursor: pointer;
+                color: #6366f1;
+                transition: color 0.2s;
+            }
+            .kb-doc-name-preview:hover {
+                color: #4f46e5;
+                text-decoration: underline;
+            }
+            .kb-preview-icon {
+                cursor: pointer;
+                font-size: 14px;
+                margin-left: 3px;
+                opacity: 0.6;
+                transition: opacity 0.2s;
+            }
+            .kb-preview-icon:hover { opacity: 1; }
             
             /* ==================== 弹窗样式 ==================== */
             .kb-modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
                 background: rgba(0, 0, 0, 0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1000;
-                opacity: 0;
-                visibility: hidden;
+                display: flex; align-items: center; justify-content: center;
+                z-index: 1000; opacity: 0; visibility: hidden;
                 transition: all 0.3s;
             }
-            
-            .kb-modal-overlay.show {
-                opacity: 1;
-                visibility: visible;
-            }
+            .kb-modal-overlay.show { opacity: 1; visibility: visible; }
             
             .kb-modal {
-                background: #fff;
-                border-radius: 16px;
-                width: 400px;
-                max-width: 90%;
+                background: #fff; border-radius: 16px;
+                width: 400px; max-width: 90%;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                transform: translateY(-20px);
-                transition: transform 0.3s;
+                transform: translateY(-20px); transition: transform 0.3s;
             }
-            
-            .kb-modal-overlay.show .kb-modal {
-                transform: translateY(0);
-            }
+            .kb-modal-overlay.show .kb-modal { transform: translateY(0); }
             
             .kb-modal-header {
-                padding: 20px 24px;
-                border-bottom: 1px solid #f0f0f0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
+                padding: 20px 24px; border-bottom: 1px solid #f0f0f0;
+                display: flex; justify-content: space-between; align-items: center;
             }
-            
             .kb-modal-title {
-                font-size: 18px;
-                font-weight: 600;
-                color: #1a1a2e;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                font-size: 18px; font-weight: 600; color: #1a1a2e;
+                display: flex; align-items: center; gap: 8px;
             }
-            
             .kb-modal-close {
-                width: 32px;
-                height: 32px;
-                border: none;
-                background: #f3f4f6;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 18px;
-                color: #6b7280;
+                width: 32px; height: 32px; border: none;
+                background: #f3f4f6; border-radius: 8px;
+                cursor: pointer; font-size: 18px; color: #6b7280;
                 transition: all 0.2s;
             }
-            
-            .kb-modal-close:hover {
-                background: #e5e7eb;
-                color: #374151;
-            }
-            
-            .kb-modal-body {
-                padding: 24px;
-            }
-            
+            .kb-modal-close:hover { background: #e5e7eb; color: #374151; }
+            .kb-modal-body { padding: 24px; }
             .kb-modal-input {
-                width: 100%;
-                padding: 12px 16px;
-                border: 2px solid #e5e7eb;
-                border-radius: 10px;
-                font-size: 14px;
-                outline: none;
-                transition: all 0.2s;
+                width: 100%; padding: 12px 16px;
+                border: 2px solid #e5e7eb; border-radius: 10px;
+                font-size: 14px; outline: none; transition: all 0.2s;
                 box-sizing: border-box;
             }
-            
             .kb-modal-input:focus {
                 border-color: #7c3aed;
                 box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
             }
-            
-            .kb-modal-input::placeholder {
-                color: #9ca3af;
-            }
-            
+            .kb-modal-input::placeholder { color: #9ca3af; }
             .kb-modal-footer {
-                padding: 16px 24px;
-                border-top: 1px solid #f0f0f0;
-                display: flex;
-                justify-content: flex-end;
-                gap: 12px;
+                padding: 16px 24px; border-top: 1px solid #f0f0f0;
+                display: flex; justify-content: flex-end; gap: 12px;
             }
-            
             .kb-modal-btn {
-                padding: 10px 24px;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
+                padding: 10px 24px; border-radius: 8px;
+                font-size: 14px; font-weight: 500; cursor: pointer;
                 transition: all 0.2s;
             }
-            
-            .kb-modal-btn.cancel {
-                background: #f3f4f6;
-                border: none;
-                color: #6b7280;
-            }
-            
-            .kb-modal-btn.cancel:hover {
-                background: #e5e7eb;
-            }
-            
+            .kb-modal-btn.cancel { background: #f3f4f6; border: none; color: #6b7280; }
+            .kb-modal-btn.cancel:hover { background: #e5e7eb; }
             .kb-modal-btn.confirm {
                 background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-                border: none;
-                color: #fff;
+                border: none; color: #fff;
             }
-            
             .kb-modal-btn.confirm:hover {
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
             }
+            .kb-modal-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
             
-            .kb-modal-btn:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none !important;
-            }
-            
-            /* 移动文档弹窗 - 文件夹选择列表 */
             .kb-folder-select-list {
-                max-height: 300px;
-                overflow-y: auto;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                margin-top: 12px;
+                max-height: 300px; overflow-y: auto;
+                border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 12px;
             }
-            
             .kb-folder-select-item {
-                display: flex;
-                align-items: center;
-                padding: 12px 16px;
-                cursor: pointer;
-                transition: all 0.2s;
+                display: flex; align-items: center;
+                padding: 12px 16px; cursor: pointer; transition: all 0.2s;
                 border-bottom: 1px solid #f0f0f0;
             }
-            
-            .kb-folder-select-item:last-child {
-                border-bottom: none;
-            }
-            
-            .kb-folder-select-item:hover {
-                background: #f9fafb;
-            }
-            
-            .kb-folder-select-item.selected {
-                background: #ede9fe;
-            }
-            
-            .kb-folder-select-item .folder-icon {
-                font-size: 20px;
-                margin-right: 12px;
-            }
-            
-            .kb-folder-select-item .folder-name {
-                font-size: 14px;
-                color: #374151;
-            }
-            
-            .kb-folder-select-item.root-folder {
-                background: #f0fdf4;
-            }
-            
-            .kb-folder-select-item.root-folder:hover {
-                background: #dcfce7;
-            }
+            .kb-folder-select-item:last-child { border-bottom: none; }
+            .kb-folder-select-item:hover { background: #f9fafb; }
+            .kb-folder-select-item.selected { background: #ede9fe; }
+            .kb-folder-select-item .folder-icon { font-size: 20px; margin-right: 12px; }
+            .kb-folder-select-item .folder-name { font-size: 14px; color: #374151; }
+            .kb-folder-select-item.root-folder { background: #f0fdf4; }
+            .kb-folder-select-item.root-folder:hover { background: #dcfce7; }
 
             /* ==================== 拖放提示浮层 ==================== */
             .kb-drop-toast {
-                position: fixed;
-                bottom: 32px;
-                left: 50%;
+                position: fixed; bottom: 32px; left: 50%;
                 transform: translateX(-50%) translateY(80px);
-                background: rgba(30, 30, 60, 0.92);
-                color: #fff;
-                padding: 10px 24px;
-                border-radius: 12px;
-                font-size: 13px;
-                font-weight: 500;
-                z-index: 9999;
-                pointer-events: none;
-                opacity: 0;
+                background: rgba(30, 30, 60, 0.92); color: #fff;
+                padding: 10px 24px; border-radius: 12px;
+                font-size: 13px; font-weight: 500; z-index: 9999;
+                pointer-events: none; opacity: 0;
                 transition: all 0.3s cubic-bezier(.4,0,.2,1);
-                white-space: nowrap;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+                white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
             }
             .kb-drop-toast.show {
+                opacity: 1; transform: translateX(-50%) translateY(0);
+            }
+
+            /* ==================== ★ 媒体预览弹窗 ==================== */
+            .media-preview-overlay {
+                display: none;
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0, 0, 0, 0.88);
+                z-index: 10000;
+                justify-content: center; align-items: center;
+                flex-direction: column;
+            }
+            .media-preview-overlay.show { display: flex; }
+
+            .media-preview-toolbar {
+                position: absolute; top: 16px; right: 24px;
+                display: flex; gap: 10px; z-index: 10001;
+            }
+            .media-preview-toolbar a,
+            .media-preview-toolbar button {
+                color: #fff; background: rgba(255,255,255,0.15);
+                padding: 8px 16px; border-radius: 8px;
+                text-decoration: none; font-size: 13px;
+                border: none; cursor: pointer;
+                transition: background 0.2s;
+            }
+            .media-preview-toolbar a:hover,
+            .media-preview-toolbar button:hover {
+                background: rgba(255,255,255,0.3);
+            }
+
+            .media-preview-title {
+                color: #fff; font-size: 15px; margin-bottom: 12px;
+                max-width: 80%; text-align: center; word-break: break-all;
+            }
+
+            .media-preview-img-wrap {
+                max-width: 90vw; max-height: 70vh;
+                overflow: auto; display: flex;
+                justify-content: center; align-items: center;
+            }
+            .media-preview-img-wrap img {
+                max-width: 100%; max-height: 70vh;
+                border-radius: 8px;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            }
+
+            .media-preview-text-section {
+                margin-top: 14px; max-width: 80vw; width: 620px;
+            }
+            .media-preview-text-section summary {
+                color: rgba(255,255,255,0.8); cursor: pointer;
+                font-size: 13px; padding: 8px 16px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 8px; list-style: none;
+            }
+            .media-preview-text-section summary::-webkit-details-marker { display: none; }
+            .media-preview-text-section summary::before { content: '▶ '; }
+            .media-preview-text-section[open] summary::before { content: '▼ '; }
+            .media-preview-text-content {
+                color: rgba(255,255,255,0.9); font-size: 12px;
+                line-height: 1.7; max-height: 28vh; overflow-y: auto;
+                padding: 14px; margin-top: 8px;
+                background: rgba(255,255,255,0.08);
+                border-radius: 8px; white-space: pre-wrap;
+            }
+
+            /* ★★★ 新增 CSS — 实时计时器样式 ★★★ */
+
+            /* ① 全局上传计时浮条（底部悬浮） */
+            .kb-upload-timer-bar {
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%) translateY(80px);
+                background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+                color: #fff;
+                padding: 12px 24px;
+                border-radius: 14px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 9998;
+                box-shadow: 0 8px 32px rgba(30, 27, 75, 0.45);
+                font-size: 13px;
+                font-weight: 500;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.35s cubic-bezier(.4,0,.2,1);
+                white-space: nowrap;
+                max-width: 90vw;
+            }
+            .kb-upload-timer-bar.show {
                 opacity: 1;
+                visibility: visible;
                 transform: translateX(-50%) translateY(0);
+            }
+            .kb-upload-timer-spinner {
+                width: 16px; height: 16px;
+                border: 2.5px solid rgba(255,255,255,0.25);
+                border-top-color: #a5b4fc;
+                border-radius: 50%;
+                animation: spin 0.7s linear infinite;
+                flex-shrink: 0;
+            }
+            .kb-upload-timer-name {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 200px;
+                color: #c7d2fe;
+            }
+            .kb-upload-timer-elapsed {
+                font-variant-numeric: tabular-nums;
+                font-weight: 700;
+                color: #fbbf24;
+                min-width: 44px;
+                text-align: right;
+            }
+            .kb-upload-timer-done {
+                color: #86efac;
+                font-weight: 600;
+            }
+
+            /* ② 文档列表行内计时器 */
+            .kb-doc-timer {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 10px;
+                color: #6b7280;
+                z-index: 2;
+                position: relative;
+                flex-shrink: 0;
+                font-variant-numeric: tabular-nums;
+                margin-left: 4px;
+            }
+            .kb-doc-timer .timer-icon {
+                font-size: 11px;
+            }
+            .kb-doc-timer .timer-value {
+                font-weight: 600;
+                color: #d97706;
+                min-width: 32px;
+                text-align: right;
             }
         </style>
         
@@ -954,17 +971,21 @@
                 <!-- 上传区域 -->
                 <div class="kb-card">
                     <div class="kb-upload-zone" id="uploadZone">
-                        <input type="file" id="fileInput" hidden accept=".pdf,.txt,.md,.doc,.docx">
+                        <input type="file" id="fileInput" hidden 
+                               accept=".pdf,.txt,.md,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.mp4,.avi,.mov,.mkv,.pptx,.ppt">
                         <div class="kb-upload-icon">📄</div>
                         <div class="kb-upload-text">拖拽文件到此处，或点击上传</div>
-                        <div class="kb-upload-hint">支持 PDF、TXT、MD、DOC、DOCX（最大 50MB）</div>
+                        <div class="kb-upload-hint">
+                            📝 文档: PDF、TXT、MD、DOC、DOCX（50MB）<br>
+                            🖼️ 图片: JPG、PNG、GIF、BMP、WEBP（50MB）<br>
+                            🎬 视频: MP4、AVI、MOV、MKV（200MB）<br>
+                            📊 PPT: PPTX、PPT（50MB）
+                        </div>
                         <button class="kb-upload-btn" onclick="document.getElementById('fileInput').click()">
                             选择文件
                         </button>
                     </div>
                 </div>
-                
-                <!-- ① 统计卡片已删除 -->
                 
                 <!-- 文档列表 -->
                 <div class="kb-card kb-docs-card">
@@ -979,12 +1000,10 @@
                         </div>
                     </div>
                     
-                    <!-- 面包屑导航 -->
                     <div class="kb-breadcrumb" id="breadcrumb">
                         <span class="kb-breadcrumb-item active" data-folder-id="">📂 根目录</span>
                     </div>
                     
-                    <!-- 文件夹和文档列表 -->
                     <ul class="kb-doc-list" id="docList">
                         <li class="kb-empty-docs">加载中...</li>
                     </ul>
@@ -1001,12 +1020,10 @@
                         </div>
                         <span class="kb-chat-header-badge">RAG 增强</span>
                     </div>
-                    
                     <div class="kb-chat-tips">
                         <span class="tip-icon">💡</span>
                         <span>基于您上传的文档进行智能问答，支持多文档关联检索</span>
                     </div>
-                    
                     <div class="kb-fastgpt-container">
                         <div class="kb-iframe-loading" id="iframeLoading">
                             <div class="kb-loading-spinner"></div>
@@ -1028,9 +1045,7 @@
         <div class="kb-modal-overlay" id="newFolderModal">
             <div class="kb-modal">
                 <div class="kb-modal-header">
-                    <div class="kb-modal-title">
-                        <span>📁</span> 新建文件夹
-                    </div>
+                    <div class="kb-modal-title"><span>📁</span> 新建文件夹</div>
                     <button class="kb-modal-close" onclick="hideNewFolderModal()">&times;</button>
                 </div>
                 <div class="kb-modal-body">
@@ -1048,9 +1063,7 @@
         <div class="kb-modal-overlay" id="renameModal">
             <div class="kb-modal">
                 <div class="kb-modal-header">
-                    <div class="kb-modal-title">
-                        <span>✏️</span> 重命名
-                    </div>
+                    <div class="kb-modal-title"><span>✏️</span> 重命名</div>
                     <button class="kb-modal-close" onclick="hideRenameModal()">&times;</button>
                 </div>
                 <div class="kb-modal-body">
@@ -1068,22 +1081,42 @@
         <div class="kb-modal-overlay" id="moveDocModal">
             <div class="kb-modal">
                 <div class="kb-modal-header">
-                    <div class="kb-modal-title">
-                        <span>📦</span> 移动文档
-                    </div>
+                    <div class="kb-modal-title"><span>📦</span> 移动文档</div>
                     <button class="kb-modal-close" onclick="hideMoveDocModal()">&times;</button>
                 </div>
                 <div class="kb-modal-body">
                     <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">选择目标文件夹：</p>
-                    <div class="kb-folder-select-list" id="folderSelectList">
-                        <!-- 动态填充 -->
-                    </div>
+                    <div class="kb-folder-select-list" id="folderSelectList"></div>
                 </div>
                 <div class="kb-modal-footer">
                     <button class="kb-modal-btn cancel" onclick="hideMoveDocModal()">取消</button>
                     <button class="kb-modal-btn confirm" id="confirmMoveDoc" onclick="confirmMoveDoc()">移动</button>
                 </div>
             </div>
+        </div>
+
+        <!-- ★ 媒体预览弹窗 -->
+        <div class="media-preview-overlay" id="mediaPreviewOverlay">
+            <div class="media-preview-toolbar">
+                <a id="mediaPreviewDownload" href="#" download title="下载原始文件">⬇️ 下载</a>
+                <button onclick="closeMediaPreview()">✕ 关闭</button>
+            </div>
+            <div class="media-preview-title" id="mediaPreviewTitle"></div>
+            <div class="media-preview-img-wrap">
+                <img id="mediaPreviewImg" src="" alt="预览" />
+            </div>
+            <details class="media-preview-text-section" id="mediaPreviewTextSection" style="display:none;">
+                <summary>📝 查看 AI 解析内容</summary>
+                <div class="media-preview-text-content" id="mediaPreviewText"></div>
+            </details>
+        </div>
+
+        <!-- ★ 上传计时浮条 (新增 HTML) -->
+        <div class="kb-upload-timer-bar" id="uploadTimerBar">
+            <div class="kb-upload-timer-spinner"></div>
+            <span class="kb-upload-timer-name" id="uploadTimerName"></span>
+            <span style="color:rgba(255,255,255,0.4)">—</span>
+            <span class="kb-upload-timer-elapsed" id="uploadTimerElapsed">0.0s</span>
         </div>
 
         <!-- 拖放提示浮层 -->
@@ -1093,25 +1126,120 @@
 
 <script>
     // ==================== 全局状态 ====================
-    let currentFolderId = null;  // 当前所在文件夹
-    let folderPath = [];         // 文件夹路径栈
-    let allFolders = [];         // 所有文件夹列表（用于移动）
-    let renameTarget = null;     // 重命名目标 { type: 'folder'|'doc', id: '' }
-    let moveDocId = null;        // 要移动的文档ID
-    let selectedMoveTarget = null; // 选中的移动目标文件夹
-    
-    // 拖拽状态
-    let draggedDocId = null;     // 当前正在拖拽的文档 ID
-    let draggedDocName = '';     // 当前正在拖拽的文档名称
+    let currentFolderId = null;
+    let folderPath = [];
+    let allFolders = [];
+    let renameTarget = null;
+    let moveDocId = null;
+    let selectedMoveTarget = null;
+    let draggedDocId = null;
+    let draggedDocName = '';
     
     const currentUsername = '{{ username }}';
-    
+
+    const TEXT_EXTENSIONS  = ['pdf', 'txt', 'md', 'doc', 'docx'];
+    const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    const VIDEO_EXTENSIONS = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'webm'];
+    const PPT_EXTENSIONS   = ['pptx', 'ppt'];
+    const MEDIA_EXTENSIONS = [...IMAGE_EXTENSIONS, ...VIDEO_EXTENSIONS, ...PPT_EXTENSIONS];
+    const ALL_EXTENSIONS   = [...TEXT_EXTENSIONS, ...MEDIA_EXTENSIONS];
+
+    // ★★★ 新增 JS — 计时器全局变量与工具函数 ★★★
+    let activeUploadTimer = null;   // { filename, startTime, intervalId }
+    let docTimerIntervalId = null;  // 文档列表行内计时器的全局 setInterval ID
+
+    /**
+     * ★ 格式化秒数为可读字符串
+     */
+    function formatElapsedTime(seconds) {
+        if (seconds < 0) return '0.0s';
+        if (seconds < 60) return seconds.toFixed(1) + 's';
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return m + 'm' + s.toString().padStart(2, '0') + 's';
+    }
+
+    /**
+     * ★ 启动全局上传计时浮条
+     */
+    function startUploadTimerBar(filename) {
+        stopUploadTimerBar();
+        const bar    = document.getElementById('uploadTimerBar');
+        const nameEl = document.getElementById('uploadTimerName');
+        const timeEl = document.getElementById('uploadTimerElapsed');
+        const spinEl = bar.querySelector('.kb-upload-timer-spinner');
+
+        nameEl.textContent = filename;
+        timeEl.textContent = '0.0s';
+        timeEl.classList.remove('kb-upload-timer-done');
+        if (spinEl) spinEl.style.display = '';
+
+        const startTime = Date.now();
+        activeUploadTimer = {
+            filename: filename,
+            startTime: startTime,
+            intervalId: setInterval(() => {
+                const elapsed = (Date.now() - startTime) / 1000;
+                timeEl.textContent = formatElapsedTime(elapsed);
+            }, 100)
+        };
+        bar.classList.add('show');
+    }
+
+    /**
+     * ★ 停止全局上传计时浮条（带完成/失败提示）
+     * @param {string|null} resultText  显示的结果文字，null 则直接隐藏
+     * @param {number}      hideDelay   自动隐藏延迟(ms)
+     */
+    function stopUploadTimerBar(resultText, hideDelay) {
+        if (activeUploadTimer) {
+            clearInterval(activeUploadTimer.intervalId);
+            activeUploadTimer = null;
+        }
+        const bar = document.getElementById('uploadTimerBar');
+        if (!bar) return;
+
+        if (resultText) {
+            const timeEl = document.getElementById('uploadTimerElapsed');
+            const spinEl = bar.querySelector('.kb-upload-timer-spinner');
+            if (spinEl) spinEl.style.display = 'none';
+            timeEl.textContent = resultText;
+            timeEl.classList.add('kb-upload-timer-done');
+            setTimeout(() => { bar.classList.remove('show'); }, hideDelay || 3000);
+        } else {
+            bar.classList.remove('show');
+        }
+    }
+
+    /**
+     * ★ 启动文档列表行内计时器的全局刷新循环（每秒更新一次）
+     */
+    function ensureDocTimerLoop() {
+        if (docTimerIntervalId) return;              // 已在运行
+        docTimerIntervalId = setInterval(() => {
+            const els = document.querySelectorAll('.kb-doc-timer[data-start-ms]');
+            if (els.length === 0) {
+                // 没有需要计时的文档 → 停止循环
+                clearInterval(docTimerIntervalId);
+                docTimerIntervalId = null;
+                return;
+            }
+            const now = Date.now();
+            els.forEach(el => {
+                const startMs = parseInt(el.getAttribute('data-start-ms'), 10);
+                if (!startMs || isNaN(startMs)) return;
+                const elapsed = (now - startMs) / 1000;
+                const valEl = el.querySelector('.timer-value');
+                if (valEl) valEl.textContent = formatElapsedTime(elapsed);
+            });
+        }, 1000);
+    }
+
     // ==================== 页面加载 ====================
     document.addEventListener('DOMContentLoaded', function() {
         loadDocuments();
         initUploadZone();
         initFastGPTIframe();
-        
         setInterval(checkProcessingDocs, 10000);
         
         document.getElementById('newFolderName').addEventListener('keypress', function(e) {
@@ -1119,6 +1247,15 @@
         });
         document.getElementById('renameInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') confirmRename();
+        });
+
+        // ★ 预览弹窗：点击背景关闭
+        document.getElementById('mediaPreviewOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeMediaPreview();
+        });
+        // ★ ESC 关闭预览
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeMediaPreview();
         });
     });
     
@@ -1133,32 +1270,67 @@
                 if (data.success && data.chat_url) {
                     let chatUrl = data.chat_url;
                     chatUrl += `&用户学号=${encodeURIComponent(currentUsername)}`;
-                    
-                    console.log('📱 加载 FastGPT 聊天:', chatUrl);
-                    console.log('📱 当前用户:', currentUsername);
-                    
                     iframe.src = chatUrl;
                 } else {
                     iframe.src = 'about:blank';
                     loading.innerHTML = `
                         <div style="color: #d97706; font-size: 14px;">⚠️ 暂无可用的问答助手</div>
-                        <div style="color: #9ca3af; font-size: 12px; margin-top: 8px;">请先上传文档</div>
-                    `;
+                        <div style="color: #9ca3af; font-size: 12px; margin-top: 8px;">请先上传文档</div>`;
                 }
             })
             .catch(err => {
-                console.error('获取聊天URL失败:', err);
                 loading.innerHTML = `
                     <div style="color: #dc2626; font-size: 14px;">❌ 加载失败</div>
-                    <div style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${err.message}</div>
-                `;
+                    <div style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${err.message}</div>`;
             });
         
         iframe.onload = function() {
-            setTimeout(() => {
-                loading.classList.add('hidden');
-            }, 500);
+            setTimeout(() => { loading.classList.add('hidden'); }, 500);
         };
+    }
+
+    // ==================== ★ 媒体预览功能 ====================
+    function openMediaPreview(docId, mediaUrl) {
+        const overlay  = document.getElementById('mediaPreviewOverlay');
+        const img      = document.getElementById('mediaPreviewImg');
+        const title    = document.getElementById('mediaPreviewTitle');
+        const dlBtn    = document.getElementById('mediaPreviewDownload');
+        const textSec  = document.getElementById('mediaPreviewTextSection');
+        const textDiv  = document.getElementById('mediaPreviewText');
+
+        const el = document.querySelector(`[data-preview-doc="${docId}"]`);
+        const filename = el ? el.getAttribute('data-filename') : docId;
+
+        title.textContent = filename;
+        img.src = mediaUrl;
+        img.alt = filename;
+        img.style.display = 'block';
+        img.onerror = function() {
+            this.style.display = 'none';
+            title.textContent = filename + '（原始文件加载失败）';
+        };
+
+        dlBtn.href = mediaUrl + '/download';
+
+        textSec.style.display = 'none';
+        textSec.removeAttribute('open');
+        fetch(`/api/kb/document/${docId}/content`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.parsed_text) {
+                    textDiv.textContent = data.parsed_text;
+                    textSec.style.display = 'block';
+                }
+            })
+            .catch(() => {});
+
+        overlay.classList.add('show');
+    }
+
+    function closeMediaPreview() {
+        const overlay = document.getElementById('mediaPreviewOverlay');
+        overlay.classList.remove('show');
+        document.getElementById('mediaPreviewImg').src = '';
     }
 
     
@@ -1169,26 +1341,19 @@
         
         zone.addEventListener('dragover', e => {
             e.preventDefault();
-            // 只对外部文件拖入高亮，内部文档拖拽不触发上传区
-            if (!draggedDocId) {
-                zone.classList.add('dragover');
-            }
+            if (!draggedDocId) zone.classList.add('dragover');
         });
-        
         zone.addEventListener('dragleave', e => {
             e.preventDefault();
             zone.classList.remove('dragover');
         });
-        
         zone.addEventListener('drop', e => {
             e.preventDefault();
             zone.classList.remove('dragover');
-            // 只对外部文件上传，内部拖拽忽略
             if (!draggedDocId && e.dataTransfer.files.length > 0) {
                 uploadFile(e.dataTransfer.files[0]);
             }
         });
-        
         input.addEventListener('change', e => {
             if (e.target.files.length > 0) {
                 uploadFile(e.target.files[0]);
@@ -1197,51 +1362,83 @@
         });
     }
     
+    // ★★★ 完整替换 uploadFile — 带实时计时器 ★★★
     function uploadFile(file) {
-        const maxSize = 50 * 1024 * 1024;
-        if (file.size > maxSize) {
-            alert('文件过大，最大支持 50MB');
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!ALL_EXTENSIONS.includes(ext)) {
+            alert('不支持的文件类型: .' + ext);
             return;
         }
-        
-        const allowedExt = ['pdf', 'txt', 'md', 'doc', 'docx'];
-        const ext = file.name.split('.').pop().toLowerCase();
-        if (!allowedExt.includes(ext)) {
-            alert('不支持的文件类型');
+        const isVideo = VIDEO_EXTENSIONS.includes(ext);
+        const maxSize = isVideo ? 200 * 1024 * 1024 : 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert(`文件过大，最大支持 ${maxSize / (1024 * 1024)}MB`);
             return;
         }
         
         const formData = new FormData();
         formData.append('file', file);
-        
-        if (currentFolderId) {
-            formData.append('folder_id', currentFolderId);
-        }
+        if (currentFolderId) formData.append('folder_id', currentFolderId);
         
         const btn = document.querySelector('.kb-upload-btn');
         const originalText = btn.textContent;
-        btn.textContent = '上传中...';
+        const isMedia = MEDIA_EXTENSIONS.includes(ext);
+        const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
+
+        if (isMedia) {
+            const typeLabel = IMAGE_EXTENSIONS.includes(ext) ? '图片'
+                            : VIDEO_EXTENSIONS.includes(ext) ? '视频' : 'PPT';
+            btn.textContent = `正在上传${typeLabel}...`;
+        } else {
+            btn.textContent = '上传中...';
+        }
         btn.disabled = true;
         
-        fetch('/api/kb/upload', {
-            method: 'POST',
-            body: formData
-        })
+        // ★ 启动计时浮条
+        startUploadTimerBar(file.name);
+        const uploadStartMs = Date.now();
+
+        fetch('/api/kb/upload', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
             btn.textContent = originalText;
             btn.disabled = false;
-            
+
+            // ★ 计算前端实测耗时
+            const clientElapsed = ((Date.now() - uploadStartMs) / 1000).toFixed(1);
+            // 后端返回的耗时（如果有）
+            const serverElapsed = data.upload_time_seconds
+                ? data.upload_time_seconds.toFixed(1) : null;
+            const displayTime = serverElapsed || clientElapsed;
+
             if (data.success) {
                 _hadProcessing = true;
+
+                // ★ 浮条显示完成耗时
+                const doneText = `✅ ${displayTime}s`;
+                stopUploadTimerBar(doneText, 3500);
+
+                if (data.media_type) {
+                    const labels = { image: '图片', video: '视频', ppt: 'PPT' };
+                    showDropToast(`✅ ${labels[data.media_type] || '文件'}上传完成 (${displayTime}s)，等待处理...`);
+                    setTimeout(() => hideDropToast(), 4000);
+                } else {
+                    showDropToast(`✅ 上传完成 (${displayTime}s)，正在索引...`);
+                    setTimeout(() => hideDropToast(), 3000);
+                }
+
                 loadDocuments();
             } else {
+                // ★ 失败 → 浮条显示失败
+                stopUploadTimerBar(`❌ 失败 ${clientElapsed}s`, 4000);
                 alert('上传失败: ' + (data.error || '未知错误'));
             }
         })
         .catch(err => {
             btn.textContent = originalText;
             btn.disabled = false;
+            const clientElapsed = ((Date.now() - uploadStartMs) / 1000).toFixed(1);
+            stopUploadTimerBar(`❌ 出错 ${clientElapsed}s`, 4000);
             alert('上传出错: ' + err.message);
         });
     }
@@ -1252,7 +1449,6 @@
         const folderUrl = currentFolderId 
             ? `/api/kb/folders?parent_id=${currentFolderId}`
             : '/api/kb/folders';
-            
         const docUrl = currentFolderId
             ? `/api/kb/folder/${currentFolderId}/documents`
             : '/api/kb/folder/root/documents';
@@ -1266,7 +1462,6 @@
             const folders = folderData.folders || [];
             const documents = docData.documents || [];
             allFolders = flattenFolderTree(treeData.tree || []);
-            
             renderList(folders, documents);
             updateBreadcrumb();
         })
@@ -1287,7 +1482,7 @@
         return result;
     }
     
-    // ==================== ② ③ 核心渲染（删除状态文字，新增共享 Toggle） ====================
+    // ==================== ★ 核心渲染（含计时器 + 媒体预览入口） ====================
     function renderList(folders, documents) {
         const list = document.getElementById('docList');
         
@@ -1297,8 +1492,9 @@
         }
         
         let html = '';
+        let hasTimerDocs = false;    // ★ 是否有需要计时的文档
         
-        // 渲染文件夹（作为拖放目标）
+        // 渲染文件夹
         for (const folder of folders) {
             html += `
                 <li class="kb-folder-item" 
@@ -1319,48 +1515,75 @@
                         <button class="kb-folder-action-btn" onclick="showRenameFolderModal('${folder.folder_id}', '${escapeHtml(folder.name)}')">✏️</button>
                         <button class="kb-folder-action-btn delete" onclick="deleteFolder('${folder.folder_id}', '${escapeHtml(folder.name)}')">🗑️</button>
                     </div>
-                </li>
-            `;
+                </li>`;
         }
         
-        // 渲染文档（可拖拽 + 共享Toggle）
+        // 渲染文档
         for (const doc of documents) {
             const icon = getFileIcon(doc.file_type);
             const size = formatFileSize(doc.file_size);
+            const isParsing    = (doc.status === 'parsing');
             const isProcessing = (doc.status === 'processing');
-            const isReady = (doc.status === 'ready');
-            const isFailed = (doc.status === 'failed');
-            const isShared = doc.shared || false;
+            const isReady      = (doc.status === 'ready');
+            const isFailed     = (doc.status === 'failed');
+            const isShared     = doc.shared || false;
+            const mediaType    = doc.media_type || '';
 
             const trainingCount = doc.training_count || 0;
-            const dataCount = doc.data_count || 0;
-            const totalCount = dataCount + trainingCount;
+            const dataCount     = doc.data_count || 0;
+            const totalCount    = dataCount + trainingCount;
             let progressPct = 0;
             if (isProcessing && totalCount > 0) {
                 progressPct = Math.round(dataCount / totalCount * 100);
             }
 
             let metaText = `${size} · ${doc.chunk_count || 0} 块`;
-            if (isProcessing && totalCount > 0) {
-                metaText = `${size} · 已索引 ${dataCount}/${totalCount}`;
+            if (isParsing) metaText = `${size} · 正在解析...`;
+            else if (isProcessing && totalCount > 0) metaText = `${size} · 已索引 ${dataCount}/${totalCount}`;
+
+            // 多媒体类型徽章
+            let mediaBadge = '';
+            if (mediaType) {
+                const badgeLabels = { image: '图片', video: '视频', ppt: 'PPT' };
+                mediaBadge = `<span class="kb-media-badge ${mediaType}">${badgeLabels[mediaType] || mediaType}</span>`;
             }
 
-            // 进度条（仅处理中显示）
+            // ★ 判断是否可预览原图
+            const canPreview = (mediaType === 'image') && doc.has_original_file && doc.media_url;
+
+            // ★ 文件名 HTML（图片可点击预览）
+            let nameInnerHtml;
+            if (canPreview) {
+                nameInnerHtml = `<span class="kb-doc-name-preview"
+                                       data-preview-doc="${doc.doc_id}"
+                                       data-filename="${escapeHtml(doc.filename)}"
+                                       onclick="event.stopPropagation();openMediaPreview('${doc.doc_id}','${doc.media_url}')"
+                                       title="${escapeHtml(doc.filename)}">${escapeHtml(doc.filename)}</span><span class="kb-preview-icon"
+                                       onclick="event.stopPropagation();openMediaPreview('${doc.doc_id}','${doc.media_url}')"
+                                       title="查看原图">🔍</span>`;
+            } else {
+                nameInnerHtml = escapeHtml(doc.filename);
+            }
+
+            // 进度条
             let progressHtml = '';
             if (isProcessing && totalCount > 0) {
                 progressHtml = `
                     <div class="kb-doc-progress-fill" style="width:${progressPct}%"></div>
-                    <div class="kb-doc-progress-bar" style="width:${progressPct}%"></div>
-                `;
+                    <div class="kb-doc-progress-bar" style="width:${progressPct}%"></div>`;
+            }
+            if (isParsing) {
+                progressHtml = `
+                    <div class="kb-doc-progress-fill" style="width:100%; background: rgba(124, 58, 237, 0.08);"></div>
+                    <div class="kb-doc-progress-bar" style="width:100%; background: linear-gradient(90deg, #7c3aed, #a855f7, #7c3aed);"></div>`;
             }
 
-            // 进度百分比（仅处理中显示）
             let pctHtml = '';
             if (isProcessing && totalCount > 0) {
                 pctHtml = `<span class="kb-progress-pct">${progressPct}%</span>`;
             }
 
-            // ② ③ 替代旧状态文字：就绪 → 共享Toggle，其他 → 小图标
+            // 状态区域
             let shareOrStatusHtml = '';
             if (isReady) {
                 shareOrStatusHtml = `
@@ -1370,12 +1593,33 @@
                         <span class="kb-share-slider"></span>
                         <span class="kb-share-label">${isShared ? '公开' : '私有'}</span>
                     </label>`;
+            } else if (isParsing) {
+                shareOrStatusHtml = `
+                    <div class="kb-doc-parsing-info">
+                        <span class="parsing-spinner"></span>
+                        <span>解析中</span>
+                    </div>`;
             } else if (isFailed) {
                 shareOrStatusHtml = '<span class="kb-doc-status-icon" title="处理失败">❌</span>';
-            } else if (isProcessing) {
-                // 进度条 + 百分比已经显示，不需要额外状态
-            } else {
+            } else if (!isProcessing) {
                 shareOrStatusHtml = '<span class="kb-doc-status-icon" title="等待处理">⏳</span>';
+            }
+
+            // ★★★ 新增：行内计时器 HTML（processing / parsing 状态） ★★★
+            let timerHtml = '';
+            if (isParsing || isProcessing) {
+                const uploadTimeStr = doc.upload_time || doc.uploaded_at || '';
+                if (uploadTimeStr) {
+                    const startMs = new Date(uploadTimeStr).getTime();
+                    const elapsed = (Date.now() - startMs) / 1000;
+                    if (elapsed > 0 && elapsed < 86400) {
+                        hasTimerDocs = true;
+                        timerHtml = `<span class="kb-doc-timer" data-start-ms="${startMs}">
+                            <span class="timer-icon">⏱️</span>
+                            <span class="timer-value">${formatElapsedTime(elapsed)}</span>
+                        </span>`;
+                    }
+                }
             }
 
             html += `
@@ -1386,31 +1630,35 @@
                     ondragend="onDocDragEnd(event)">
                     ${progressHtml}
                     <div class="kb-doc-info">
-                        <span class="kb-doc-icon">${icon}</span>
+                        <span class="kb-doc-icon">${icon}${mediaBadge}</span>
                         <div>
-                            <div class="kb-doc-name" title="${escapeHtml(doc.filename)}">${escapeHtml(doc.filename)}</div>
+                            <div class="kb-doc-name" title="${escapeHtml(doc.filename)}">${nameInnerHtml}</div>
                             <div class="kb-doc-meta">${metaText}</div>
                         </div>
                     </div>
                     ${shareOrStatusHtml}
+                    ${timerHtml}
                     ${pctHtml}
                     <div class="kb-doc-actions">
                         <button class="kb-folder-action-btn" onclick="event.stopPropagation(); showMoveDocModal('${doc.doc_id}', '${escapeHtml(doc.filename)}')" title="移动">📦</button>
                         <button class="kb-doc-delete" onclick="event.stopPropagation(); deleteDoc('${doc.doc_id}')">删除</button>
                     </div>
-                </li>
-            `;
+                </li>`;
         }
         
         list.innerHTML = html;
+
+        // ★ 如果有需要计时的文档，启动全局刷新循环
+        if (hasTimerDocs) {
+            ensureDocTimerLoop();
+        }
     }
     
-    // ==================== ④ 公开/取消公开 ====================
+    // ==================== 公开/取消公开 ====================
     function toggleShare(docId, isShared) {
         const toggle = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"] .kb-share-toggle input`);
         const label = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"] .kb-share-label`);
         
-        // 禁用 + 提示
         if (toggle) toggle.disabled = true;
         if (label) label.textContent = isShared ? '共享中…' : '取消中…';
         
@@ -1418,20 +1666,15 @@
             ? `/api/kb/document/${docId}/share`
             : `/api/kb/document/${docId}/unshare`;
         
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
+        fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
         .then(r => r.json())
         .then(data => {
             if (toggle) toggle.disabled = false;
-            
             if (data.success) {
                 if (label) label.textContent = isShared ? '公开' : '私有';
                 showDropToast(isShared ? '✅ 已公开到共享知识库' : '🔒 已取消公开');
                 setTimeout(() => hideDropToast(), 2000);
             } else {
-                // 回退
                 if (toggle) toggle.checked = !isShared;
                 if (label) label.textContent = !isShared ? '公开' : '私有';
                 alert('操作失败: ' + (data.error || '未知错误'));
@@ -1449,7 +1692,6 @@
     function updateBreadcrumb() {
         const breadcrumb = document.getElementById('breadcrumb');
         
-        // 根目录面包屑：始终可放置
         let html = `<span class="kb-breadcrumb-item ${folderPath.length === 0 ? 'active' : ''}" 
                          data-folder-id=""
                          onclick="navigateToRoot()"
@@ -1458,7 +1700,6 @@
                          ondragleave="onBreadcrumbDragLeave(event)"
                          ondrop="onBreadcrumbDrop(event, null)">📂 根目录</span>`;
         
-        // 每一层面包屑都可放置
         for (let i = 0; i < folderPath.length; i++) {
             const isLast = i === folderPath.length - 1;
             const fid = folderPath[i].id;
@@ -1494,155 +1735,53 @@
         loadDocuments();
     }
     
-    // ==================== 拖拽相关事件处理 ====================
-    
-    /**
-     * 文档开始拖拽
-     */
+    // ==================== 拖拽 ====================
     function onDocDragStart(event, docId, docName) {
         draggedDocId = docId;
         draggedDocName = docName;
-        
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', docId);
-        
         setTimeout(() => {
             const el = event.target.closest('.kb-doc-item');
             if (el) el.classList.add('dragging');
         }, 0);
-        
         showDropToast(`📄 正在拖拽「${docName}」— 放到文件夹或面包屑上`);
-        console.log(`🖱️ 开始拖拽文档: ${docName} (${docId})`);
     }
     
-    /**
-     * 文档拖拽结束
-     */
     function onDocDragEnd(event) {
-        document.querySelectorAll('.kb-doc-item.dragging').forEach(el => {
-            el.classList.remove('dragging');
-        });
-        
-        document.querySelectorAll('.drop-target').forEach(el => {
-            el.classList.remove('drop-target');
-        });
-        
+        document.querySelectorAll('.kb-doc-item.dragging').forEach(el => el.classList.remove('dragging'));
+        document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
         hideDropToast();
         draggedDocId = null;
         draggedDocName = '';
     }
     
-    /**
-     * 文件夹：dragover
-     */
-    function onFolderDragOver(event) {
-        if (!draggedDocId) return;
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    }
+    function onFolderDragOver(event)  { if (draggedDocId) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } }
+    function onFolderDragEnter(event) { if (!draggedDocId) return; event.preventDefault(); const f = event.target.closest('.kb-folder-item'); if (f) f.classList.add('drop-target'); }
+    function onFolderDragLeave(event) { const f = event.target.closest('.kb-folder-item'); if (f) { const r = event.relatedTarget; if (!f.contains(r)) f.classList.remove('drop-target'); } }
     
-    /**
-     * 文件夹：dragenter
-     */
-    function onFolderDragEnter(event) {
-        if (!draggedDocId) return;
-        event.preventDefault();
-        const folder = event.target.closest('.kb-folder-item');
-        if (folder) {
-            folder.classList.add('drop-target');
-        }
-    }
-    
-    /**
-     * 文件夹：dragleave
-     */
-    function onFolderDragLeave(event) {
-        const folder = event.target.closest('.kb-folder-item');
-        if (folder) {
-            const related = event.relatedTarget;
-            if (!folder.contains(related)) {
-                folder.classList.remove('drop-target');
-            }
-        }
-    }
-    
-    /**
-     * 文件夹：drop
-     */
     function onFolderDrop(event, folderId, folderName) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        const folder = event.target.closest('.kb-folder-item');
-        if (folder) folder.classList.remove('drop-target');
-        
+        event.preventDefault(); event.stopPropagation();
+        const f = event.target.closest('.kb-folder-item'); if (f) f.classList.remove('drop-target');
         if (!draggedDocId) return;
-        
-        console.log(`📦 拖放移动: ${draggedDocName} → 文件夹「${folderName}」`);
         executeDragMove(draggedDocId, folderId, `文件夹「${folderName}」`);
     }
     
-    /**
-     * 面包屑：dragover
-     */
-    function onBreadcrumbDragOver(event) {
-        if (!draggedDocId) return;
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    }
+    function onBreadcrumbDragOver(event)  { if (draggedDocId) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } }
+    function onBreadcrumbDragEnter(event) { if (!draggedDocId) return; event.preventDefault(); const i = event.target.closest('.kb-breadcrumb-item'); if (i) i.classList.add('drop-target'); }
+    function onBreadcrumbDragLeave(event) { const i = event.target.closest('.kb-breadcrumb-item'); if (i) { const r = event.relatedTarget; if (!i.contains(r)) i.classList.remove('drop-target'); } }
     
-    /**
-     * 面包屑：dragenter
-     */
-    function onBreadcrumbDragEnter(event) {
-        if (!draggedDocId) return;
-        event.preventDefault();
-        const item = event.target.closest('.kb-breadcrumb-item');
-        if (item) {
-            item.classList.add('drop-target');
-        }
-    }
-    
-    /**
-     * 面包屑：dragleave
-     */
-    function onBreadcrumbDragLeave(event) {
-        const item = event.target.closest('.kb-breadcrumb-item');
-        if (item) {
-            const related = event.relatedTarget;
-            if (!item.contains(related)) {
-                item.classList.remove('drop-target');
-            }
-        }
-    }
-    
-    /**
-     * 面包屑：drop
-     */
     function onBreadcrumbDrop(event, folderId) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        const item = event.target.closest('.kb-breadcrumb-item');
-        if (item) item.classList.remove('drop-target');
-        
+        event.preventDefault(); event.stopPropagation();
+        const i = event.target.closest('.kb-breadcrumb-item'); if (i) i.classList.remove('drop-target');
         if (!draggedDocId) return;
-        
         const targetName = folderId ? '上级文件夹' : '根目录';
-        console.log(`📦 拖放移动: ${draggedDocName} → ${targetName}`);
         executeDragMove(draggedDocId, folderId, targetName);
     }
     
-    /**
-     * 执行拖拽移动
-     */
     function executeDragMove(docId, targetFolderId, targetLabel) {
         const docEl = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"]`);
-        if (docEl) {
-            docEl.style.transition = 'all 0.3s';
-            docEl.style.opacity = '0.3';
-            docEl.style.transform = 'translateX(40px)';
-        }
+        if (docEl) { docEl.style.transition = 'all 0.3s'; docEl.style.opacity = '0.3'; docEl.style.transform = 'translateX(40px)'; }
         
         fetch(`/api/kb/document/${docId}/move`, {
             method: 'POST',
@@ -1658,38 +1797,18 @@
             } else {
                 showDropToast(`❌ 移动失败: ${data.error || '未知错误'}`);
                 setTimeout(() => hideDropToast(), 2000);
-                if (docEl) {
-                    docEl.style.opacity = '1';
-                    docEl.style.transform = '';
-                }
+                if (docEl) { docEl.style.opacity = '1'; docEl.style.transform = ''; }
             }
         })
         .catch(err => {
             showDropToast(`❌ 移动出错: ${err.message}`);
             setTimeout(() => hideDropToast(), 2000);
-            if (docEl) {
-                docEl.style.opacity = '1';
-                docEl.style.transform = '';
-            }
+            if (docEl) { docEl.style.opacity = '1'; docEl.style.transform = ''; }
         });
     }
     
-    /**
-     * 显示底部拖放提示
-     */
-    function showDropToast(message) {
-        const toast = document.getElementById('dropToast');
-        toast.textContent = message;
-        toast.classList.add('show');
-    }
-    
-    /**
-     * 隐藏底部拖放提示
-     */
-    function hideDropToast() {
-        const toast = document.getElementById('dropToast');
-        toast.classList.remove('show');
-    }
+    function showDropToast(message) { const t = document.getElementById('dropToast'); t.textContent = message; t.classList.add('show'); }
+    function hideDropToast() { document.getElementById('dropToast').classList.remove('show'); }
     
     // ==================== 文件夹操作 ====================
     function showNewFolderModal() {
@@ -1697,66 +1816,34 @@
         document.getElementById('newFolderName').value = '';
         document.getElementById('newFolderName').focus();
     }
-    
-    function hideNewFolderModal() {
-        document.getElementById('newFolderModal').classList.remove('show');
-    }
+    function hideNewFolderModal() { document.getElementById('newFolderModal').classList.remove('show'); }
     
     function createFolder() {
         const name = document.getElementById('newFolderName').value.trim();
-        if (!name) {
-            alert('请输入文件夹名称');
-            return;
-        }
-        
+        if (!name) { alert('请输入文件夹名称'); return; }
         const btn = document.getElementById('confirmNewFolder');
-        btn.disabled = true;
-        btn.textContent = '创建中...';
+        btn.disabled = true; btn.textContent = '创建中...';
         
         fetch('/api/kb/folder', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: name,
-                parent_id: currentFolderId
-            })
+            body: JSON.stringify({ name: name, parent_id: currentFolderId })
         })
         .then(r => r.json())
         .then(data => {
-            btn.disabled = false;
-            btn.textContent = '创建';
-            
-            if (data.success) {
-                hideNewFolderModal();
-                loadDocuments();
-            } else {
-                alert('创建失败: ' + (data.error || '未知错误'));
-            }
+            btn.disabled = false; btn.textContent = '创建';
+            if (data.success) { hideNewFolderModal(); loadDocuments(); }
+            else alert('创建失败: ' + (data.error || '未知错误'));
         })
-        .catch(err => {
-            btn.disabled = false;
-            btn.textContent = '创建';
-            alert('创建出错: ' + err.message);
-        });
+        .catch(err => { btn.disabled = false; btn.textContent = '创建'; alert('创建出错: ' + err.message); });
     }
     
     function deleteFolder(folderId, folderName) {
-        if (!confirm(`确定要删除文件夹「${folderName}」吗？\n\n注意：如果文件夹内有内容，将一并删除！`)) {
-            return;
-        }
-        
+        if (!confirm(`确定要删除文件夹「${folderName}」吗？\n\n注意：如果文件夹内有内容，将一并删除！`)) return;
         fetch(`/api/kb/folder/${folderId}?recursive=true`, { method: 'DELETE' })
             .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    loadDocuments();
-                } else {
-                    alert('删除失败: ' + (data.error || '未知错误'));
-                }
-            })
-            .catch(err => {
-                alert('删除出错: ' + err.message);
-            });
+            .then(data => { if (data.success) loadDocuments(); else alert('删除失败: ' + (data.error || '未知错误')); })
+            .catch(err => alert('删除出错: ' + err.message));
     }
     
     function showRenameFolderModal(folderId, currentName) {
@@ -1766,88 +1853,47 @@
         document.getElementById('renameInput').focus();
         document.getElementById('renameInput').select();
     }
-    
-    function hideRenameModal() {
-        document.getElementById('renameModal').classList.remove('show');
-        renameTarget = null;
-    }
+    function hideRenameModal() { document.getElementById('renameModal').classList.remove('show'); renameTarget = null; }
     
     function confirmRename() {
         if (!renameTarget) return;
-        
         const newName = document.getElementById('renameInput').value.trim();
-        if (!newName) {
-            alert('名称不能为空');
-            return;
-        }
-        
+        if (!newName) { alert('名称不能为空'); return; }
         const btn = document.getElementById('confirmRename');
-        btn.disabled = true;
-        btn.textContent = '保存中...';
+        btn.disabled = true; btn.textContent = '保存中...';
         
         let url, body;
-        if (renameTarget.type === 'folder') {
-            url = `/api/kb/folder/${renameTarget.id}/rename`;
-            body = { name: newName };
-        } else {
-            url = `/api/kb/rename/${renameTarget.id}`;
-            body = { new_name: newName };
-        }
+        if (renameTarget.type === 'folder') { url = `/api/kb/folder/${renameTarget.id}/rename`; body = { name: newName }; }
+        else { url = `/api/kb/rename/${renameTarget.id}`; body = { new_name: newName }; }
         
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        })
+        fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         .then(r => r.json())
         .then(data => {
-            btn.disabled = false;
-            btn.textContent = '确定';
-            
-            if (data.success) {
-                hideRenameModal();
-                loadDocuments();
-            } else {
-                alert('重命名失败: ' + (data.error || '未知错误'));
-            }
+            btn.disabled = false; btn.textContent = '确定';
+            if (data.success) { hideRenameModal(); loadDocuments(); }
+            else alert('重命名失败: ' + (data.error || '未知错误'));
         })
-        .catch(err => {
-            btn.disabled = false;
-            btn.textContent = '确定';
-            alert('重命名出错: ' + err.message);
-        });
+        .catch(err => { btn.disabled = false; btn.textContent = '确定'; alert('重命名出错: ' + err.message); });
     }
     
     // ==================== 文档操作 ====================
     function deleteDoc(docId) {
         if (!confirm('确定要删除这个文档吗？')) return;
-        
         fetch(`/api/kb/document/${docId}`, { method: 'DELETE' })
             .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    loadDocuments();
-                } else {
-                    alert('删除失败: ' + (data.error || '未知错误'));
-                }
-            })
-            .catch(err => {
-                alert('删除出错: ' + err.message);
-            });
+            .then(data => { if (data.success) loadDocuments(); else alert('删除失败: ' + (data.error || '未知错误')); })
+            .catch(err => alert('删除出错: ' + err.message));
     }
     
     function showMoveDocModal(docId, filename) {
         moveDocId = docId;
         selectedMoveTarget = null;
-        
         const list = document.getElementById('folderSelectList');
         let html = `
             <div class="kb-folder-select-item root-folder" data-folder-id="" onclick="selectMoveTarget(this, null)">
                 <span class="folder-icon">📂</span>
                 <span class="folder-name">根目录</span>
-            </div>
-        `;
-        
+            </div>`;
         for (const folder of allFolders) {
             const indent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(folder.level);
             html += `
@@ -1855,34 +1901,23 @@
                      onclick="selectMoveTarget(this, '${folder.folder_id}')">
                     <span class="folder-icon">${indent}📁</span>
                     <span class="folder-name">${escapeHtml(folder.name)}</span>
-                </div>
-            `;
+                </div>`;
         }
-        
         list.innerHTML = html;
         document.getElementById('moveDocModal').classList.add('show');
     }
-    
-    function hideMoveDocModal() {
-        document.getElementById('moveDocModal').classList.remove('show');
-        moveDocId = null;
-        selectedMoveTarget = null;
-    }
+    function hideMoveDocModal() { document.getElementById('moveDocModal').classList.remove('show'); moveDocId = null; selectedMoveTarget = null; }
     
     function selectMoveTarget(element, folderId) {
-        document.querySelectorAll('.kb-folder-select-item').forEach(el => {
-            el.classList.remove('selected');
-        });
+        document.querySelectorAll('.kb-folder-select-item').forEach(el => el.classList.remove('selected'));
         element.classList.add('selected');
         selectedMoveTarget = folderId;
     }
     
     function confirmMoveDoc() {
         if (!moveDocId) return;
-        
         const btn = document.getElementById('confirmMoveDoc');
-        btn.disabled = true;
-        btn.textContent = '移动中...';
+        btn.disabled = true; btn.textContent = '移动中...';
         
         fetch(`/api/kb/document/${moveDocId}/move`, {
             method: 'POST',
@@ -1891,51 +1926,77 @@
         })
         .then(r => r.json())
         .then(data => {
-            btn.disabled = false;
-            btn.textContent = '移动';
-            
-            if (data.success) {
-                hideMoveDocModal();
-                loadDocuments();
-            } else {
-                alert('移动失败: ' + (data.error || '未知错误'));
-            }
+            btn.disabled = false; btn.textContent = '移动';
+            if (data.success) { hideMoveDocModal(); loadDocuments(); }
+            else alert('移动失败: ' + (data.error || '未知错误'));
         })
-        .catch(err => {
-            btn.disabled = false;
-            btn.textContent = '移动';
-            alert('移动出错: ' + err.message);
-        });
+        .catch(err => { btn.disabled = false; btn.textContent = '移动'; alert('移动出错: ' + err.message); });
     }
     
-    // ==================== 自动刷新处理中的文档 ====================
+    // ★★★ 完整替换 checkProcessingDocs — 处理完成时显示耗时 ★★★
     let _hadProcessing = false;
     
     function checkProcessingDocs() {
         fetch('/api/kb/documents')
             .then(r => r.json())
             .then(data => {
+                const docs = data.documents || [];
                 const hasProcessing = data.has_processing || false;
-                
-                if (hasProcessing) {
+                const hasParsing = docs.some(d => d.status === 'parsing');
+
+                if (hasProcessing || hasParsing) {
                     _hadProcessing = true;
                     loadDocuments();
                 } else if (_hadProcessing) {
+                    // ★ 所有文档处理完成 → 显示完成提示
                     _hadProcessing = false;
                     loadDocuments();
+
+                    // 找出刚完成的文档，显示耗时
+                    const justReady = docs.filter(d => {
+                        if (d.status !== 'ready') return false;
+                        const processedAt = d.processed_at ? new Date(d.processed_at).getTime() : 0;
+                        return processedAt && (Date.now() - processedAt) < 15000; // 15秒内完成的
+                    });
+
+                    if (justReady.length > 0) {
+                        const names = justReady.map(d => d.filename).join(', ');
+                        // 计算总耗时
+                        let totalInfo = '';
+                        if (justReady.length === 1) {
+                            const d = justReady[0];
+                            const uploadTime = d.upload_time ? new Date(d.upload_time).getTime() : 0;
+                            const processedAt = d.processed_at ? new Date(d.processed_at).getTime() : 0;
+                            if (uploadTime && processedAt && processedAt > uploadTime) {
+                                const totalSec = ((processedAt - uploadTime) / 1000).toFixed(1);
+                                totalInfo = ` (总耗时 ${totalSec}s)`;
+                            }
+                        }
+                        showDropToast(`✅ 处理完成: ${names}${totalInfo}`);
+                        setTimeout(() => hideDropToast(), 4000);
+                    } else {
+                        showDropToast('✅ 所有文档已处理完成');
+                        setTimeout(() => hideDropToast(), 3000);
+                    }
+
+                    // ★ 停止行内计时器循环
+                    if (docTimerIntervalId) {
+                        clearInterval(docTimerIntervalId);
+                        docTimerIntervalId = null;
+                    }
                 }
-            });
+            })
+            .catch(() => {});
     }
 
     
     // ==================== 工具函数 ====================
     function getFileIcon(type) {
         const icons = {
-            'pdf': '📕',
-            'txt': '📄',
-            'md': '📝',
-            'doc': '📘',
-            'docx': '📘'
+            'pdf': '📕', 'txt': '📄', 'md': '📝', 'doc': '📘', 'docx': '📘',
+            'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'bmp': '🖼️', 'webp': '🖼️',
+            'mp4': '🎬', 'avi': '🎬', 'mov': '🎬', 'mkv': '🎬', 'flv': '🎬', 'wmv': '🎬', 'webm': '🎬',
+            'pptx': '📊', 'ppt': '📊',
         };
         return icons[type] || '📄';
     }
@@ -1944,10 +2005,7 @@
         if (!bytes) return '0 B';
         const units = ['B', 'KB', 'MB', 'GB'];
         let i = 0;
-        while (bytes >= 1024 && i < units.length - 1) {
-            bytes /= 1024;
-            i++;
-        }
+        while (bytes >= 1024 && i < units.length - 1) { bytes /= 1024; i++; }
         return bytes.toFixed(1) + ' ' + units[i];
     }
     

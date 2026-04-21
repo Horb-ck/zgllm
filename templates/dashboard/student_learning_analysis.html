@@ -73,7 +73,7 @@
     
     <!-- 主内容区域 -->
     <div class="main-content">
-        <!-- 无课程提示区域（默认隐藏，通过JS控制显示） -->
+        <!-- 无课程提示区域 -->
         <div id="noCourseWarning" class="no-course-warning" style="display: none;">
             <div class="warning-content">
                 <h2>您当前未选修任何课程</h2>
@@ -85,7 +85,7 @@
             </div>
         </div>
 
-        <!-- 有课程时的完整页面内容（默认显示，通过JS控制隐藏） -->
+        <!-- 有课程时的完整页面内容 -->
         <div id="coursePageContent">
             <div class="page-header">
                 <div class="header-top">
@@ -93,7 +93,6 @@
                         <h1>学情分析 - 学生端</h1>
                         <p>全面掌握学习情况，精准指导学习策略</p>
                     </div>
-                    <!-- 课程选择下拉框 -->
                     <div class="course-selector-container">
                         <div class="course-selector">
                             <button class="course-selector-btn" id="courseSelectorBtn">
@@ -113,16 +112,15 @@
 
             <!-- 主内容网格布局 - 左右等高 -->
             <div class="main-grid">
-                <!-- 左半区域：学习概览、已发布任务、成绩分析 -->
+                <!-- 左半区域 -->
                 <div class="left-main-content">
-                    <!-- 学习概览（包含个人概览和单元进度） -->
+                    <!-- 学习概览 -->
                     <div class="dashboard-card overview-progress-section">
                         <div class="card-header">
                             <h2>学习概览</h2>
-                            <span class="card-badge" id="overall-progress">82%</span>
+                            <span class="card-badge" id="overall-progress">--</span>
                         </div>
                         <div class="card-content">
-                            <!-- 个人概览部分 - 减小高度 -->
                             <div class="overview-section">
                                 <div class="overview-stats compact">
                                     <div class="stat-card compact">
@@ -130,7 +128,7 @@
                                             <i class="fas fa-tasks"></i>
                                         </div>
                                         <div class="stat-info">
-                                            <h3 id="assignment-completion-rate">85%</h3>
+                                            <h3 id="assignment-completion-rate">--</h3>
                                             <p>作业完成率</p>
                                         </div>
                                     </div>
@@ -139,7 +137,7 @@
                                             <i class="fas fa-question-circle"></i>
                                         </div>
                                         <div class="stat-info">
-                                            <h3 id="quiz-completion-rate">92%</h3>
+                                            <h3 id="quiz-completion-rate">--</h3>
                                             <p>测验完成率</p>
                                         </div>
                                     </div>
@@ -148,7 +146,7 @@
                                             <i class="fas fa-folder"></i>
                                         </div>
                                         <div class="stat-info">
-                                            <h3 id="module-completion-rate">78%</h3>
+                                            <h3 id="module-completion-rate">--</h3>
                                             <p>单元完成率</p>
                                         </div>
                                     </div>
@@ -157,125 +155,46 @@
                                             <i class="fas fa-chart-line"></i>
                                         </div>
                                         <div class="stat-info">
-                                            <h3 id="average-score">88.5</h3>
+                                            <h3 id="average-score">--</h3>
                                             <p>平均成绩</p>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- 简化版班级排名信息 - 减小高度 -->
                                 <div class="ranking-info-simple compact">
                                     <div class="ranking-item">
                                         <span class="ranking-label">班级排名:</span>
-                                        <span class="ranking-value" id="class-rank">5</span>
+                                        <span class="ranking-value" id="class-rank">--</span>
                                     </div>
                                     <div class="ranking-item">
                                         <span class="ranking-label">班级人数:</span>
-                                        <span class="ranking-value" id="total-students">32</span>
+                                        <span class="ranking-value" id="total-students">--</span>
                                     </div>
                                     <div class="ranking-item">
                                         <span class="ranking-label">班级平均分:</span>
-                                        <span class="ranking-value" id="class-average">85.2</span>
+                                        <span class="ranking-value" id="class-average">--</span>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- 单元学习进度部分 - 增加高度 -->
                             <div class="progress-section">
                                 <div class="section-header">
                                     <h3 class="section-subtitle">单元学习进度</h3>
-                                    <span class="section-count" id="module-count">6个单元</span>
+                                    <span class="section-count" id="module-count">0个单元</span>
                                 </div>
                                 <div id="module-progress-list" class="progress-list scrollable-content">
-                                    <!-- 假数据：单元学习进度 -->
-                                    <div class="module-progress-item completed">
-                                        <div class="module-header">
-                                            <span class="module-name">第一章：Python基础</span>
-                                            <span class="module-status status-completed">已完成</span>
-                                        </div>
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" style="width: 100%"></div>
-                                        </div>
-                                        <div class="progress-info">
-                                            <span>8 个项目</span>
-                                            <span>100% 完成</span>
-                                        </div>
-                                    </div>
-                                    <div class="module-progress-item in-progress">
-                                        <div class="module-header">
-                                            <span class="module-name">第二章：数据结构与算法</span>
-                                            <span class="module-status status-in-progress">进行中</span>
-                                        </div>
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" style="width: 85%"></div>
-                                        </div>
-                                        <div class="progress-info">
-                                            <span>12 个项目</span>
-                                            <span>85% 完成</span>
-                                        </div>
-                                    </div>
-                                    <div class="module-progress-item in-progress">
-                                        <div class="module-header">
-                                            <span class="module-name">第三章：面向对象编程</span>
-                                            <span class="module-status status-in-progress">进行中</span>
-                                        </div>
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" style="width: 60%"></div>
-                                        </div>
-                                        <div class="progress-info">
-                                            <span>10 个项目</span>
-                                            <span>60% 完成</span>
-                                        </div>
-                                    </div>
-                                    <div class="module-progress-item in-progress">
-                                        <div class="module-header">
-                                            <span class="module-name">第四章：Web开发基础</span>
-                                            <span class="module-status status-in-progress">进行中</span>
-                                        </div>
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" style="width: 30%"></div>
-                                        </div>
-                                        <div class="progress-info">
-                                            <span>15 个项目</span>
-                                            <span>30% 完成</span>
-                                        </div>
-                                    </div>
-                                    <div class="module-progress-item">
-                                        <div class="module-header">
-                                            <span class="module-name">第五章：数据库操作</span>
-                                            <span class="module-status status-in-progress">未开始</span>
-                                        </div>
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" style="width: 0%"></div>
-                                        </div>
-                                        <div class="progress-info">
-                                            <span>8 个项目</span>
-                                            <span>0% 完成</span>
-                                        </div>
-                                    </div>
-                                    <div class="module-progress-item locked">
-                                        <div class="module-header">
-                                            <span class="module-name">第六章：项目实战</span>
-                                            <span class="module-status status-locked">已锁定</span>
-                                        </div>
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" style="width: 0%"></div>
-                                        </div>
-                                        <div class="progress-info">
-                                            <span>6 个项目</span>
-                                            <span>0% 完成</span>
-                                        </div>
-                                    </div>
+                                    <!-- 动态加载单元进度 -->
+                                    <div class="empty-state">暂无单元数据</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 已发布任务（修改标题） -->
+                    <!-- 已发布任务 -->
                     <div class="dashboard-card tasks-section">
                         <div class="card-header">
                             <h2>已发布任务</h2>
-                            <span class="card-badge" id="published-tasks-count">11</span>
+                            <span class="card-badge" id="published-tasks-count">0</span>
                         </div>
                         <div class="card-content">
                             <div class="tasks-tabs">
@@ -286,188 +205,12 @@
                                 <div class="tab-content">
                                     <div class="tab-pane active" id="tasks-assignments-tab">
                                         <div id="published-assignments-list" class="tasks-list scrollable-content">
-                                            <!-- 假数据：已发布作业 -->
-                                            <div class="task-item assignment">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>Python基础编程作业</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">100分</span>
-                                                            <span class="task-due">截止: 2024-01-20 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-pending">
-                                                            待完成
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item assignment">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>数据结构算法实现</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">100分</span>
-                                                            <span class="task-due">截止: 2024-01-18 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-overdue">
-                                                            已过期
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item assignment">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>面向对象设计项目</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">150分</span>
-                                                            <span class="task-due">截止: 2024-01-15 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-completed">
-                                                            已完成
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item assignment">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>Web开发实战作业</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">120分</span>
-                                                            <span class="task-due">截止: 2024-01-19 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-due-soon">
-                                                            即将截止
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item assignment">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>数据库设计报告</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">80分</span>
-                                                            <span class="task-due">截止: 2024-01-10 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-missing">
-                                                            截止且未提交
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item assignment">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>期末考试项目</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">200分</span>
-                                                            <span class="task-due">截止: 2024-01-25 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-pending">
-                                                            待完成
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <div class="empty-state">暂无作业数据</div>
                                         </div>
                                     </div>
                                     <div class="tab-pane" id="tasks-quizzes-tab">
                                         <div id="published-quizzes-list" class="tasks-list scrollable-content">
-                                            <!-- 假数据：已发布测验 -->
-                                            <div class="task-item quiz">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>Python基础语法测验</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">50分</span>
-                                                            <span class="task-due">截止: 2024-01-19 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-pending">
-                                                            待完成
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item quiz">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>数据结构期中测验</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">100分</span>
-                                                            <span class="task-due">截止: 2024-01-17 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-completed">
-                                                            已完成
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item quiz">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>面向对象编程测验</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">80分</span>
-                                                            <span class="task-due">截止: 2024-01-15 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-overdue">
-                                                            已过期
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item quiz">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>Web开发基础测验</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">70分</span>
-                                                            <span class="task-due">截止: 2024-01-18 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-due-soon">
-                                                            即将截止
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="task-item quiz">
-                                                <div class="task-content">
-                                                    <div class="task-info">
-                                                        <h3>数据库操作测验</h3>
-                                                        <div class="task-details">
-                                                            <span class="task-points">90分</span>
-                                                            <span class="task-due">截止: 2024-01-22 23:59</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="task-status">
-                                                        <span class="status status-pending">
-                                                            待完成
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <div class="empty-state">暂无测验数据</div>
                                         </div>
                                     </div>
                                 </div>
@@ -490,111 +233,12 @@
                                 <div class="tab-content">
                                     <div class="tab-pane active" id="scores-assignments-tab">
                                         <div id="assignment-scores-list" class="scores-list scrollable-content">
-                                            <!-- 假数据：作业成绩 -->
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>Python基础编程作业</h3>
-                                                        <p class="score-full">满分: 100分</p>
-                                                    </div>
-                                                    <div class="score-display score-excellent">
-                                                        95/100
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>数据结构算法实现</h3>
-                                                        <p class="score-full">满分: 100分</p>
-                                                    </div>
-                                                    <div class="score-display score-good">
-                                                        88/100
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>面向对象设计项目</h3>
-                                                        <p class="score-full">满分: 100分</p>
-                                                    </div>
-                                                    <div class="score-display score-excellent">
-                                                        92/100
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>Web开发实战作业</h3>
-                                                        <p class="score-full">满分: 100分</p>
-                                                    </div>
-                                                    <div class="score-display score-good">
-                                                        78/100
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>数据库设计报告</h3>
-                                                        <p class="score-full">满分: 100分</p>
-                                                    </div>
-                                                    <div class="score-display score-good">
-                                                        85/100
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <div class="empty-state">暂无作业成绩</div>
                                         </div>
                                     </div>
                                     <div class="tab-pane" id="scores-quizzes-tab">
                                         <div id="quiz-scores-list" class="scores-list scrollable-content">
-                                            <!-- 假数据：测验成绩 -->
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>Python基础语法测验</h3>
-                                                        <p class="score-full">满分: 50分</p>
-                                                    </div>
-                                                    <div class="score-display score-excellent">
-                                                        45/50
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>数据结构期中测验</h3>
-                                                        <p class="score-full">满分: 100分</p>
-                                                    </div>
-                                                    <div class="score-display score-good">
-                                                        85/100
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>面向对象编程测验</h3>
-                                                        <p class="score-full">满分: 80分</p>
-                                                    </div>
-                                                    <div class="score-display score-good">
-                                                        72/80
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="score-item">
-                                                <div class="score-content">
-                                                    <div class="score-info">
-                                                        <h3>Web开发基础测验</h3>
-                                                        <p class="score-full">满分: 70分</p>
-                                                    </div>
-                                                    <div class="score-display score-poor">
-                                                        63/70
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <div class="empty-state">暂无测验成绩</div>
                                         </div>
                                     </div>
                                 </div>
@@ -605,7 +249,6 @@
 
                 <!-- 右半区域：AI助手 -->
                 <div class="right-side-content">
-                    <!-- AI助手（占满整个右半区域） -->
                     <div class="dashboard-card ai-assistant-card">
                         <div class="card-header">
                             <h2>学习AI助手</h2>
@@ -616,7 +259,6 @@
                                 <p>与学习AI助手深度交流，获取个性化学习建议、答疑和学习规划指导</p>
                             </div>
                             <div class="ai-assistant-iframe-container">
-                                <!-- 使用动态URL，包含用户名 -->
                                 <iframe 
                                     id="aiAssistantIframe"
                                     src=""
@@ -1872,53 +1514,31 @@ html {
 <script>
     // 当前选中的课程ID
     let currentCourseId = null;
-    // 当前用户名
     const CURRENT_USERNAME = '{{ username }}';
-    // AI助手基础URL
+    const CURRENT_SIS_ID = "{{ sis_id }}";
     const FIXED_AI_ASSISTANT_URL = 'http://180.85.206.30:3000/chat/share?shareId=jsAuv0TXdXryj2utqxDGIK9c';
 
-    // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', function() {
-        // 初始化标签页事件
         initTabEvents();
-        // 设置AI助手URL
         initializeAIAssistant();
-        // 初始加载数据
         loadStudentData();
-        // 监听窗口大小变化
         window.addEventListener('resize', handleResize);
-        // 初始调整一次
         handleResize();
     });
 
-    // 处理窗口大小变化
     function handleResize() {
         const width = window.innerWidth;
-        const container = document.querySelector('.dashboard-container');
-        
-        // 在较小屏幕上调整布局
-        if (width < 480) {
-            // 进一步缩小字体
-            document.documentElement.style.fontSize = '10px';
-        } else if (width < 768) {
-            document.documentElement.style.fontSize = '11px';
-        } else if (width < 1200) {
-            document.documentElement.style.fontSize = '12px';
-        } else {
-            document.documentElement.style.fontSize = '14px';
-        }
-        
-        // 调整任务项布局
+        if (width < 480) document.documentElement.style.fontSize = '10px';
+        else if (width < 768) document.documentElement.style.fontSize = '11px';
+        else if (width < 1200) document.documentElement.style.fontSize = '12px';
+        else document.documentElement.style.fontSize = '14px';
         adjustTaskItems();
     }
 
-    // 调整任务项布局
     function adjustTaskItems() {
         const width = window.innerWidth;
         const taskItems = document.querySelectorAll('.task-item');
-        
         if (width < 768) {
-            // 小屏幕：垂直布局
             taskItems.forEach(item => {
                 const content = item.querySelector('.task-content');
                 if (content) {
@@ -1926,14 +1546,10 @@ html {
                     content.style.alignItems = 'flex-start';
                     content.style.gap = '0.375rem';
                 }
-                
                 const status = item.querySelector('.task-status');
-                if (status) {
-                    status.style.alignSelf = 'flex-start';
-                }
+                if (status) status.style.alignSelf = 'flex-start';
             });
         } else {
-            // 大屏幕：水平布局
             taskItems.forEach(item => {
                 const content = item.querySelector('.task-content');
                 if (content) {
@@ -1941,20 +1557,15 @@ html {
                     content.style.alignItems = 'flex-start';
                     content.style.gap = '0.5rem';
                 }
-                
                 const status = item.querySelector('.task-status');
-                if (status) {
-                    status.style.alignSelf = 'flex-start';
-                }
+                if (status) status.style.alignSelf = 'flex-start';
             });
         }
     }
 
-    // 显示/隐藏无课程提示
     function toggleNoCourseWarning(show) {
         const noCourseWarning = document.getElementById('noCourseWarning');
         const coursePageContent = document.getElementById('coursePageContent');
-        
         if (show) {
             noCourseWarning.style.display = 'flex';
             coursePageContent.style.display = 'none';
@@ -1965,23 +1576,17 @@ html {
         }
     }
 
-    // 初始化课程选择器
     function initCourseSelector() {
         const courseSelectorBtn = document.getElementById('courseSelectorBtn');
         const courseDropdown = document.getElementById('courseDropdown');
-        
         if (!courseSelectorBtn || !courseDropdown) return;
-        
         if (courseSelectorBtn.dataset.initialized === 'true') return;
-        
         courseSelectorBtn.dataset.initialized = 'true';
-        
         courseSelectorBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             courseDropdown.classList.toggle('show');
             courseSelectorBtn.classList.toggle('active');
         });
-        
         document.addEventListener('click', function(e) {
             if (!courseSelectorBtn.contains(e.target) && !courseDropdown.contains(e.target)) {
                 courseDropdown.classList.remove('show');
@@ -1990,318 +1595,382 @@ html {
         });
     }
 
-    // 初始化标签页事件
     function initTabEvents() {
         document.querySelectorAll('.tab-buttons').forEach(tabButtons => {
             if (tabButtons.dataset.initialized === 'true') return;
-            
             tabButtons.dataset.initialized = 'true';
-            
             tabButtons.addEventListener('click', function(e) {
                 const tabButton = e.target.closest('.tab-button');
                 if (!tabButton) return;
-                
                 const tabName = tabButton.getAttribute('data-tab');
                 const tabsContainer = tabButtons.closest('[class*="-tabs"]');
-                
                 if (!tabsContainer) return;
-                
-                tabButtons.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
+                tabButtons.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                 tabButton.classList.add('active');
-                
                 const tabContent = tabsContainer.querySelector('.tab-content');
                 if (!tabContent) return;
-                
-                tabContent.querySelectorAll('.tab-pane').forEach(pane => {
-                    pane.classList.remove('active');
-                });
-                
+                tabContent.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
                 const tabPane = document.getElementById(tabName + '-tab');
-                if (tabPane) {
-                    tabPane.classList.add('active');
-                }
+                if (tabPane) tabPane.classList.add('active');
             });
         });
     }
 
-    // 初始化AI助手链接
-function initializeAIAssistant() {
-    const iframe = document.getElementById('aiAssistantIframe');
-    const descElement = document.getElementById('ai-assistant-desc');
-    
-    if (!iframe) return;
-    
-    // 构建完整的URL，添加用户名参数
-    let fullUrl = FIXED_AI_ASSISTANT_URL;
-    if (CURRENT_USERNAME) {
-        fullUrl += `&studentUid=${encodeURIComponent(CURRENT_USERNAME)}`;
+    function initializeAIAssistant() {
+        const iframe = document.getElementById('aiAssistantIframe');
+        if (!iframe) return;
+        let fullUrl = FIXED_AI_ASSISTANT_URL;
+        if (CURRENT_SIS_ID) {
+            fullUrl += (fullUrl.includes('?') ? '&' : '?') + `studentUid=${encodeURIComponent(CURRENT_SIS_ID)}`;
+        }
+        iframe.src = fullUrl;
     }
-    
-    // 更新iframe的src
-    iframe.src = fullUrl;
-}
 
-    // 更新当前选中的课程
     async function updateCurrentCourse(courseId, courseName, sisCourseId, enrollmentTermId, workflowState) {
         try {
             const response = await fetch('/dashboard/study_situation/update_current_course', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    course_id: courseId,
-                    course_name: courseName,
-                    sis_course_id: sisCourseId,
-                    enrollment_term_id: enrollmentTermId,
-                    workflow_state: workflowState
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ course_id: courseId, course_name: courseName, sis_course_id: sisCourseId, enrollment_term_id: enrollmentTermId, workflow_state: workflowState })
             });
-            
             const result = await response.json();
-            
-            if (result.success) {
+            if (result.success || !result.error) {
                 currentCourseId = courseId;
                 return true;
-            } else {
-                console.error('更新当前课程失败:', result.error);
-                return false;
             }
+            return false;
         } catch (error) {
-            console.error('调用更新课程接口失败:', error);
+            console.error('更新课程失败:', error);
             return false;
         }
     }
 
-    // 加载学生数据
     async function loadStudentData(courseId = null) {
         try {
             showLoading(true);
-            
             let url = '/dashboard/study_situation/student/overview';
-            if (courseId) {
-                url += `?course_id=${courseId}`;
-            }
-            
+            if (courseId) url += `?course_id=${courseId}`;
             const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            
-            if (data.error) {
-                showError(data.error);
-            }
-            
-            const hasCourses = data.course_info && 
-                              data.course_info.student_courses && 
-                              data.course_info.student_courses.length > 0;
-            
+            if (data.error) showError(data.error);
+            const hasCourses = data.course_info && data.course_info.student_courses && data.course_info.student_courses.length > 0;
             if (!hasCourses) {
                 toggleNoCourseWarning(true);
                 showLoading(false);
                 return;
             }
-            
             toggleNoCourseWarning(false);
-            
-            // 更新课程选择器（真实数据）
             updateCourseSelector(data.course_info || { student_courses: [] });
-            
-            // 如果后端返回了真实数据，则使用真实数据，否则使用假数据
-            if (hasRealData(data)) {
-                updateStudentDashboard(data);
-            } else {
-                // 页面加载时已经显示假数据，这里不需要额外操作
-                console.log('后端数据不足，继续显示假数据');
-            }
-            
+            updateStudentDashboard(data);
             showLoading(false);
         } catch (error) {
-            console.error('加载学生数据失败:', error);
-            
-            // 尝试从后端获取课程信息
-            try {
-                const fallbackUrl = '/dashboard/study_situation/student/overview?course_id=0';
-                const fallbackResponse = await fetch(fallbackUrl);
-                if (fallbackResponse.ok) {
-                    const fallbackData = await fallbackResponse.json();
-                    
-                    const hasCourses = fallbackData.course_info && 
-                                      fallbackData.course_info.student_courses && 
-                                      fallbackData.course_info.student_courses.length > 0;
-                    
-                    if (!hasCourses) {
-                        toggleNoCourseWarning(true);
-                    } else {
-                        toggleNoCourseWarning(false);
-                        updateCourseSelector(fallbackData.course_info || { student_courses: [] });
-                        // 页面加载时已经显示假数据
-                    }
-                } else {
-                    toggleNoCourseWarning(true);
-                }
-            } catch (fallbackError) {
-                console.error('备用数据加载失败:', fallbackError);
-                toggleNoCourseWarning(true);
-            }
-            
+            console.error('加载失败:', error);
+            toggleNoCourseWarning(true);
             showLoading(false);
         }
     }
 
-    // 检查是否有真实数据
-    function hasRealData(data) {
-        // 检查各个数据区域是否有真实数据
-        const hasRealAssignmentData = data.assignment_analysis && 
-            data.assignment_analysis.submission_stats && 
-            data.assignment_analysis.submission_stats.total_assignments > 0;
-        
-        const hasRealQuizData = data.quiz_analysis && 
-            data.quiz_analysis.quiz_stats && 
-            data.quiz_analysis.quiz_stats.total_quizzes > 0;
-        
-        const hasRealModuleData = data.module_analysis && 
-            data.module_analysis.progress_stats && 
-            data.module_analysis.progress_stats.total_modules > 0;
-        
-        return hasRealAssignmentData || hasRealQuizData || hasRealModuleData;
-    }
-
-    // 更新学生仪表板（使用真实数据）
     function updateStudentDashboard(data) {
-        console.log('使用真实数据更新仪表板');
-        updateOverviewProgress(data);
+        updateOverviewStats(data);
+        updateModuleProgressList(data);
         updatePublishedTasks(data);
         updateScoreAnalysis(data);
     }
 
-    // 更新学习概览（真实数据）
-    function updateOverviewProgress(data) {
+    function updateOverviewStats(data) {
         const assignmentStats = data.assignment_analysis?.submission_stats || {};
         const quizStats = data.quiz_analysis?.quiz_stats || {};
         const moduleStats = data.module_analysis?.progress_stats || {};
         const ranking = data.ranking_analysis || {};
         const overviewStats = data.overview_stats || {};
-        
-        // 如果有真实数据，则更新
-        if (assignmentStats.submission_rate !== undefined) {
-            document.getElementById('assignment-completion-rate').textContent = 
-                assignmentStats.submission_rate + '%';
+        if (assignmentStats.submission_rate !== undefined) document.getElementById('assignment-completion-rate').textContent = assignmentStats.submission_rate + '%';
+        if (quizStats.completed_count !== undefined && quizStats.total_quizzes) {
+            const rate = Math.round((quizStats.completed_count / quizStats.total_quizzes) * 100);
+            document.getElementById('quiz-completion-rate').textContent = rate + '%';
         }
-        
-        if (quizStats.completed_count && quizStats.total_quizzes) {
-            document.getElementById('quiz-completion-rate').textContent = 
-                Math.round((quizStats.completed_count / quizStats.total_quizzes) * 100) + '%';
-        }
-        
-        if (moduleStats.completion_rate !== undefined) {
-            document.getElementById('module-completion-rate').textContent = 
-                moduleStats.completion_rate + '%';
-        }
-        
-        if (data.assignment_analysis?.score_analysis?.average_score !== undefined) {
-            document.getElementById('average-score').textContent = 
-                data.assignment_analysis.score_analysis.average_score.toFixed(1);
-        }
-        
-        if (ranking.class_ranking !== undefined) {
-            document.getElementById('class-rank').textContent = ranking.class_ranking;
-        }
-        
-        if (ranking.total_students !== undefined) {
-            document.getElementById('total-students').textContent = ranking.total_students;
-        }
-        
-        if (ranking.average_class_score !== undefined) {
-            document.getElementById('class-average').textContent = 
-                parseFloat(ranking.average_class_score).toFixed(1);
-        }
-        
-        if (overviewStats.completion_rate !== undefined) {
-            document.getElementById('overall-progress').textContent = 
-                overviewStats.completion_rate + '%';
-        }
-        
-        // 更新单元进度列表
-        if (data.module_analysis) {
-            updateModuleProgressList(data);
-        }
+        if (moduleStats.completion_rate !== undefined) document.getElementById('module-completion-rate').textContent = moduleStats.completion_rate + '%';
+        if (data.assignment_analysis?.score_analysis?.average_score !== undefined) document.getElementById('average-score').textContent = data.assignment_analysis.score_analysis.average_score.toFixed(1);
+        if (ranking.class_ranking !== undefined) document.getElementById('class-rank').textContent = ranking.class_ranking;
+        if (ranking.total_students !== undefined) document.getElementById('total-students').textContent = ranking.total_students;
+        if (ranking.average_class_score !== undefined) document.getElementById('class-average').textContent = parseFloat(ranking.average_class_score).toFixed(1);
+        if (overviewStats.completion_rate !== undefined) document.getElementById('overall-progress').textContent = overviewStats.completion_rate + '%';
     }
 
-    // 更新已发布任务（真实数据）
-    function updatePublishedTasks(data) {
-        // 如果有真实数据，则更新
-        if (data.assignment_analysis || data.quiz_analysis) {
-            updatePublishedAssignments(data);
-            updatePublishedQuizzes(data);
-            
-            // 更新任务数量
-            const assignmentCount = data.assignment_analysis?.pending_assignments?.length || 0;
-            const quizCount = data.quiz_analysis?.pending_quizzes?.length || 0;
-            document.getElementById('published-tasks-count').textContent = assignmentCount + quizCount;
-        }
-    }
-
-    // 更新成绩分析（真实数据）
-    function updateScoreAnalysis(data) {
-        // 如果有真实数据，则更新
-        if (data.assignment_analysis?.graded_assignments?.length > 0) {
-            updateAssignmentScores(data);
-        }
-        if (data.quiz_analysis?.quiz_scores?.length > 0) {
-            updateQuizScores(data);
-        }
-    }
-
-    // 更新课程选择器
-    function updateCourseSelector(courseInfo) {
-        const courseList = document.getElementById('courseList');
-        const courses = courseInfo.student_courses || [];
-        const currentCourseId = courseInfo.current_course_id;
-        
-        if (courses.length === 0) {
-            courseList.innerHTML = `
-                <div class="course-empty">
-                    <i class="fas fa-folder-open"></i>
-                    <p>暂无课程信息</p>
-                </div>
-            `;
-            
-            document.getElementById('selectedCourseName').textContent = '选择课程...';
+    function updateModuleProgressList(data) {
+        const container = document.getElementById('module-progress-list');
+        const modules = data.module_analysis?.modules || [];
+        const moduleCount = modules.length;
+        document.getElementById('module-count').textContent = moduleCount + '个单元';
+        if (!moduleCount) {
+            container.innerHTML = '<div class="empty-state">暂无单元数据</div>';
             return;
         }
-        
-        const currentCourse = courses.find(c => String(c.course_id) === String(currentCourseId)) || courses[0];
-        const currentCourseName = currentCourse.course_name || currentCourse.name || '未命名课程';
-        document.getElementById('selectedCourseName').textContent = currentCourseName;
-        
-        courseList.innerHTML = courses.map(course => {
-            const courseId = course.course_id;
-            const courseName = course.course_name || course.name || '未命名课程';
-            const sisCourseId = course.sis_course_id || '';
-            const enrollmentTermId = course.enrollment_term_id || '';
-            const workflowState = course.workflow_state || '';
-            const isActive = String(courseId) === String(currentCourseId);
-            
+        container.innerHTML = modules.map(module => {
+            let statusClass = '', statusText = '';
+            const progress = module.progress_percent || 0;
+            if (progress >= 100) { statusClass = 'status-completed'; statusText = '已完成'; }
+            else if (progress > 0) { statusClass = 'status-in-progress'; statusText = '进行中'; }
+            else { statusClass = 'status-locked'; statusText = '未开始'; }
             return `
-                <div class="course-item ${isActive ? 'active' : ''}" 
-                     data-course-id="${courseId}" 
-                     data-course-name="${courseName}"
-                     data-sis-course-id="${sisCourseId}"
-                     data-enrollment-term-id="${enrollmentTermId}"
-                     data-workflow-state="${workflowState}">
-                    <div class="course-name">${courseName}</div>
-                    <div class="course-code">课程ID: ${courseId}</div>
-                    ${sisCourseId ? `<div class="course-sis-id">教务编号: ${sisCourseId}</div>` : ''}
+                <div class="module-progress-item ${progress >= 100 ? 'completed' : (progress > 0 ? 'in-progress' : 'locked')}">
+                    <div class="module-header">
+                        <span class="module-name">${escapeHtml(module.name || '未命名单元')}</span>
+                        <span class="module-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span>${module.items_count || 0} 个项目</span>
+                        <span>${progress}% 完成</span>
+                    </div>
                 </div>
             `;
         }).join('');
+    }
+
+    function updatePublishedTasks(data) {
+        // 更新总任务角标
+        const assignTotal = (data.assignment_analysis?.pending_assignments?.length || 0) + (data.assignment_analysis?.completed_assignments?.length || 0);
+        const quizTotal = (data.quiz_analysis?.pending_quizzes?.length || 0) + (data.quiz_analysis?.completed_quizzes?.length || 0);
+        document.getElementById('published-tasks-count').textContent = assignTotal + quizTotal;
+
+        // 渲染作业和测验列表
+        updatePublishedAssignments(data);
+        updatePublishedQuizzes(data);
+    }
+
+    // 核心修复：渲染所有作业（未完成 + 已完成）
+    function updatePublishedAssignments(data) {
+        const container = document.getElementById('published-assignments-list');
         
+        // 从后端分别拿到未完成和已完成的数组
+        const pending = data.assignment_analysis?.pending_assignments || [];
+        const completed = data.assignment_analysis?.completed_assignments || [];
+        
+        // 将它们合并在一起，并带上 completed 标记
+        const allAssignments = [
+            ...pending.map(a => ({ ...a, isCompleted: false })),
+            ...completed.map(a => ({ ...a, isCompleted: true }))
+        ];
+        
+        if (!allAssignments.length) {
+            container.innerHTML = '<div class="empty-state">暂无作业数据</div>';
+            return;
+        }
+        
+        // 按时间排序：未交的逾期排前面，然后是未交未逾期，最后是已交的
+        allAssignments.sort((a, b) => {
+            if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+            const aDue = a.due_at ? new Date(a.due_at).getTime() : 9999999999999;
+            const bDue = b.due_at ? new Date(b.due_at).getTime() : 9999999999999;
+            return aDue - bDue;
+        });
+
+        container.innerHTML = allAssignments.map(assign => {
+            let statusClass = '', statusText = '';
+            const dueDate = assign.due_at ? new Date(assign.due_at) : null;
+            const now = new Date();
+            
+            // 核心修复：根据后端的 assignment_name 提取名称
+            const displayName = assign.assignment_name || assign.name || assign.title || '未命名作业';
+            
+            if (assign.isCompleted) { 
+                statusClass = 'status-completed'; 
+                statusText = '已完成'; 
+            } else if (dueDate && dueDate < now) { 
+                statusClass = 'status-overdue'; 
+                statusText = '已逾期'; 
+            } else if (dueDate && (dueDate - now) < 24*3600*1000) { 
+                statusClass = 'status-due-soon'; 
+                statusText = '即将截止'; 
+            } else { 
+                statusClass = 'status-pending'; 
+                statusText = '待完成'; 
+            }
+            
+            return `
+                <div class="task-item assignment">
+                    <div class="task-content">
+                        <div class="task-info">
+                            <h3>${escapeHtml(displayName)}</h3>
+                            <div class="task-details">
+                                <span class="task-points">${assign.points_possible || 0}分</span>
+                                <span class="task-due">截止: ${dueDate ? dueDate.toLocaleString('zh-CN') : '无截止日期'}</span>
+                            </div>
+                        </div>
+                        <div class="task-status">
+                            <span class="status ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 核心修复：渲染所有测验（未完成 + 已完成）
+    function updatePublishedQuizzes(data) {
+        const container = document.getElementById('published-quizzes-list');
+        
+        const pending = data.quiz_analysis?.pending_quizzes || [];
+        const completed = data.quiz_analysis?.completed_quizzes || [];
+        
+        const allQuizzes = [
+            ...pending.map(q => ({ ...q, isCompleted: false })),
+            ...completed.map(q => ({ ...q, isCompleted: true }))
+        ];
+
+        if (!allQuizzes.length) {
+            container.innerHTML = '<div class="empty-state">暂无测验数据</div>';
+            return;
+        }
+
+        allQuizzes.sort((a, b) => {
+            if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+            const aDue = a.due_at ? new Date(a.due_at).getTime() : 9999999999999;
+            const bDue = b.due_at ? new Date(b.due_at).getTime() : 9999999999999;
+            return aDue - bDue;
+        });
+
+        container.innerHTML = allQuizzes.map(quiz => {
+            let statusClass = '', statusText = '';
+            const dueDate = quiz.due_at ? new Date(quiz.due_at) : null;
+            const now = new Date();
+            
+            // 后端测验名字段是 quiz_title
+            const displayName = quiz.quiz_title || quiz.title || '未命名测验';
+
+            if (quiz.isCompleted) { 
+                statusClass = 'status-completed'; 
+                statusText = '已完成'; 
+            } else if (dueDate && dueDate < now) { 
+                statusClass = 'status-overdue'; 
+                statusText = '已逾期'; 
+            } else if (dueDate && (dueDate - now) < 24*3600*1000) { 
+                statusClass = 'status-due-soon'; 
+                statusText = '即将截止'; 
+            } else { 
+                statusClass = 'status-pending'; 
+                statusText = '待完成'; 
+            }
+            
+            return `
+                <div class="task-item quiz">
+                    <div class="task-content">
+                        <div class="task-info">
+                            <h3>${escapeHtml(displayName)}</h3>
+                            <div class="task-details">
+                                <span class="task-points">${quiz.points_possible || 0}分</span>
+                                <span class="task-due">截止: ${dueDate ? dueDate.toLocaleString('zh-CN') : '无截止日期'}</span>
+                            </div>
+                        </div>
+                        <div class="task-status">
+                            <span class="status ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateScoreAnalysis(data) {
+        updateAssignmentScores(data);
+        updateQuizScores(data);
+    }
+
+    function updateAssignmentScores(data) {
+        const container = document.getElementById('assignment-scores-list');
+        const graded = data.assignment_analysis?.graded_assignments || [];
+        if (!graded.length) {
+            container.innerHTML = '<div class="empty-state">暂无已批改作业</div>';
+            return;
+        }
+        container.innerHTML = graded.map(assign => {
+            const score = assign.score || 0;
+            const maxScore = assign.points_possible || 1;
+            const percent = (score / maxScore * 100).toFixed(1);
+            let scoreClass = 'score-good';
+            if (percent >= 90) scoreClass = 'score-excellent';
+            else if (percent < 60) scoreClass = 'score-poor';
+            
+            const displayName = assign.assignment_name || assign.name || '未命名作业';
+            
+            return `
+                <div class="score-item">
+                    <div class="score-content">
+                        <div class="score-info">
+                            <h3>${escapeHtml(displayName)}</h3>
+                            <p class="score-full">满分: ${maxScore}分</p>
+                        </div>
+                        <div class="score-display ${scoreClass}">
+                            ${score}/${maxScore}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateQuizScores(data) {
+        const container = document.getElementById('quiz-scores-list');
+        const quizScores = data.quiz_analysis?.quiz_scores || [];
+        if (!quizScores.length) {
+            container.innerHTML = '<div class="empty-state">暂无测验成绩</div>';
+            return;
+        }
+        container.innerHTML = quizScores.map(quiz => {
+            const score = quiz.score || 0;
+            const maxScore = quiz.points_possible || 1;
+            const percent = (score / maxScore * 100).toFixed(1);
+            let scoreClass = 'score-good';
+            if (percent >= 90) scoreClass = 'score-excellent';
+            else if (percent < 60) scoreClass = 'score-poor';
+            
+            const displayName = quiz.quiz_title || quiz.title || '未命名测验';
+            
+            return `
+                <div class="score-item">
+                    <div class="score-content">
+                        <div class="score-info">
+                            <h3>${escapeHtml(displayName)}</h3>
+                            <p class="score-full">满分: ${maxScore}分</p>
+                        </div>
+                        <div class="score-display ${scoreClass}">
+                            ${score}/${maxScore}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateCourseSelector(courseInfo) {
+        const courseList = document.getElementById('courseList');
+        const courses = courseInfo.student_courses || [];
+        const currentCourseIdFromServer = courseInfo.current_course_id;
+        if (courses.length === 0) {
+            courseList.innerHTML = '<div class="course-empty"><i class="fas fa-folder-open"></i><p>暂无课程信息</p></div>';
+            document.getElementById('selectedCourseName').textContent = '选择课程...';
+            return;
+        }
+        const currentCourse = courses.find(c => String(c.course_id) === String(currentCourseIdFromServer)) || courses[0];
+        document.getElementById('selectedCourseName').textContent = currentCourse.course_name || currentCourse.name || '未命名课程';
+        courseList.innerHTML = courses.map(course => {
+            const isActive = String(course.course_id) === String(currentCourseIdFromServer);
+            return `
+                <div class="course-item ${isActive ? 'active' : ''}" 
+                     data-course-id="${course.course_id}" 
+                     data-course-name="${course.course_name || course.name}"
+                     data-sis-course-id="${course.sis_course_id || ''}"
+                     data-enrollment-term-id="${course.enrollment_term_id || ''}"
+                     data-workflow-state="${course.workflow_state || ''}">
+                    <div class="course-name">${escapeHtml(course.course_name || course.name)}</div>
+                    <div class="course-code">课程ID: ${course.course_id}</div>
+                    ${course.sis_course_id ? `<div class="course-sis-id">教务编号: ${course.sis_course_id}</div>` : ''}
+                </div>
+            `;
+        }).join('');
         document.querySelectorAll('.course-item').forEach(item => {
             item.addEventListener('click', async function() {
                 const courseId = this.dataset.courseId;
@@ -2309,75 +1978,44 @@ function initializeAIAssistant() {
                 const sisCourseId = this.dataset.sisCourseId;
                 const enrollmentTermId = this.dataset.enrollmentTermId;
                 const workflowState = this.dataset.workflowState;
-                
-                document.querySelectorAll('.course-item').forEach(item => {
-                    item.classList.remove('active');
-                });
+                document.querySelectorAll('.course-item').forEach(i => i.classList.remove('active'));
                 this.classList.add('active');
-                
                 document.getElementById('selectedCourseName').textContent = courseName;
-                
-                const courseDropdown = document.getElementById('courseDropdown');
-                const courseSelectorBtn = document.getElementById('courseSelectorBtn');
-                courseDropdown.classList.remove('show');
-                courseSelectorBtn.classList.remove('active');
-                
-                const updateSuccess = await updateCurrentCourse(
-                    courseId, 
-                    courseName, 
-                    sisCourseId, 
-                    enrollmentTermId, 
-                    workflowState
-                );
-                
-                if (updateSuccess) {
-                    loadStudentData(courseId);
-                    initializeAIAssistant()
-                }
+                const dropdown = document.getElementById('courseDropdown');
+                const btn = document.getElementById('courseSelectorBtn');
+                dropdown.classList.remove('show');
+                btn.classList.remove('active');
+                const success = await updateCurrentCourse(courseId, courseName, sisCourseId, enrollmentTermId, workflowState);
+                if (success) loadStudentData(courseId);
             });
         });
     }
 
-    // 显示/隐藏加载状态
     function showLoading(isLoading) {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (!loadingOverlay && isLoading) {
-            const overlay = document.createElement('div');
+        let overlay = document.getElementById('loadingOverlay');
+        if (isLoading && !overlay) {
+            overlay = document.createElement('div');
             overlay.id = 'loadingOverlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(255, 255, 255, 0.8);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-            `;
-            overlay.innerHTML = `
-                <div style="text-align: center;">
-                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-                    <p style="margin-top: 1rem; color: #666;">加载中...</p>
-                </div>
-            `;
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;justify-content:center;align-items:center;z-index:9999;';
+            overlay.innerHTML = '<div style="text-align:center;"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p style="margin-top:1rem;color:#666;">加载中...</p></div>';
             document.body.appendChild(overlay);
-        } else if (loadingOverlay && !isLoading) {
-            loadingOverlay.remove();
+        } else if (!isLoading && overlay) {
+            overlay.remove();
         }
     }
 
-    // 日期格式化函数
-    function formatDate(dateString) {
-        if (!dateString) return '无';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
+    function showError(message) {
+        console.warn(message);
     }
 
-    // 显示错误信息
-    function showError(message) {
-        console.warn('数据加载错误:', message);
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
 </script>
 {% endblock %}
