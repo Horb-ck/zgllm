@@ -620,6 +620,13 @@ def _build_new_home_context():
 def home():
     return render_template('dashboard/new_home_fullscreen.html', **_build_new_home_context())
 
+# ===== BEGIN: Tencent Cloud-inspired experimental homepage route =====
+@app.route('/dashboard/new-home-cloud')
+@login_required
+def home_cloud():
+    return render_template('dashboard/new_home_tencent_style.html', **_build_new_home_context())
+# ===== END: Tencent Cloud-inspired experimental homepage route =====
+
 @app.route('/dashboard/his')
 @login_required
 def his():
