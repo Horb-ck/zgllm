@@ -1,13 +1,57 @@
 import copy
+import hashlib
+import json
 import os
 import re
 import threading
 import time
+from datetime import datetime, timedelta
+from urllib.parse import unquote, urljoin, urlparse
 
 import requests
 from flask import Blueprint, flash, redirect, render_template, session, url_for
+from bs4 import BeautifulSoup
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 app_comp = Blueprint("app_comp", __name__)
+
+ROBOCON_HOME_URL = "https://robocon.org.cn/"
+ROBOCON_NEWS_URL = "https://robocon.org.cn/h-col-104.html"
+ROBOCON_REQUEST_TIMEOUT = 12
+ROBOCON_VERIFY_SSL = False
+ROBOCON_SYNC_INTERVAL_DAYS = 2
+ROBOCON_SYNC_HOUR = 3
+ROBOCON_SYNC_MINUTE = 0
+ROBOCON_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROBOCON_DOC_DIR = os.path.join(
+    ROBOCON_BASE_DIR,
+    "static",
+    "robocon_docs",
+    "national",
+    "official_monitor"
+)
+ROBOCON_STATE_PATH = os.path.join(ROBOCON_DOC_DIR, "resources_state.json")
+ROBOCON_REQUIRED_TITLE_KEYWORDS = ("第二十五届", "ROBOCON")
+ROBOCON_RULE_CORE_KEYWORDS = ("竞技赛规则", "规则书", "比赛规则", "规则V", "补充规则", "规则修订")
+ROBOCON_FIGURE_CORE_KEYWORDS = ("图册", "场地图", "尺寸图", "结构图", "附件图")
+ROBOCON_FAQ_CORE_KEYWORDS = ("FAQ", "答疑", "补充说明", "裁判说明", "问题解答")
+ROBOCON_IMPORTANT_NOTICE_KEYWORDS = ("赛程", "时间安排", "中期检查", "技术交流", "测试安排", "参赛说明", "现场说明")
+ROBOCON_GENERAL_NOTICE_KEYWORDS = ("通知", "报名", "公示", "名单", "会议", "举办", "资格", "结果", "章程")
+ROBOCON_DOWNLOADABLE_CATEGORIES = {"rule_core", "figure_core", "faq_core"}
+ROBOCON_ATTACHMENT_ALLOW_KEYWORDS = ("规则", "rule", "图册", "faq", "答疑", "武林探秘", "补充说明")
+ROBOCON_ATTACHMENT_BLOCK_KEYWORDS = ("报名表", "回执", "盖章", "汇总表", "名单", "签到", "申请表", "说明会")
+ROBOCON_CATEGORY_LABELS = {
+    "rule_core": "核心规则",
+    "figure_core": "图册",
+    "faq_core": "FAQ",
+    "important_notice": "重要通知",
+    "general_notice": "通知"
+}
+ROBOCON_SCHEDULER_STATE = {
+    "started": False,
+    "lock": threading.Lock(),
+    "thread": None
+}
 
 ROBOTAC_HOME_URL = "https://www.robotac.cn/"
 ROBOTAC_INTRO_URL = "https://www.robotac.cn/h-col-141.html"
@@ -217,8 +261,344 @@ def build_resources_with_local_overrides(resources, local_path_map=None):
 
     return resource_copy
 
+def strip_html(value):
+    cleaned = re.sub(r"<[^>]+>", " ", value or "")
+    cleaned = cleaned.replace("&nbsp;", " ")
+    return re.sub(r"\s+", " ", cleaned).strip()
 
-def get_robocon_main_resources():
+
+def normalize_text(value):
+    return re.sub(r"\s+", " ", (value or "").strip())
+
+
+def sanitize_filename(filename):
+    safe_name = re.sub(r"[\\/:*?\"<>|]+", "_", filename or "")
+    safe_name = re.sub(r"\s+", "_", safe_name).strip("._")
+    return safe_name or f"file_{int(time.time())}"
+
+
+def parse_date_value(value):
+    if not value:
+        return None
+
+    date_match = re.search(r"([0-9]{4})[-/.年]([0-9]{1,2})[-/.月]([0-9]{1,2})", value)
+    if not date_match:
+        return None
+
+    year, month, day = date_match.groups()
+    try:
+        return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
+    except ValueError:
+        return None
+
+
+def requests_get_robocon(url):
+    kwargs = {
+        "headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/131.0.0.0 Safari/537.36"
+            )
+        },
+        "timeout": ROBOCON_REQUEST_TIMEOUT
+    }
+    if url.startswith(ROBOCON_HOME_URL) and not ROBOCON_VERIFY_SSL:
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        kwargs["verify"] = False
+    return requests.get(url, **kwargs)
+
+
+def is_relevant_robocon_title(title):
+    text = normalize_text(title)
+    if not text:
+        return False
+
+    return all(keyword in text for keyword in ROBOCON_REQUIRED_TITLE_KEYWORDS)
+
+
+def title_contains_any_keyword(title, keywords):
+    text = normalize_text(title)
+    lowered = text.lower()
+    for keyword in keywords:
+        if keyword.lower() in lowered:
+            return True
+    return False
+
+
+def classify_robocon_entry(title):
+    if not is_relevant_robocon_title(title):
+        return None
+    if title_contains_any_keyword(title, ROBOCON_RULE_CORE_KEYWORDS):
+        return "rule_core"
+    if title_contains_any_keyword(title, ROBOCON_FIGURE_CORE_KEYWORDS):
+        return "figure_core"
+    if title_contains_any_keyword(title, ROBOCON_FAQ_CORE_KEYWORDS):
+        return "faq_core"
+    if title_contains_any_keyword(title, ROBOCON_IMPORTANT_NOTICE_KEYWORDS):
+        return "important_notice"
+    if title_contains_any_keyword(title, ROBOCON_GENERAL_NOTICE_KEYWORDS):
+        return "general_notice"
+    return None
+
+
+def should_download_robocon_entry(category):
+    return category in ROBOCON_DOWNLOADABLE_CATEGORIES
+
+
+def infer_robocon_doc_type(title, category=None):
+    if category in ROBOCON_CATEGORY_LABELS:
+        return ROBOCON_CATEGORY_LABELS[category]
+    if "图册" in title:
+        return "图册"
+    if "FAQ" in title or "答疑" in title:
+        return "FAQ"
+    if "规则" in title:
+        return "规则"
+    if "通知" in title:
+        return "通知"
+    return "官网资料"
+
+
+def relative_static_path(local_path):
+    static_root = os.path.join(ROBOCON_BASE_DIR, "static")
+    if not local_path or not local_path.startswith(static_root):
+        return None
+    relative_path = os.path.relpath(local_path, static_root).replace(os.sep, "/")
+    return f"/static/{relative_path}"
+
+
+def ensure_robocon_storage():
+    os.makedirs(ROBOCON_DOC_DIR, exist_ok=True)
+
+
+def download_robocon_file(file_url, file_name):
+    ensure_robocon_storage()
+    response = requests_get_robocon(file_url)
+    response.raise_for_status()
+    file_bytes = response.content
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
+    parsed_path = urlparse(file_url).path
+    suffix = os.path.splitext(parsed_path)[1] or os.path.splitext(file_name)[1] or ".pdf"
+    local_filename = f"{sanitize_filename(os.path.splitext(file_name)[0])}_{file_hash[:12]}{suffix}"
+    local_path = os.path.join(ROBOCON_DOC_DIR, local_filename)
+    if not os.path.exists(local_path):
+        with open(local_path, "wb") as file_obj:
+            file_obj.write(file_bytes)
+    return {
+        "file_hash": file_hash,
+        "local_path": local_path,
+        "local_url": relative_static_path(local_path)
+    }
+
+
+def extract_robocon_news_entries(html):
+    soup = BeautifulSoup(html, "lxml")
+    container = soup.select_one(".news_list_wrap")
+    if not container:
+        return []
+
+    entries = []
+    seen_urls = set()
+    for link in container.select("a[href]"):
+        href = normalize_text(link.get("href"))
+        if not href:
+            continue
+        detail_url = urljoin(ROBOCON_HOME_URL, href)
+        if detail_url in seen_urls:
+            continue
+
+        title = normalize_text(link.get_text(" ", strip=True)) or normalize_text(link.get("title"))
+        if not title:
+            continue
+        category = classify_robocon_entry(title)
+        if not category:
+            continue
+
+        block = link.find_parent(["li", "div", "article", "section"]) or link.parent
+        block_text = normalize_text(block.get_text(" ", strip=True)) if block else ""
+        publish_date = parse_date_value(block_text) or parse_date_value(title)
+
+        entries.append(
+            {
+                "title": title,
+                "detail_url": detail_url,
+                "publish_date": publish_date,
+                "type": infer_robocon_doc_type(title, category),
+                "category": category
+            }
+        )
+        seen_urls.add(detail_url)
+    return entries
+
+
+def extract_detail_main_node(soup):
+    selectors = [
+        ".article_content",
+        ".rich-text",
+        ".news_detail_wrap",
+        ".nd_content",
+        ".text",
+        ".content"
+    ]
+    for selector in selectors:
+        node = soup.select_one(selector)
+        if node:
+            return node
+    return soup.body or soup
+
+
+def extract_robocon_attachment_links(main_node, page_url):
+    attachments = []
+    seen_urls = set()
+    for anchor in main_node.select("a[href]"):
+        href = normalize_text(anchor.get("href"))
+        if not href:
+            continue
+        full_url = urljoin(page_url, href)
+        parsed_path = urlparse(full_url).path.lower()
+        is_attachment = any(
+            parsed_path.endswith(ext)
+            for ext in (".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".rar")
+        )
+        if not is_attachment and "/upload/" not in parsed_path and "/file/" not in parsed_path:
+            continue
+        if full_url in seen_urls:
+            continue
+
+        anchor_text = normalize_text(anchor.get_text(" ", strip=True))
+        file_name = anchor_text or os.path.basename(unquote(urlparse(full_url).path)) or "attachment"
+        attachments.append({"file_name": file_name, "file_url": full_url})
+        seen_urls.add(full_url)
+    return attachments
+
+
+def is_downloadable_robocon_attachment(file_name):
+    normalized_name = normalize_text(file_name)
+    if not normalized_name:
+        return False
+    if title_contains_any_keyword(normalized_name, ROBOCON_ATTACHMENT_BLOCK_KEYWORDS):
+        return False
+    return title_contains_any_keyword(normalized_name, ROBOCON_ATTACHMENT_ALLOW_KEYWORDS)
+
+
+def fetch_robocon_detail_resource(entry):
+    response = requests_get_robocon(entry["detail_url"])
+    response.raise_for_status()
+    html = response.text
+    soup = BeautifulSoup(html, "lxml")
+
+    title_node = soup.select_one("h1")
+    title = normalize_text(title_node.get_text(" ", strip=True)) if title_node else entry["title"]
+    body_text = normalize_text(strip_html(html))
+    publish_date = parse_date_value(body_text) or entry.get("publish_date") or "官网当前页面"
+    main_node = extract_detail_main_node(soup)
+    attachments = extract_robocon_attachment_links(main_node, entry["detail_url"])
+
+    doc = {
+        "title": title,
+        "type": infer_robocon_doc_type(title, entry.get("category")),
+        "date": publish_date,
+        "url": entry["detail_url"],
+        "preview_url": entry["detail_url"],
+        "source": "ROBOCON 官网赛事动态",
+        "category": entry.get("category"),
+        "download_policy": "download" if should_download_robocon_entry(entry.get("category")) else "metadata_only"
+    }
+
+    if should_download_robocon_entry(entry.get("category")):
+        filtered_attachments = [
+            attachment for attachment in attachments
+            if is_downloadable_robocon_attachment(attachment["file_name"])
+        ]
+        if filtered_attachments:
+            primary_attachment = filtered_attachments[0]
+        else:
+            primary_attachment = None
+
+        if primary_attachment:
+            try:
+                download_result = download_robocon_file(
+                    primary_attachment["file_url"],
+                    primary_attachment["file_name"]
+                )
+                doc["url"] = primary_attachment["file_url"]
+                doc["preview_url"] = download_result["local_url"] or primary_attachment["file_url"]
+                doc["source"] = f"{doc['source']} / 本地副本"
+                doc["downloaded_attachment"] = primary_attachment["file_name"]
+            except Exception as exc:
+                print(f"下载 Robocon 附件失败: {primary_attachment['file_url']} -> {exc}")
+        else:
+            print(f"Robocon 条目命中可下载分类，但未找到符合规则的附件: {title}")
+    else:
+        try:
+            summary_text = normalize_text(main_node.get_text(" ", strip=True))
+            if summary_text:
+                doc["summary"] = summary_text[:180]
+        except Exception:
+            pass
+
+    return doc
+
+
+def build_robocon_dynamic_resources(docs, synced_at):
+    resources = get_robocon_main_resources_snapshot()
+    if docs:
+        resources["national"]["docs"] = docs
+        resources["national"]["updated_at"] = docs[0]["date"]
+        resources["national"]["update_note"] = (
+            f"后台定时任务已在 {synced_at} 完成最近一次官网同步，"
+            "当前仅对规则、图册、FAQ 等规则资产下载附件，通知类内容只记录详情。"
+        )
+    return resources
+
+
+def save_robocon_resources_state(resources):
+    ensure_robocon_storage()
+    with open(ROBOCON_STATE_PATH, "w", encoding="utf-8") as file_obj:
+        json.dump(resources, file_obj, ensure_ascii=False, indent=2)
+
+
+def load_robocon_resources_state():
+    if not os.path.exists(ROBOCON_STATE_PATH):
+        return None
+    try:
+        with open(ROBOCON_STATE_PATH, "r", encoding="utf-8") as file_obj:
+            return json.load(file_obj)
+    except Exception as exc:
+        print(f"读取 Robocon 本地缓存失败: {exc}")
+        return None
+
+
+def sync_robocon_main_resources():
+    print(f"开始同步 Robocon 官网规则: {ROBOCON_NEWS_URL}")
+    response = requests_get_robocon(ROBOCON_NEWS_URL)
+    response.raise_for_status()
+    entries = extract_robocon_news_entries(response.text)
+    print(f"Robocon 列表页抓取成功，发现候选条目 {len(entries)} 条")
+
+    docs = []
+    for entry in entries:
+        try:
+            doc = fetch_robocon_detail_resource(entry)
+            docs.append(doc)
+            print(
+                "同步 Robocon 条目成功: "
+                f"{doc['title']} "
+                f"[category={doc.get('category')}, policy={doc.get('download_policy')}]"
+            )
+        except Exception as exc:
+            print(f"同步 Robocon 条目失败: {entry.get('detail_url')} -> {exc}")
+
+    docs.sort(key=lambda item: item.get("date") or "", reverse=True)
+    synced_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    resources = build_robocon_dynamic_resources(docs, synced_at)
+    save_robocon_resources_state(resources)
+    print(f"Robocon 官网同步完成，本次处理条目 {len(docs)} 条")
+    return resources
+
+
+def get_robocon_main_resources_snapshot():
     return build_resources_with_local_overrides(
         ROBOCON_MAIN_RESOURCES,
         {
@@ -237,10 +617,82 @@ def get_robocon_main_resources():
     )
 
 
-def strip_html(value):
-    cleaned = re.sub(r"<[^>]+>", " ", value or "")
-    cleaned = cleaned.replace("&nbsp;", " ")
-    return re.sub(r"\s+", " ", cleaned).strip()
+def get_robocon_main_resources():
+    cached_resources = load_robocon_resources_state()
+    if cached_resources:
+        return cached_resources
+    return get_robocon_main_resources_snapshot()
+
+
+def compute_next_robocon_sync(now=None):
+    now = now or datetime.now()
+    anchor = datetime(now.year, 1, 1, ROBOCON_SYNC_HOUR, ROBOCON_SYNC_MINUTE, 0)
+    if now <= anchor:
+        return anchor
+
+    days_since_anchor = (now.date() - anchor.date()).days
+    next_offset = days_since_anchor if days_since_anchor % ROBOCON_SYNC_INTERVAL_DAYS == 0 else days_since_anchor + 1
+    candidate = anchor + timedelta(days=next_offset)
+    if candidate <= now:
+        candidate += timedelta(days=ROBOCON_SYNC_INTERVAL_DAYS)
+    while (candidate.date() - anchor.date()).days % ROBOCON_SYNC_INTERVAL_DAYS != 0:
+        candidate += timedelta(days=1)
+    return candidate
+
+
+def robocon_scheduler_loop():
+    print(
+        "Robocon 定时同步已启动，"
+        f"计划每 {ROBOCON_SYNC_INTERVAL_DAYS} 天 {ROBOCON_SYNC_HOUR:02d}:{ROBOCON_SYNC_MINUTE:02d} 执行一次"
+    )
+
+    if not os.path.exists(ROBOCON_STATE_PATH):
+        try:
+            print("未发现 Robocon 本地缓存，启动后先执行一次初始化同步")
+            sync_robocon_main_resources()
+        except Exception as exc:
+            print(f"初始化同步 Robocon 官网失败: {exc}")
+
+    while True:
+        next_run = compute_next_robocon_sync()
+        wait_seconds = max(30, int((next_run - datetime.now()).total_seconds()))
+        print(f"下一次 Robocon 定时同步时间: {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
+        time.sleep(wait_seconds)
+        try:
+            sync_robocon_main_resources()
+        except Exception as exc:
+            print(f"Robocon 定时同步失败: {exc}")
+        time.sleep(1)
+
+
+def should_start_background_scheduler():
+    werkzeug_run_main = os.environ.get("WERKZEUG_RUN_MAIN")
+    if werkzeug_run_main is not None:
+        return werkzeug_run_main == "true"
+    return True
+
+
+def start_robocon_scheduler():
+    if not should_start_background_scheduler():
+        return
+
+    with ROBOCON_SCHEDULER_STATE["lock"]:
+        if ROBOCON_SCHEDULER_STATE["started"]:
+            return
+
+        scheduler_thread = threading.Thread(
+            target=robocon_scheduler_loop,
+            name="robocon-sync-scheduler",
+            daemon=True
+        )
+        scheduler_thread.start()
+        ROBOCON_SCHEDULER_STATE["thread"] = scheduler_thread
+        ROBOCON_SCHEDULER_STATE["started"] = True
+
+
+@app_comp.record_once
+def on_app_comp_registered(state):
+    start_robocon_scheduler()
 
 
 def classify_robotac_doc(title):

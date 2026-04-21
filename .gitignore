@@ -194,4 +194,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 .codex
+start.sh
 media_uploads/

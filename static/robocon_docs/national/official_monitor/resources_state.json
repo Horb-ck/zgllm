@@ -1,0 +1,230 @@
+{
+  "national": {
+    "key": "national",
+    "label": "国赛",
+    "description": "全国大学生机器人大赛 ROBOCON 主赛官方规则资料。",
+    "official_url": "https://robocon.org.cn/",
+    "updated_at": "2026-04-03",
+    "update_note": "后台定时任务已在 2026-04-21 03:00:21 完成最近一次官网同步，当前仅对规则、图册、FAQ 等规则资产下载附件，通知类内容只记录详情。",
+    "docs": [
+      {
+        "title": "关于第二十五届全国大学生机器人大赛 ROBOCON 赛事中期检查的通知",
+        "type": "重要通知",
+        "date": "2026-04-03",
+        "url": "https://robocon.org.cn/sys-nd/82.html",
+        "preview_url": "https://robocon.org.cn/sys-nd/82.html",
+        "source": "ROBOCON 官网赛事动态",
+        "category": "important_notice",
+        "download_policy": "metadata_only",
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 | 赛事动态 赛事规则 通知公告 新闻发布 | 联系我们 | 2025证书查询 | 报名 关于第二十五届全国大学生机器人大赛 ROBOCON 赛事中期检查的通知 2026-04-03 14:32 备注：可在附件下载PDF版本和回执word模板 关于第二十五届全国大学生机器人大"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V5",
+        "type": "核心规则",
+        "date": "2026-03-13",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgifrOzQYoj9bl4AQ.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E7%AB%9E%E6%8A%80%E8%B5%9B%E8%A7%84%E5%88%99V5.pdf&v=1773387017",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V5_f445c4ecf3ce.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V5.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON沙排之王比赛规则V2",
+        "type": "核心规则",
+        "date": "2026-03-13",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgqJTPzQYo6sG9ggY.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E6%B2%99%E6%8E%92%E4%B9%8B%E7%8E%8B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99V2.pdf&v=1773390376",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON沙排之王比赛规则V2_e6172fe173f0.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON沙排之王比赛规则V2.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”技能挑战赛规则V2",
+        "type": "核心规则",
+        "date": "2026-03-13",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgj-nOzQYowrTKrAU.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E6%8A%80%E8%83%BD%E6%8C%91%E6%88%98%E8%B5%9B%E8%A7%84%E5%88%99V2.pdf&v=1773386895",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”技能挑战赛规则V2_a148a418dfec.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”技能挑战赛规则V2.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V4",
+        "type": "核心规则",
+        "date": "2026-02-27",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAg2p6FzQYopqvMiQU.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E7%AB%9E%E6%8A%80%E8%B5%9B%E8%A7%84%E5%88%99V4.pdf&v=1772179290",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V4_28f11a5a70aa.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V4.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON武林探秘图册V3",
+        "type": "图册",
+        "date": "2026-01-08",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAg8JD8ygYooN-gowM.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E5%9B%BE%E5%86%8CV3.pdf&v=1767835760",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON武林探秘图册V3_faeb3a6d6ac9.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "figure_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON武林探秘图册V3.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V3",
+        "type": "核心规则",
+        "date": "2026-01-08",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAg_o-8ygYo9KfmlgY.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E7%AB%9E%E6%8A%80%E8%B5%9B%E8%A7%84%E5%88%99V3.pdf&v=1767835642",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V3_d3d09796324d.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V3.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON图册V3",
+        "type": "图册",
+        "date": "2025-12-20",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgqMaiygYoiIuGvwc.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E5%9B%BE%E5%86%8CV3.pdf&v=1766368040",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON图册V3_9c54323ac4db.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "figure_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON图册V3.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”技能挑战赛规则V1",
+        "type": "核心规则",
+        "date": "2025-11-20",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAg2_SEyQYolr3svQU.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E6%8A%80%E8%83%BD%E6%8C%91%E6%88%98%E8%B5%9B%E8%A7%84%E5%88%99V1.pdf&v=1763783259",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”技能挑战赛规则V1_be5620232ae3.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”技能挑战赛规则V1.pdf"
+      },
+      {
+        "title": "2026年第二十五届全国大学生机器人大赛ROBOCON图册V.2.1",
+        "type": "图册",
+        "date": "2025-11-10",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAg-JHHyAYomdXf0gY.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E5%9B%BE%E5%86%8CV.2.1.pdf&v=1762773244",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON图册V.2.1_751d9d779c40.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "figure_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON图册V.2.1.pdf"
+      },
+      {
+        "title": "2026年第二十五届全国大学生机器人大赛ROBOCON图册V.2",
+        "type": "图册",
+        "date": "2025-11-03",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgioqiyAYojZf17wc.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E5%9B%BE%E5%86%8CV.2.pdf&v=1762166027",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON图册V.2_78fcc6f881f8.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "figure_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON图册V.2.pdf"
+      },
+      {
+        "title": "2026年第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V.2",
+        "type": "核心规则",
+        "date": "2025-11-03",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgwImiyAYovrO-6wU.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E7%AB%9E%E6%8A%80%E8%B5%9B%E8%A7%84%E5%88%99V.2.pdf&v=1762165952",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V.2_f9fb27533885.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V.2.pdf"
+      },
+      {
+        "title": "2026年第二十五届全国大学生机器人大赛ROBOCON沙排之王比赛规则V1.0",
+        "type": "核心规则",
+        "date": "2025-11-03",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgrIuhyAYo-eKm4QQ.pdf?f=2026%E5%B9%B4%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E6%B2%99%E6%8E%92%E4%B9%8B%E7%8E%8B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99V1.0.pdf&v=1762149804",
+        "preview_url": "/static/robocon_docs/national/official_monitor/2026年第二十五届全国大学生机器人大赛ROBOCON沙排之王比赛规则V1.0_b25c64d01584.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "2026年第二十五届全国大学生机器人大赛ROBOCON沙排之王比赛规则V1.0.pdf"
+      },
+      {
+        "title": "关于举办第二十五届全国大学生机器人大赛ROBOCON 赛事的通知",
+        "type": "通知",
+        "date": "2025-10-27",
+        "url": "https://robocon.org.cn/sys-nd/63.html",
+        "preview_url": "https://robocon.org.cn/sys-nd/63.html",
+        "source": "ROBOCON 官网赛事动态",
+        "category": "general_notice",
+        "download_policy": "metadata_only",
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 | 赛事动态 赛事规则 通知公告 新闻发布 | 联系我们 | 2025证书查询 | 报名 关于举办第二十五届全国大学生机器人大赛ROBOCON 赛事的通知 2025-10-27 15:00 关于举办第二十五届全国大学生机器人大赛 ROBOCON 赛事的通知.pdf 声明：此篇"
+      },
+      {
+        "title": "【图册】第二十五届全国大学生机器人大赛ROBOCON图册",
+        "type": "图册",
+        "date": "2025-09-12",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgga6QxgYoqMGZIA.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E5%9B%BE%E5%86%8C.pdf&v=1757681409",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON图册_7af475b3079c.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "figure_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON图册.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON竞技赛主题与规则V.1",
+        "type": "核心规则",
+        "date": "2025-09-09",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgv8eAxgYohL3f1AI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E7%AB%9E%E6%8A%80%E8%B5%9B%E8%A7%84%E5%88%99V.1.pdf&v=1757422527",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V.1_09609427c06e.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V.1.pdf"
+      }
+    ]
+  },
+  "international": {
+    "key": "international",
+    "label": "国际赛",
+    "description": "ABU Robocon 官方规则资料。当前最新资料实际发布在 2025 主办方官网，aburobocon.net 主页仍显示 2017 页面。",
+    "official_url": "https://aburobocon2025.mnb.mn/en",
+    "updated_at": "2025-08-05",
+    "update_note": "按当前可访问的官方站点，最新规则资料来自 ABU Robocon 2025 Ulaanbaatar 官网。",
+    "docs": [
+      {
+        "title": "ABU ROBOCON 2025 Rule Book",
+        "type": "最新规则",
+        "date": "2024-11-21",
+        "url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_Rulebook_20241121.pdf",
+        "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_Rulebook_20241121.pdf",
+        "source": "ABU Robocon 2025 官网"
+      },
+      {
+        "title": "ABU ROBOCON 2025 FAQ",
+        "type": "FAQ",
+        "date": "2025-08-05",
+        "url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_FAQ_20250805.pdf",
+        "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/ABU_ROBOCON_2025_FAQ_20250805.pdf",
+        "source": "ABU Robocon 2025 官网"
+      },
+      {
+        "title": "Appendix 1. Game field - Structure",
+        "type": "Figures",
+        "date": "2024-08-08",
+        "url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-1.pdf",
+        "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-1.pdf",
+        "source": "ABU Robocon 2025 官网"
+      },
+      {
+        "title": "Appendix 2. Game field - Dimensions (Top view)",
+        "type": "Figures",
+        "date": "2024-08-08",
+        "url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-2.pdf",
+        "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-2.pdf",
+        "source": "ABU Robocon 2025 官网"
+      }
+    ]
+  }
+}
