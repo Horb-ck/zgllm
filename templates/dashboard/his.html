@@ -976,10 +976,11 @@
                         <div class="kb-upload-icon">📄</div>
                         <div class="kb-upload-text">拖拽文件到此处，或点击上传</div>
                         <div class="kb-upload-hint">
-                            📝 文档: PDF、TXT、MD、DOC、DOCX（50MB）<br>
+                            📝 文档: PDF、TXT、MD、DOC、DOCX（100MB）<br>
                             🖼️ 图片: JPG、PNG、GIF、BMP、WEBP（50MB）<br>
-                            🎬 视频: MP4、AVI、MOV、MKV（200MB）<br>
-                            📊 PPT: PPTX、PPT（50MB）
+                            🎬 视频: MP4、AVI、MOV、MKV（500MB）<br>
+                            📊 PPT: PPTX、PPT（100MB）<br>
+                            📋 每人最多 1000 个文档
                         </div>
                         <button class="kb-upload-btn" onclick="document.getElementById('fileInput').click()">
                             选择文件
@@ -1268,9 +1269,8 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.chat_url) {
-                    let chatUrl = data.chat_url;
-                    chatUrl += `&用户学号=${encodeURIComponent(currentUsername)}`;
-                    iframe.src = chatUrl;
+                    // ★★★ 修复：直接用后端返回的 URL，不再追加 studentId ★★★
+                    iframe.src = data.chat_url;
                 } else {
                     iframe.src = 'about:blank';
                     loading.innerHTML = `
@@ -1288,6 +1288,7 @@
             setTimeout(() => { loading.classList.add('hidden'); }, 500);
         };
     }
+
 
     // ==================== ★ 媒体预览功能 ====================
     function openMediaPreview(docId, mediaUrl) {
@@ -1369,8 +1370,18 @@
             alert('不支持的文件类型: .' + ext);
             return;
         }
-        const isVideo = VIDEO_EXTENSIONS.includes(ext);
-        const maxSize = isVideo ? 200 * 1024 * 1024 : 50 * 1024 * 1024;
+
+        // ★ 更细粒度的前端大小校验
+        let maxSize;
+        if (VIDEO_EXTENSIONS.includes(ext)) {
+            maxSize = 500 * 1024 * 1024;   // 视频 500MB
+        } else if (IMAGE_EXTENSIONS.includes(ext)) {
+            maxSize = 50 * 1024 * 1024;    // 图片 50MB
+        } else if (PPT_EXTENSIONS.includes(ext)) {
+            maxSize = 100 * 1024 * 1024;   // PPT 100MB
+        } else {
+            maxSize = 100 * 1024 * 1024;   // 文档 100MB
+        }
         if (file.size > maxSize) {
             alert(`文件过大，最大支持 ${maxSize / (1024 * 1024)}MB`);
             return;

@@ -1,7 +1,8 @@
 # /home/zgllm/test_server/routes/kb_routes.py
 # -*- coding: utf-8 -*-
 """
-个人知识库路由模块 —— v4.0 移除外部m3e预检，信任FastGPT内部索引
+个人知识库路由模块 —— v4.1 移除本地文件存储，仅依赖 FastGPT 索引
+★ 变更：不再将用户上传的原始文件保存到本地 media_uploads 目录
 """
 
 import os
@@ -28,16 +29,18 @@ _db = None
 _login_required = None
 _process_user_courses = None
 _media_parser = None
-_media_upload_dir = None
-_server_base_url = None
+# ★ 已移除: _media_upload_dir, _server_base_url
 _fastgpt_api_url = None
 _fastgpt_api_key = None
+
+# ★ 新增：每个用户最大文档数量
+_MAX_DOCUMENTS_PER_USER = 1000
 
 
 def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
                       process_user_courses_func, media_parser=None):
     global _fastgpt_kb_service, _db, _login_required, _process_user_courses
-    global _media_parser, _media_upload_dir, _server_base_url
+    global _media_parser
     global _fastgpt_api_url, _fastgpt_api_key
 
     _fastgpt_kb_service = fastgpt_kb_service
@@ -46,19 +49,10 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
     _process_user_courses = process_user_courses_func
     _media_parser = media_parser
 
-    # 服务器外部基址
-    _server_base_url = os.environ.get('SERVER_BASE_URL', 'http://180.85.206.21:5003').rstrip('/')
-
-    if _server_base_url:
-        print(f"   🌐 服务器基址(环境变量): {_server_base_url}")
-    else:
-        print("   ⚠️  未设置 SERVER_BASE_URL 环境变量，将在请求时自动检测")
-
-    # ★ 读取 FastGPT API（优先从已有服务读取，无需重复配置）
+    # ★ 读取 FastGPT API（优先从已有服务读取）
     _fastgpt_api_url = os.environ.get('FASTGPT_API_URL', '').rstrip('/')
     _fastgpt_api_key = os.environ.get('FASTGPT_API_KEY', '')
 
-    # 从已有的 fastgpt_kb_service 自动读取（不用重复配环境变量）
     if _fastgpt_kb_service:
         if not _fastgpt_api_url:
             _fastgpt_api_url = getattr(_fastgpt_kb_service, 'api_url', '') or \
@@ -79,32 +73,11 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
     else:
         print("   ⚠️  FastGPT API Key 未找到，图片上传到 FastGPT 不可用")
 
-    # 创建媒体文件存储目录
-    _media_upload_dir = os.path.join(app.root_path, 'media_uploads')
-    try:
-        os.makedirs(_media_upload_dir, exist_ok=True)
-        test_file = os.path.join(_media_upload_dir, '.write_test')
-        with open(test_file, 'w') as f:
-            f.write('ok')
-        os.unlink(test_file)
-        print(f"   📁 媒体文件存储目录: {_media_upload_dir}")
-        print(f"   ✅ 媒体目录可写")
-    except Exception as e:
-        fallback = os.path.join('/tmp', 'kb_media_uploads')
-        os.makedirs(fallback, exist_ok=True)
-        _media_upload_dir = fallback
-        print(f"   ⚠️  原目录权限不足({e}), 回退到: {fallback}")
-        try:
-            test_file = os.path.join(fallback, '.write_test')
-            with open(test_file, 'w') as f:
-                f.write('ok')
-            os.unlink(test_file)
-            print(f"   ✅ 媒体目录可写")
-        except Exception as e2:
-            print(f"   ❌ 媒体目录不可写: {e2}")
+    # ★ 已移除: 本地 media_uploads 目录创建
+    print(f"   ★ 本地文件存储已禁用，所有文件仅索引到 FastGPT")
 
 
-# ================== FastGPT 图片上传 ==================
+# ================== FastGPT 图片上传（保留，用于在知识库文本中嵌入图片URL） ==================
 
 def _get_fastgpt_base():
     if '/api' in _fastgpt_api_url:
@@ -293,6 +266,7 @@ def _get_kb_stats(username):
     return {'documents': 0, 'ready_documents': 0, 'chunks': 0, 'queries': 0, 'rag_enabled': False}
 
 
+# ★ 已简化: 移除 has_original_file / media_url / public_media_url 字段
 def _format_document(doc):
     shared_at = doc.get('shared_at')
     if shared_at and hasattr(shared_at, 'isoformat'):
@@ -315,9 +289,9 @@ def _format_document(doc):
         'parsed_from_media': doc.get('parsed_from_media', False),
         'parse_stage': doc.get('parse_stage', ''),
         'parse_progress': doc.get('parse_progress', 0),
-        'has_original_file': doc.get('has_original_file', False),
-        'media_url': doc.get('media_url', ''),
-        'public_media_url': doc.get('public_media_url', ''),
+        # ★ 图片预览改为使用 FastGPT URL（如有）
+        'has_original_file': bool(doc.get('fastgpt_image_url')),
+        'media_url': doc.get('fastgpt_image_url', ''),
     }
 
 
@@ -332,19 +306,15 @@ def _require_login(f):
     return decorated
 
 
-def _generate_public_token(doc_id, username):
-    secret = f"media_pub_{doc_id}_{username}_salt2026"
-    return hashlib.sha256(secret.encode()).hexdigest()[:20]
+# ★ 已删除: _generate_public_token 函数
 
 
-# ================== 卡住文档检测（仅提示，不自动标记失败） ==================
+# ================== 卡住文档检测 ==================
 
-# 文档卡住阈值（分钟）
 _STUCK_THRESHOLD_MINUTES = int(os.environ.get('STUCK_THRESHOLD_MINUTES', '10'))
 
 
 def _detect_stuck_documents(documents):
-    """检测卡住的文档：processing 超过阈值时间（仅用于前端提示）"""
     stuck = []
     now = datetime.now()
     for doc in documents:
@@ -369,14 +339,13 @@ def _detect_stuck_documents(documents):
     return stuck
 
 
-# ================== 模型健康检查（仅保留文本模型和VLM，移除m3e外部检测） ==================
+# ================== 模型健康检查 ==================
 
 _health_cache = {}
-_HEALTH_CACHE_TTL = 60  # 缓存 60 秒
+_HEALTH_CACHE_TTL = 60
 
 
 def _cached_health(cache_key, check_fn):
-    """带缓存的健康检查包装"""
     now = time.time()
     if cache_key in _health_cache:
         cached_result, cached_ts = _health_cache[cache_key]
@@ -388,7 +357,6 @@ def _cached_health(cache_key, check_fn):
 
 
 def _do_check_text_model():
-    """测试 FastGPT 的文本理解/问答模型 (Qwen3-8B)"""
     result = {
         'name': 'Qwen3-8B',
         'type': '文本理解/问答模型',
@@ -437,7 +405,6 @@ def _do_check_text_model():
 
 
 def _do_check_vlm():
-    """测试 VLM 视觉模型"""
     result = {
         'type': 'VLM 视觉模型',
         'description': '用于图片/视频/PPT 内容理解；不可用时无法解析多媒体',
@@ -491,10 +458,7 @@ def _check_vlm_health():
     return _cached_health('vlm', _do_check_vlm)
 
 
-# ================== 辅助函数（续） ==================
-
 def _get_user_dataset_id(username):
-    """获取用户的 FastGPT dataset_id"""
     try:
         user_kb = _db.user_fastgpt_kb.find_one({'username': username})
         if user_kb and user_kb.get('dataset_id'):
@@ -527,6 +491,7 @@ def api_kb_stats():
                         'documents': 0, 'chunks': 0, 'queries': 0, 'rag_enabled': False})
 
 
+# ★★★ 重写: 上传接口 —— 移除所有本地文件保存逻辑 ★★★
 @kb_bp.route('/api/kb/upload', methods=['POST'])
 @_require_login
 def api_kb_upload():
@@ -558,18 +523,46 @@ def api_kb_upload():
             'error': f'不支持的文件类型: .{ext}，支持: {", ".join(sorted(all_allowed))}'
         })
 
-    # ★ 不再预检 m3e，直接上传，由 FastGPT 内部完成索引 ★
-
     file.seek(0, 2)
     file_size = file.tell()
     file.seek(0)
 
-    max_size = 200 * 1024 * 1024 if ext in media_extensions else 50 * 1024 * 1024
+    # ★★★ 改动：更细粒度的文件大小限制 ★★★
+    VIDEO_EXTS = {'mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'webm'}
+    IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'}
+    PPT_EXTS   = {'pptx', 'ppt'}
+
+    if ext in VIDEO_EXTS:
+        max_size = 500 * 1024 * 1024   # 视频 500MB
+    elif ext in IMAGE_EXTS:
+        max_size = 50 * 1024 * 1024    # 图片 50MB
+    elif ext in PPT_EXTS:
+        max_size = 100 * 1024 * 1024   # PPT 100MB
+    elif ext in text_extensions:
+        max_size = 100 * 1024 * 1024   # 文档 100MB
+    else:
+        max_size = 100 * 1024 * 1024   # 默认 100MB
+
     if file_size > max_size:
         return jsonify({
             'success': False,
             'error': f'文件过大，最大支持 {max_size // (1024 * 1024)}MB'
         })
+
+    # ★★★ 新增：文档数量上限检查（1000 个） ★★★
+    try:
+        current_doc_count = _db.kb_documents.count_documents({
+            'username': username,
+            'status': {'$nin': ['failed']}       # 排除已失败的
+        })
+        if current_doc_count >= _MAX_DOCUMENTS_PER_USER:
+            return jsonify({
+                'success': False,
+                'error': f'已达到文档数量上限（{_MAX_DOCUMENTS_PER_USER} 个），'
+                         f'当前 {current_doc_count} 个，请删除部分文档后再上传'
+            })
+    except Exception as e:
+        print(f"⚠️ 文档数量检查失败（不影响上传）: {e}")
 
     # ── 多媒体解析分支 ──
     if ext in media_extensions and _media_parser:
@@ -582,58 +575,10 @@ def api_kb_upload():
             doc_id = f"doc_{username}_{_h}"
             media_type_val = _media_parser.get_media_type(filename)
 
-            # 保存原始媒体文件到本地
-            media_file_path = ''
-            has_original_file = False
-            media_url = ''
-            public_media_url = ''
-            public_token = ''
-            if _media_upload_dir:
-                try:
-                    user_dir = os.path.join(_media_upload_dir, username)
-                    os.makedirs(user_dir, exist_ok=True)
-                    try:
-                        os.chmod(user_dir, 0o755)
-                    except Exception:
-                        pass
-
-                    stored_name = f"{doc_id}.{ext if ext else 'bin'}"
-                    media_file_path = os.path.join(user_dir, stored_name)
-                    with open(media_file_path, 'wb') as mf:
-                        mf.write(file_content)
-                    has_original_file = True
-                    media_url = f"/api/kb/media/{doc_id}"
-
-                    public_token = _generate_public_token(doc_id, username)
-                    if _server_base_url:
-                        server_base = _server_base_url
-                    else:
-                        try:
-                            server_base = f"{request.scheme}://{request.host}"
-                        except Exception:
-                            server_base = 'http://localhost:5003'
-                    public_media_url = f"{server_base}/api/kb/media/public/{doc_id}/{public_token}"
-
-                    print(f"   💾 原始文件已保存: {media_file_path}")
-                    print(f"   🔗 本地公开链接: {public_media_url}")
-                except Exception as save_err:
-                    print(f"   ⚠️ 保存原始文件失败: {save_err}")
-                    traceback.print_exc()
-                    media_file_path = ''
-
-            # 捕获 server_base
-            if _server_base_url:
-                captured_server_base = _server_base_url
-            else:
-                try:
-                    captured_server_base = f"{request.scheme}://{request.host}"
-                except Exception:
-                    captured_server_base = 'http://localhost:5003'
-
             # ★ 提前获取 dataset_id（给异步线程用）
             captured_dataset_id = _get_user_dataset_id(username)
 
-            # MongoDB 创建记录
+            # ★ MongoDB 创建记录 —— 不再写入本地文件相关字段
             _db.kb_documents.update_one(
                 {'doc_id': doc_id},
                 {'$set': {
@@ -648,16 +593,13 @@ def api_kb_upload():
                     'parsed_from_media': True,
                     'media_type': media_type_val,
                     'shared': False,
-                    'has_original_file': has_original_file,
-                    'media_file_path': media_file_path,
-                    'media_url': media_url,
-                    'public_media_url': public_media_url,
-                    'public_media_token': public_token,
+                    # ★ 已移除: has_original_file, media_file_path,
+                    #           media_url, public_media_url, public_media_token
                 }},
                 upsert=True
             )
 
-            # ★★★ 异步解析 ★★★
+            # ★★★ 异步解析（不保存本地文件） ★★★
             def _async_parse():
                 try:
                     def _on_progress(stage, pct):
@@ -694,42 +636,27 @@ def api_kb_upload():
                         )
                         return
 
-                    # ★★★ 图片：确定嵌入URL ★★★
+                    # ★★★ 图片：仅尝试上传到 FastGPT 获取URL ★★★
                     embedded_img_url = ''
-                    url_source = ''
 
-                    if media_type_val == 'image' and has_original_file:
-                        # 方案A：上传到 FastGPT
+                    if media_type_val == 'image':
                         print(f"   🔄 正在上传图片到 FastGPT...")
                         fastgpt_result = _upload_image_to_fastgpt(
                             file_content, filename, dataset_id=captured_dataset_id)
                         if fastgpt_result.get('success'):
                             embedded_img_url = fastgpt_result['url']
-                            url_source = 'fastgpt'
-                            print(f"   ✅ 方案A成功: {embedded_img_url}")
+                            print(f"   ✅ 图片已上传到 FastGPT: {embedded_img_url}")
                             _db.kb_documents.update_one(
                                 {'doc_id': doc_id},
-                                {'$set': {'fastgpt_image_url': embedded_img_url, 'image_url_source': 'fastgpt'}}
+                                {'$set': {
+                                    'fastgpt_image_url': embedded_img_url,
+                                    'image_url_source': 'fastgpt',
+                                }}
                             )
                         else:
-                            print(f"   ⚠️ 方案A失败: {fastgpt_result.get('error', '?')[:120]}")
-
-                        # 方案B：本地公开URL
-                        if not embedded_img_url and public_media_url:
-                            embedded_img_url = public_media_url
-                            url_source = 'local'
-                            print(f"   📎 方案B: {embedded_img_url}")
-                            _db.kb_documents.update_one(
-                                {'doc_id': doc_id},
-                                {'$set': {'image_url_source': 'local'}}
-                            )
-
-                        # 方案C：构建URL
-                        if not embedded_img_url:
-                            token = _generate_public_token(doc_id, username)
-                            embedded_img_url = f"{captured_server_base}/api/kb/media/public/{doc_id}/{token}"
-                            url_source = 'constructed'
-                            print(f"   📎 方案C: {embedded_img_url}")
+                            print(f"   ⚠️ 图片上传到 FastGPT 失败: "
+                                  f"{fastgpt_result.get('error', '?')[:120]}")
+                            # ★ 已移除: 方案B(本地URL) 和 方案C(构建URL)
 
                     # 嵌入图片链接到知识库文本
                     if embedded_img_url and media_type_val == 'image':
@@ -741,7 +668,7 @@ def api_kb_upload():
                             f"以下是对该图片的 AI 描述：\n\n"
                         )
                         parsed_text = image_header + parsed_text
-                        print(f"   🖼️ 已嵌入图片链接 (来源: {url_source})")
+                        print(f"   🖼️ 已嵌入图片链接 (来源: fastgpt)")
 
                     # 存到 MongoDB
                     _db.kb_documents.update_one(
@@ -805,7 +732,7 @@ def api_kb_upload():
                             'doc_id': {'$ne': doc_id},
                         })
 
-                    print(f"✅ 异步解析完成: {filename} → {chunk_count} 块 (图片: {url_source or 'N/A'})")
+                    print(f"✅ 异步解析完成: {filename} → {chunk_count} 块")
 
                 except Exception as e:
                     traceback.print_exc()
@@ -845,7 +772,6 @@ def api_kb_upload():
         return jsonify({'success': False, 'error': str(e)})
 
 
-# ★★★ v4.0：文档列表接口，不再检测 m3e，信任 FastGPT 同步状态 ★★★
 @kb_bp.route('/api/kb/documents')
 @_require_login
 def api_kb_documents():
@@ -854,7 +780,6 @@ def api_kb_documents():
         return jsonify({'success': False, 'error': '知识库服务未初始化',
                         'documents': [], 'total': 0, 'has_processing': False})
     try:
-        # 正常获取文档列表（状态由 FastGPT 同步决定，不做外部 m3e 预检）
         if hasattr(_fastgpt_kb_service, 'get_documents_with_realtime_status'):
             result = _fastgpt_kb_service.get_documents_with_realtime_status(username)
         else:
@@ -872,7 +797,6 @@ def api_kb_documents():
             has_processing = result.get('has_processing', False)
             has_parsing = any(d.get('status') == 'parsing' for d in documents)
 
-            # ★ 仅做简单的卡住提示，不自动标记失败
             model_warning = None
             stuck_docs = _detect_stuck_documents(documents)
             if stuck_docs:
@@ -1013,9 +937,20 @@ def api_kb_smart_chat():
 @kb_bp.route('/api/kb/workflow-search', methods=['POST'])
 def api_kb_workflow_search():
     data = request.get_json() or {}
-    student_id = data.get('student_id', '').strip()
-    query = data.get('query', '').strip()
+    student_id = (data.get('student_id') or '').strip()
+    query = (data.get('query') or '').strip()
     top_k = data.get('top_k', 5)
+
+    # ★★★ 新增：过滤无效值 ★★★
+    if student_id in ('null', 'undefined', 'None', ''):
+        student_id = ''
+        print(f"   ⚠️ workflow-search: student_id 无效，原始数据: {data}")
+
+    if not student_id or not query or not _fastgpt_kb_service:
+        return jsonify([])
+
+    print(f"   ✅ workflow-search: 用户={student_id}, query={query[:50]}")
+    
     if not student_id or not query or not _fastgpt_kb_service:
         return jsonify([])
     try:
@@ -1101,6 +1036,7 @@ def api_kb_sync_from_fastgpt():
         return jsonify({'success': False, 'error': str(e)})
 
 
+# ★ 简化: 删除文档时不再处理本地文件
 @kb_bp.route('/api/kb/document/<doc_id>', methods=['DELETE'])
 @_require_login
 def api_kb_delete_document(doc_id):
@@ -1108,17 +1044,8 @@ def api_kb_delete_document(doc_id):
     if not _fastgpt_kb_service:
         return jsonify({'success': False, 'error': '知识库服务未初始化'})
     try:
-        doc = _db.kb_documents.find_one({'doc_id': doc_id, 'username': username})
-        media_path = doc.get('media_file_path', '') if doc else ''
-
         success = _fastgpt_kb_service.delete_document(username, doc_id)
         if success:
-            if media_path and os.path.isfile(media_path):
-                try:
-                    os.unlink(media_path)
-                    print(f"   🗑️ 已删除原始媒体文件: {media_path}")
-                except OSError as e:
-                    print(f"   ⚠️ 删除原始文件失败: {e}")
             return jsonify({'success': True, 'message': '文档删除成功'})
         else:
             return jsonify({'success': False, 'error': '文档不存在或删除失败'})
@@ -1316,7 +1243,6 @@ def api_kb_move_document(doc_id):
         return jsonify({'success': False, 'error': str(e)})
 
 
-# ★★★ v4.0：文件夹文档列表，不再检测 m3e ★★★
 @kb_bp.route('/api/kb/folder/<folder_id>/documents', methods=['GET'])
 @_require_login
 def api_kb_folder_documents(folder_id):
@@ -1340,7 +1266,15 @@ def api_kb_chat_url():
     share_id = os.environ.get('FASTGPT_SHARE_ID', 'zDrmPPnh9rdi3WmnyWCFwDcb')
     base_url = os.environ.get('FASTGPT_SHARE_BASE_URL', 'http://180.85.206.30:3000')
     user_auth_token = hashlib.md5(f"pkb_auth_{username}".encode()).hexdigest()
-    chat_url = f"{base_url}/chat/share?shareId={share_id}&authToken={user_auth_token}"
+
+    # ★★★ 关键修复：URL 参数名必须是「用户学号」，与工作流 {{用户学号}} 一致 ★★★
+    from urllib.parse import quote
+    chat_url = (
+        f"{base_url}/chat/share"
+        f"?shareId={share_id}"
+        f"&authToken={user_auth_token}"
+        f"&{quote('用户学号')}={username}"
+    )
     return jsonify({
         'success': True, 'chat_url': chat_url,
         'share_id': share_id, 'auth_token': user_auth_token,
@@ -1348,58 +1282,15 @@ def api_kb_chat_url():
     })
 
 
-# ================== 媒体文件访问 API ==================
-
-@kb_bp.route('/api/kb/media/<doc_id>', methods=['GET'])
-@_require_login
-def api_kb_serve_media(doc_id):
-    username, _, _ = _get_user_info()
-    doc = _db.kb_documents.find_one({'doc_id': doc_id, 'username': username})
-    if not doc:
-        return jsonify({'error': '文档不存在'}), 404
-    media_path = doc.get('media_file_path', '')
-    if not media_path or not os.path.isfile(media_path):
-        return jsonify({'error': '原始文件不存在或已被清理'}), 404
-    filename = doc.get('filename', 'file')
-    mime_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-    return send_file(media_path, mimetype=mime_type, as_attachment=False, download_name=filename)
 
 
-@kb_bp.route('/api/kb/media/<doc_id>/download', methods=['GET'])
-@_require_login
-def api_kb_download_media(doc_id):
-    username, _, _ = _get_user_info()
-    doc = _db.kb_documents.find_one({'doc_id': doc_id, 'username': username})
-    if not doc:
-        return jsonify({'error': '文档不存在'}), 404
-    media_path = doc.get('media_file_path', '')
-    if not media_path or not os.path.isfile(media_path):
-        return jsonify({'error': '原始文件不存在'}), 404
-    filename = doc.get('filename', 'file')
-    mime_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-    return send_file(media_path, mimetype=mime_type, as_attachment=True, download_name=filename)
+# ★★★ 已删除以下 3 个本地媒体文件服务路由 ★★★
+# - /api/kb/media/<doc_id>           (api_kb_serve_media)
+# - /api/kb/media/<doc_id>/download  (api_kb_download_media)
+# - /api/kb/media/public/<doc_id>/<token>  (api_kb_serve_media_public)
 
 
-@kb_bp.route('/api/kb/media/public/<doc_id>/<token>', methods=['GET'])
-def api_kb_serve_media_public(doc_id, token):
-    """公开媒体访问（不需要登录），通过 token 验证"""
-    doc = _db.kb_documents.find_one({'doc_id': doc_id})
-    if not doc:
-        return jsonify({'error': 'Not found'}), 404
-    expected_token = doc.get('public_media_token', '')
-    if not expected_token or token != expected_token:
-        return jsonify({'error': 'Invalid token'}), 403
-    media_path = doc.get('media_file_path', '')
-    if not media_path or not os.path.isfile(media_path):
-        return jsonify({'error': 'File not found'}), 404
-    filename = doc.get('filename', 'file')
-    mime_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-    response = send_file(media_path, mimetype=mime_type, as_attachment=False, download_name=filename)
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Cache-Control'] = 'public, max-age=86400'
-    return response
-
-
+# ★ 简化: 文档内容查询，移除本地文件相关字段
 @kb_bp.route('/api/kb/document/<doc_id>/content', methods=['GET'])
 @_require_login
 def api_kb_document_content(doc_id):
@@ -1411,9 +1302,6 @@ def api_kb_document_content(doc_id):
         'success': True, 'doc_id': doc_id,
         'filename': doc.get('filename', ''),
         'media_type': doc.get('media_type', ''),
-        'has_original_file': doc.get('has_original_file', False),
-        'media_url': doc.get('media_url', ''),
-        'public_media_url': doc.get('public_media_url', ''),
         'fastgpt_image_url': doc.get('fastgpt_image_url', ''),
         'embedded_image_url': doc.get('embedded_image_url', ''),
         'image_url_source': doc.get('image_url_source', ''),
@@ -1456,20 +1344,16 @@ def api_kb_parse_status(doc_id):
     })
 
 
-# ================== 模型健康检查路由（仅文本模型+VLM） ==================
+# ================== 模型健康检查路由 ==================
 
 @kb_bp.route('/api/kb/model-health')
 @_require_login
 def api_kb_model_health():
-    """
-    检测知识库相关模型的可用性（不包含 m3e，索引由 FastGPT 内部管理）
-    """
     results = {
         'text_model': _check_text_health(),
         'vlm': _check_vlm_health(),
     }
 
-    # 索引模型信息（仅展示，不做外部检测）
     results['embedding'] = {
         'name': 'm3e',
         'type': '索引模型（向量化）',
@@ -1506,7 +1390,6 @@ def api_kb_model_health():
 @kb_bp.route('/api/kb/model-health/clear-cache', methods=['POST'])
 @_require_login
 def api_kb_clear_health_cache():
-    """清除健康检查缓存，强制下次重新检测"""
     _health_cache.clear()
     return jsonify({'success': True, 'message': '健康检查缓存已清除'})
 
@@ -1559,8 +1442,7 @@ def api_kb_debug_test_image_upload():
         'fastgpt_api_key_set': bool(_fastgpt_api_key),
         'fastgpt_api_key_preview': _fastgpt_api_key[:8] + '...' if _fastgpt_api_key else 'N/A',
         'dataset_id': dataset_id,
-        'server_base_url': _server_base_url or '(auto-detect)',
-        'media_upload_dir': _media_upload_dir,
+        # ★ 已移除: media_upload_dir, server_base_url
     }
 
     return jsonify({'success': True, 'results': results})
@@ -1580,21 +1462,18 @@ def api_kb_health():
 
     return jsonify({
         'status': 'ok',
-        'version': 'v4.0.0-trust-fastgpt-indexing',
+        'version': 'v4.1.0-no-local-storage',  # ★ 版本号更新
         'features': {
             'fastgpt_kb': kb_ready,
             'mongodb': _db is not None,
             'dynamic_dataset': True,
             'shared_kb': True,
             'media_parser': media_ready,
-            'media_preview': True,
-            'public_media_url': True,
             'fastgpt_image_upload': bool(_fastgpt_api_key),
             'supported_media': sorted(list(_media_parser.ALL_EXTENSIONS)) if media_ready else [],
-            'embedding_note': '索引由 FastGPT 内部管理，不做外部 m3e 连通性检测',
+            'embedding_note': '索引由 FastGPT 内部管理',
+            'local_storage': False,  # ★ 标记本地存储已禁用
         },
-        'media_upload_dir': _media_upload_dir,
-        'server_base_url': _server_base_url or '(auto-detect)',
         'fastgpt_api_url': _fastgpt_api_url,
         'timestamp': datetime.now().isoformat()
     })
