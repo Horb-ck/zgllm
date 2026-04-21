@@ -856,6 +856,48 @@ def new_chat():
                           username=session.get('username', '用户'),
                             role=session.get('role', 'student'))
 
+
+def _build_new_home_context():
+    username = session.get('username', '用户')
+    role = session.get('role', 'student')
+    current_course = session.get('current_course') or {}
+    user_courses = session.get('user_courses') or []
+
+    current_course_name = current_course.get('name')
+    showcase_agent = None
+    if current_course_name:
+        showcase_agent = next((a for a in agents if a.get('name') == current_course_name), None)
+    if showcase_agent is None and agents:
+        showcase_agent = agents[0]
+
+    owned_course_names = {
+        course.get('name')
+        for course in user_courses
+        if isinstance(course, dict) and course.get('name')
+    }
+
+    kg_embed_url = ''
+    if showcase_agent is not None:
+        kg_mode = 'visitor'
+        if role == 'teacher' and showcase_agent.get('name') in owned_course_names:
+            kg_mode = 'teacher'
+        elif showcase_agent.get('name') in owned_course_names:
+            kg_mode = 'student'
+        kg_embed_url = url_for('kg_page', course_id=showcase_agent['id'], mode=kg_mode)
+
+    return {
+        'username': username,
+        'role': role,
+        'embed_url': new_chat_url,
+        'kg_embed_url': kg_embed_url,
+    }
+
+
+@app.route('/dashboard/new-home')
+@login_required
+def home():
+    return render_template('dashboard/new_home_fullscreen.html', **_build_new_home_context())
+
 @app.route('/dashboard/his')
 @login_required
 def his():

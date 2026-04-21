@@ -10,12 +10,13 @@ from fastapi import HTTPException
 import asyncio
 from config import *
 
-mcp = FastMCP (name="study",
+mcp = FastMCP(
+    name="study",
     host="0.0.0.0",
     port=MCP_TEST_PORT,
-    description="获取学习信息",
-    sse_path='/sse'
-     )
+    instructions="获取学习信息",
+    sse_path="/sse",
+)
     
 
 # LOCAL_API_BASE = "http://180.85.206.21:7777/dashboard/study_situation"
@@ -986,6 +987,7 @@ async def search_quizzes_student(
     
 # mcp_server.py 末尾
 if __name__ == "__main__":
+<<<<<<< HEAD
     # 只有直接运行才启动服务器
     print(f"Starting MCP server on port {MCP_TEST_PORT}...")
     print(f"SSE endpoint: http://0.0.0.0:{MCP_TEST_PORT}/sse")
@@ -994,3 +996,21 @@ else:
     # 被其他模块导入时，只打印信息，不启动
     print("MCP server module imported (will be started as subprocess)")
 
+=======
+    try:
+        print("Starting server...")
+        
+        
+        # # 并发启动 ngrok（后台）
+        # threading.Thread(target=run_ngrok, daemon=True).start()
+
+        # # 稍等一下再获取 ngrok 地址
+        # threading.Thread(target=get_ngrok_url, daemon=True).start()
+        mcp.run(transport='sse') 
+       
+        #直接运行app.py即可，可配合client使用
+        # mcp.run(transport='stdio')  
+       
+    except Exception as e:
+        print(f"Error: {e}")#
+>>>>>>> 0e6abf92cf1521d393cac054e6368e89ae530356
