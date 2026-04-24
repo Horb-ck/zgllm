@@ -23,7 +23,7 @@
 
         <div class="spark-userbar">
             <div class="spark-user-pill">
-                <span class="spark-avatar">{{ username[0].upper() }}</span>
+                <span class="spark-avatar">{{ '教师' if role == 'teacher' else '学生' }}</span>
                 <span>{{ username }}</span>
             </div>
             <a href="{{ url_for('logout') }}" class="spark-link">退出</a>
@@ -43,11 +43,10 @@
     <main class="spark-main">
         <section class="spark-hero">
             <div class="spark-hero-copy">
-                <span class="spark-kicker">课程学习 · 智能体 · 知识图谱 · 学情分析</span>
                 <h1>明月科创教育大模型</h1>
                 <p>
-                    首页不再使用大量厚重卡片堆叠，而是改成更展开、更连续的平铺式布局。
-                    在同一页面中快速进入课程广场、智能问答、知识图谱和实验空间。
+                    融合课程学习、引导式问答、动态知识图谱、个性化推荐与学情分析，
+                    帮助学生更高效学习，帮助教师更精准教学。
                 </p>
 
                 <div class="spark-actions">
@@ -63,30 +62,36 @@
             </div>
         </section>
 
-        <section class="spark-strip">
+        <!-- ===== BEGIN: homepage key metrics strip ===== -->
+        <section class="spark-strip" aria-label="平台关键数据">
             <article class="strip-item">
-                <strong>课程广场</strong>
-                <span>统一展示课程与教学入口</span>
+                <span class="strip-label">对话次数</span>
+                <strong class="strip-value">{{ homepage_stats.total_dialogues }}</strong>
+                <span>记录平台持续陪伴学习与问答交流的活跃度</span>
             </article>
             <article class="strip-item">
-                <strong>智能体广场</strong>
-                <span>聚合问答、辅学与任务代理</span>
+                <span class="strip-label">注册人数</span>
+                <strong class="strip-value">{{ homepage_stats.total_registered_users }}</strong>
+                <span>汇聚正在使用平台开展学习与教学的用户规模</span>
             </article>
             <article class="strip-item">
-                <strong>知识图谱</strong>
-                <span>关联知识点、资源与案例链路</span>
+                <span class="strip-label">课程资源数</span>
+                <strong class="strip-value">{{ homepage_stats.total_course_resources }}</strong>
+                <span>沉淀课程内容、案例资料与教学入口的资源总览</span>
             </article>
             <article class="strip-item">
-                <strong>实验空间</strong>
-                <span>保留开放探索和扩展能力</span>
+                <span class="strip-label">支持竞赛数</span>
+                <strong class="strip-value">{{ homepage_stats.total_competitions }}</strong>
+                <span>覆盖多类竞赛场景，帮助团队高效备赛与训练</span>
             </article>
         </section>
+        <!-- ===== END: homepage key metrics strip ===== -->
 
         <section class="spark-section spark-feature-section" id="feature-showcase">
             <div class="spark-section-heading">
                 <span class="spark-kicker">核心能力</span>
-                <h2>用平铺式分区介绍平台功能</h2>
-                <p>每一块都直接展开，不再用厚边框卡片把页面切得太碎。</p>
+                <h2>围绕学习过程整合平台能力</h2>
+                <p>从课程入口、智能体支持到知识图谱与学情分析，帮助你更顺畅地完成学习与教学活动。</p>
             </div>
 
             <div class="spark-tabs" role="tablist" aria-label="平台功能切换">
@@ -94,7 +99,7 @@
                 <button class="spark-tab" type="button" data-feature-target="feature-course">智能体广场</button>
                 <button class="spark-tab" type="button" data-feature-target="feature-kg">知识图谱</button>
                 <button class="spark-tab" type="button" data-feature-target="feature-analysis">学情分析</button>
-                <button class="spark-tab" type="button" data-feature-target="feature-lab">实验空间</button>
+                <button class="spark-tab" type="button" data-feature-target="feature-lab">个人知识库</button>
             </div>
 
             <div class="spark-feature-stage">
@@ -178,7 +183,7 @@
             <div class="spark-section-heading">
                 <span class="spark-kicker">AI 对话</span>
                 <h2>直接在首页继续交互</h2>
-                <p>保留对话工作区，但整体放进平铺布局里，不再单独做厚重边框包裹。</p>
+                <p>在首页即可继续提问、讨论与获取学习支持，让对话自然融入课程学习过程。</p>
             </div>
             <div class="spark-embed-frame spark-embed-frame-chat">
                 <iframe
@@ -194,8 +199,8 @@
         <section class="spark-section spark-kg-section" id="kg-showcase">
             <div class="spark-section-heading">
                 <span class="spark-kicker">知识图谱</span>
-                <h2>首页中的课程知识图谱展示</h2>
-                <p>继续保留知识图谱嵌入，但视觉上改成更轻的平铺结构，弱化“框中框”的感觉。</p>
+                <h2>直观查看课程知识结构</h2>
+                <p>通过课程知识图谱快速理解知识点之间的关联关系，帮助你把握学习路径与重点内容。</p>
             </div>
             <div class="spark-embed-frame spark-embed-frame-kg">
                 <iframe
@@ -343,14 +348,18 @@
 }
 
 .spark-avatar {
-    width: 30px;
+    min-width: 44px;
     height: 30px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: #fff;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
     background: linear-gradient(135deg, #6a76ff, #4bc6ef);
 }
 
@@ -623,7 +632,6 @@
     backdrop-filter: blur(10px);
 }
 
-.knowledge-category.is-active .knowledge-category-button,
 .knowledge-category-button:hover,
 .knowledge-category-button:focus-visible {
     transform: scale(1.04);
@@ -631,86 +639,6 @@
     box-shadow: 0 20px 42px rgba(107, 127, 255, 0.18);
     color: var(--primary-deep);
     outline: none;
-}
-
-.knowledge-tooltip-card {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 220px;
-    padding: 16px 16px 14px;
-    border-radius: 24px;
-    border: 1px solid rgba(132, 152, 214, 0.18);
-    background: rgba(255, 255, 255, 0.78);
-    box-shadow: 0 22px 42px rgba(79, 97, 156, 0.12);
-    backdrop-filter: blur(16px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.22s ease, transform 0.22s ease;
-    z-index: 5;
-}
-
-.knowledge-tooltip-card.anchor-top {
-    transform: translate(calc(-50% + var(--card-x)), calc(-100% + var(--card-y) - 14px)) translateY(10px);
-}
-
-.knowledge-tooltip-card.anchor-bottom {
-    transform: translate(calc(-50% + var(--card-x)), calc(0% + var(--card-y) + 14px)) translateY(10px);
-}
-
-.knowledge-tooltip-card.anchor-left {
-    transform: translate(calc(-100% + var(--card-x) - 14px), calc(-50% + var(--card-y))) translateY(10px);
-}
-
-.knowledge-tooltip-card.anchor-right {
-    transform: translate(calc(0% + var(--card-x) + 14px), calc(-50% + var(--card-y))) translateY(10px);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card {
-    opacity: 1;
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-top {
-    transform: translate(calc(-50% + var(--card-x)), calc(-100% + var(--card-y) - 14px)) translateY(0);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-bottom {
-    transform: translate(calc(-50% + var(--card-x)), calc(0% + var(--card-y) + 14px)) translateY(0);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-left {
-    transform: translate(calc(-100% + var(--card-x) - 14px), calc(-50% + var(--card-y))) translateY(0);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-right {
-    transform: translate(calc(0% + var(--card-x) + 14px), calc(-50% + var(--card-y))) translateY(0);
-}
-
-.knowledge-tooltip-title {
-    display: block;
-    margin-bottom: 12px;
-    color: var(--primary-deep);
-    font-size: 14px;
-    font-weight: 700;
-}
-
-.knowledge-tooltip-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.knowledge-tooltip-chip {
-    min-height: 30px;
-    padding: 0 10px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    background: rgba(108, 124, 255, 0.08);
-    border: 1px solid rgba(132, 152, 214, 0.16);
-    color: var(--text);
-    font-size: 12px;
-    white-space: nowrap;
 }
 
 .knowledge-application {
@@ -849,6 +777,20 @@
 
 .strip-item strong {
     font-size: 20px;
+}
+
+.strip-label {
+    margin-top: 0 !important;
+    font-size: 14px;
+    color: rgba(44, 68, 122, 0.72);
+    letter-spacing: 0.04em;
+}
+
+.strip-value {
+    margin-top: 6px;
+    font-size: clamp(28px, 3vw, 40px) !important;
+    line-height: 1.1;
+    color: var(--ink);
 }
 
 .strip-item span {
@@ -1172,8 +1114,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const desktopRoot = document.getElementById('knowledgeMapDesktop');
     const mobileRoot = document.getElementById('knowledgeMapMobile');
     const compactMedia = window.matchMedia('(max-width: 720px)');
-    let activeCategoryId = null;
-
     tabs.forEach((tab) => {
         tab.addEventListener('click', function () {
             const targetId = this.getAttribute('data-feature-target');
@@ -1196,22 +1136,6 @@ document.addEventListener('DOMContentLoaded', function () {
             x: Math.cos(angle) * radius,
             y: Math.sin(angle) * radius
         };
-    }
-
-    function setActiveCategory(categoryId) {
-        activeCategoryId = categoryId;
-        if (!desktopRoot) return;
-        desktopRoot.querySelectorAll('.knowledge-category').forEach((node) => {
-            node.classList.toggle('is-active', node.dataset.categoryId === categoryId);
-        });
-    }
-
-    function clearActiveCategory() {
-        activeCategoryId = null;
-        if (!desktopRoot) return;
-        desktopRoot.querySelectorAll('.knowledge-category').forEach((node) => {
-            node.classList.remove('is-active');
-        });
     }
 
     function buildDesktopMap() {
@@ -1246,16 +1170,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         knowledgeMap.categories.forEach((category, index) => {
             const position = getPolarPosition(index, knowledgeMap.categories.length, categoryRadius, angleOffset);
-            const positionLength = Math.hypot(position.x, position.y) || 1;
-            const cardOffsetDistance = 118;
-            const cardOffsetX = (position.x / positionLength) * cardOffsetDistance;
-            const cardOffsetY = (position.y / positionLength) * cardOffsetDistance;
-            let cardAnchor = 'anchor-top';
-            if (Math.abs(position.x) > Math.abs(position.y)) {
-                cardAnchor = position.x > 0 ? 'anchor-right' : 'anchor-left';
-            } else if (position.y > 0) {
-                cardAnchor = 'anchor-bottom';
-            }
 
             const line = document.createElement('div');
             line.className = 'knowledge-map-link';
@@ -1274,37 +1188,7 @@ document.addEventListener('DOMContentLoaded', function () {
             button.className = 'knowledge-category-button';
             button.textContent = category.name;
 
-            const card = document.createElement('div');
-            card.className = 'knowledge-tooltip-card ' + cardAnchor;
-            card.style.setProperty('--card-x', cardOffsetX + 'px');
-            card.style.setProperty('--card-y', cardOffsetY + 'px');
-            card.innerHTML = '<span class="knowledge-tooltip-title">' + category.name + '</span>';
-
-            const chips = document.createElement('div');
-            chips.className = 'knowledge-tooltip-chips';
-            category.children.forEach((child) => {
-                const chip = document.createElement('span');
-                chip.className = 'knowledge-tooltip-chip';
-                chip.textContent = child;
-                chips.appendChild(chip);
-            });
-            card.appendChild(chips);
-
-            function activate() {
-                setActiveCategory(category.id);
-            }
-
-            function deactivate() {
-                if (activeCategoryId !== category.id) return;
-                clearActiveCategory();
-            }
-
-            node.addEventListener('mouseenter', activate);
-            node.addEventListener('mouseleave', deactivate);
-            button.addEventListener('focus', activate);
-            button.addEventListener('blur', deactivate);
-
-            node.append(button, card);
+            node.appendChild(button);
             categoryLayer.appendChild(node);
         });
 

@@ -52,7 +52,7 @@ from utils.usage_analytics import (
 from database_mongo import db, user_sessions_collection
 from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL,FASTGPT_MONGO_URI,ANALYTICS_ACCESS_KEY
 from app_kg import app_kg
-from app_comp import app_comp
+from app_comp import app_comp, agents_kd
 from study_situation_LLM import study_situation_LLM
 from study_situation_canvas import study_situation_canvas
 
@@ -885,11 +885,31 @@ def _build_new_home_context():
             kg_mode = 'student'
         kg_embed_url = url_for('kg_page', course_id=showcase_agent['id'], mode=kg_mode)
 
+    # ===== BEGIN: homepage metric summary for spark-strip =====
+    total_registered_users = 0
+    try:
+        with closing(get_conn()) as conn, conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM student")
+            result = cursor.fetchone()
+            total_registered_users = int((result or [0])[0] or 0)
+    except Exception as exc:
+        print(f"获取首页注册人数失败: {exc}")
+
+    dialogue_stats = get_fastgpt_super_teacher_question_stats()
+    homepage_stats = {
+        'total_dialogues': dialogue_stats.get('total_questions_all_time', 0),
+        'total_registered_users': total_registered_users,
+        'total_course_resources': len(agents),
+        'total_competitions': len(agents_kd),
+    }
+    # ===== END: homepage metric summary for spark-strip =====
+
     return {
         'username': username,
         'role': role,
         'embed_url': new_chat_url,
         'kg_embed_url': kg_embed_url,
+        'homepage_stats': homepage_stats,
     }
 
 
