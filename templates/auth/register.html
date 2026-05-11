@@ -43,7 +43,7 @@
                             <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
                         </svg>
                         <span class="identity-tag">学生</span>
-                        <span class="identity-hint">使用学号与校内邮箱</span>
+                        <span class="identity-hint">预置学号可使用常用邮箱</span>
                     </button>
                     <button type="button" class="identity-card" data-role="teacher" aria-pressed="false">
                         <div class="identity-dot" aria-hidden="true"></div>
@@ -129,17 +129,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const sendBtn = document.getElementById('send-code-btn');
     const emailSuggestions = document.getElementById('email-suggestions');
 
-    const emailPatterns = {
-        student: /^[^@\s]+@stu\.cqu\.edu\.cn$/i,
-        teacher: /^[^@\s]+@cqu\.edu\.cn$/i
-    };
+    const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/i;
+    const teacherEmailPattern = /^[^@\s]+@cqu\.edu\.cn$/i;
 
     function updateFields(role) {
         const isTeacher = role === 'teacher';
         usernameLabel.textContent = isTeacher ? '工号' : '学号';
         usernameInput.placeholder = isTeacher ? '请输入工号' : '请输入学号';
-        emailInput.placeholder = isTeacher ? 'yourid@cqu.edu.cn' : 'yourid@stu.cqu.edu.cn';
-        emailInput.setAttribute('pattern', isTeacher ? '^[^@\\s]+@cqu\\.edu\\.cn$' : '^[^@\\s]+@stu\\.cqu\\.edu\\.cn$');
+        emailInput.placeholder = isTeacher ? 'yourid@cqu.edu.cn' : 'yourid@stu.cqu.edu.cn 或常用邮箱';
+        if (isTeacher) {
+            emailInput.setAttribute('pattern', '^[^@\\s]+@cqu\\.edu\\.cn$');
+        } else {
+            emailInput.removeAttribute('pattern');
+        }
     }
 
     function selectRole(role) {
@@ -170,9 +172,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const role = roleInput.value || 'student';
         const email = (emailInput.value || '').trim();
 
-        if (!emailPatterns[role].test(email)) {
+        if (!emailPattern.test(email)) {
             event.preventDefault();
-            alert(role === 'teacher' ? '教师邮箱需使用 cqu.edu.cn 域名' : '学生邮箱需使用 stu.cqu.edu.cn 域名');
+            alert('请输入有效的邮箱地址');
+            emailInput.focus();
+            return;
+        }
+
+        if (role === 'teacher' && !teacherEmailPattern.test(email)) {
+            event.preventDefault();
+            alert('教师邮箱需使用 cqu.edu.cn 域名');
             emailInput.focus();
             return;
         }
@@ -230,8 +239,12 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('请先填写学号/工号和邮箱');
             return;
         }
-        if (!emailPatterns[role].test(email)) {
-            alert(role === 'teacher' ? '教师邮箱需使用 cqu.edu.cn 域名' : '学生邮箱需使用 stu.cqu.edu.cn 域名');
+        if (!emailPattern.test(email)) {
+            alert('请输入有效的邮箱地址');
+            return;
+        }
+        if (role === 'teacher' && !teacherEmailPattern.test(email)) {
+            alert('教师邮箱需使用 cqu.edu.cn 域名');
             return;
         }
         sendBtn.disabled = true;
@@ -243,6 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: new URLSearchParams({
                     email: email,
                     username: username,
+                    role: role,
                     scene: 'register'
                 })
             });
