@@ -711,7 +711,7 @@ def login():
 
 STUDENT_EMAIL_SUFFIX = '@stu.cqu.edu.cn'
 TEACHER_EMAIL_SUFFIX = '@cqu.edu.cn'
-NON_PRELOADED_STUDENT_EMAIL_ERROR = f'该学号未在预置名单中，请使用 {STUDENT_EMAIL_SUFFIX} 邮箱注册'
+NON_WHITELIST_STUDENT_EMAIL_ERROR = f'该学号未在注册白名单中，请使用 {STUDENT_EMAIL_SUFFIX} 邮箱注册'
 
 def _clean_value(value):
     return str(value or '').strip()
@@ -731,7 +731,7 @@ def _is_teacher_email(email):
 def _is_claimable_student_row(row):
     if not row:
         return False
-    # 预置行正常是 email/password 都为 NULL；异常半注册行也允许本次认领补齐。
+    # 兼容历史空行/半注册行；是否允许外部邮箱由白名单表单独决定。
     return _is_blank(row[1]) or _is_blank(row[2])
 
 def _get_student_row_by_sid(cursor, sid, for_update=False):
@@ -747,6 +747,13 @@ def _get_other_account_by_email(cursor, email, sid):
         (email, sid)
     )
     return cursor.fetchone()
+
+def _is_student_in_registration_whitelist(cursor, sid):
+    cursor.execute(
+        "SELECT 1 FROM student_registration_whitelist WHERE student_id = %s LIMIT 1",
+        (sid,)
+    )
+    return cursor.fetchone() is not None
 
 @app.route('/auth/send_code', methods=['POST'])
 def send_verification_code():
@@ -774,6 +781,7 @@ def send_verification_code():
 
         with closing(get_conn()) as conn, conn.cursor() as cursor:
             account_row = _get_student_row_by_sid(cursor, account)
+            is_whitelisted_student = _is_student_in_registration_whitelist(cursor, account)
             if _get_other_account_by_email(cursor, email_lower, account):
                 return jsonify({'error': '邮箱已被注册'}), 400
 
@@ -782,11 +790,11 @@ def send_verification_code():
                     return jsonify({'error': '教师邮箱需使用 cqu.edu.cn 域名'}), 400
                 if account_row:
                     return jsonify({'error': '账号已被注册'}), 400
-            elif account_row:
-                if not _is_claimable_student_row(account_row):
-                    return jsonify({'error': '该学号已完成注册，请直接登录'}), 400
-            elif not _is_student_email(email_lower):
-                return jsonify({'error': NON_PRELOADED_STUDENT_EMAIL_ERROR}), 400
+            elif account_row and not _is_claimable_student_row(account_row):
+                return jsonify({'error': '该学号已完成注册，请直接登录'}), 400
+
+            if role == 'student' and not is_whitelisted_student and not _is_student_email(email_lower):
+                return jsonify({'error': NON_WHITELIST_STUDENT_EMAIL_ERROR}), 400
 
     code = f"{random.randint(0, 999999):06d}"
     subject = "明月科创教育大模型｜验证码"
@@ -814,7 +822,7 @@ def send_verification_code():
     _bump_counters(ip_addr, account)
     return jsonify({'success': True, 'message': '验证码已发送'})
 
-# 新的注册逻辑，学号不在数据库中依然能够注册
+# 注册逻辑：白名单学号可使用任意邮箱，非白名单学生需使用校内学生邮箱
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     global user_global_store
@@ -856,6 +864,7 @@ def register():
             print(f"⚠️ 查询 MongoDB persons 失败: {e}")
         with closing(get_conn()) as conn, conn.cursor() as cursor:
             account_row = _get_student_row_by_sid(cursor, username, for_update=True)
+            is_whitelisted_student = _is_student_in_registration_whitelist(cursor, username)
             if _get_other_account_by_email(cursor, email, username):
                 flash('邮箱已被注册')
                 return render_template('auth/register.html', form_data=form_data)
@@ -868,13 +877,14 @@ def register():
                 if account_row:
                     flash('账号已被注册')
                     return render_template('auth/register.html', form_data=form_data)
+            elif account_row and not _is_claimable_student_row(account_row):
+                flash('该学号已完成注册，请直接登录')
+                return render_template('auth/register.html', form_data=form_data)
             elif account_row:
-                if not _is_claimable_student_row(account_row):
-                    flash('该学号已完成注册，请直接登录')
-                    return render_template('auth/register.html', form_data=form_data)
                 should_update_preloaded = True
-            elif not _is_student_email(email):
-                flash(NON_PRELOADED_STUDENT_EMAIL_ERROR)
+
+            if role == 'student' and not is_whitelisted_student and not _is_student_email(email):
+                flash(NON_WHITELIST_STUDENT_EMAIL_ERROR)
                 return render_template('auth/register.html', form_data=form_data)
 
             if not _verify_code("register", username, email, verification_code):
