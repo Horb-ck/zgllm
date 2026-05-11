@@ -2,6 +2,7 @@
 # IDE
 .cursor/
 .idea/
+.vscode/
 
 # 无视启动命令
 kill.sh

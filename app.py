@@ -709,11 +709,57 @@ def login():
                 flash('用户名或密码错误，请重试！', 'danger')
     return render_template('auth/login.html')
 
+STUDENT_EMAIL_SUFFIX = '@stu.cqu.edu.cn'
+TEACHER_EMAIL_SUFFIX = '@cqu.edu.cn'
+NON_WHITELIST_STUDENT_EMAIL_ERROR = f'该学号未在注册白名单中，请使用 {STUDENT_EMAIL_SUFFIX} 邮箱注册'
+
+def _clean_value(value):
+    return str(value or '').strip()
+
+def _is_blank(value):
+    return value is None or str(value).strip() == ''
+
+def _is_valid_email(email):
+    return bool(re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', _clean_value(email)))
+
+def _is_student_email(email):
+    return _clean_value(email).lower().endswith(STUDENT_EMAIL_SUFFIX)
+
+def _is_teacher_email(email):
+    return _clean_value(email).lower().endswith(TEACHER_EMAIL_SUFFIX)
+
+def _is_claimable_student_row(row):
+    if not row:
+        return False
+    # 兼容历史空行/半注册行；是否允许外部邮箱由白名单表单独决定。
+    return _is_blank(row[1]) or _is_blank(row[2])
+
+def _get_student_row_by_sid(cursor, sid, for_update=False):
+    sql = "SELECT sid, email, password, role, sis_id FROM student WHERE sid = %s"
+    if for_update:
+        sql += " FOR UPDATE"
+    cursor.execute(sql, (sid,))
+    return cursor.fetchone()
+
+def _get_other_account_by_email(cursor, email, sid):
+    cursor.execute(
+        "SELECT sid FROM student WHERE email = %s AND sid <> %s LIMIT 1",
+        (email, sid)
+    )
+    return cursor.fetchone()
+
+def _is_student_in_registration_whitelist(cursor, sid):
+    cursor.execute(
+        "SELECT 1 FROM student_registration_whitelist WHERE student_id = %s LIMIT 1",
+        (sid,)
+    )
+    return cursor.fetchone() is not None
+
 @app.route('/auth/send_code', methods=['POST'])
 def send_verification_code():
     data = request.form if request.form else request.json or {}
-    email = data.get('email')
-    account = data.get('username') or data.get('sid') or ''
+    email = _clean_value(data.get('email')).lower()
+    account = _clean_value(data.get('username') or data.get('sid') or '')
     scene = data.get('scene') or 'register'
     ip_addr = request.remote_addr or 'unknown'
 
@@ -724,8 +770,31 @@ def send_verification_code():
     if not _can_send(ip_addr, account):
         return jsonify({'error': '今日发送次数已达上限'}), 429
 
-    email_lower = str(email).lower()
-    role = 'teacher' if email_lower.endswith('@cqu.edu.cn') else 'student' if email_lower.endswith('@stu.cqu.edu.cn') else 'student'
+    email_lower = email
+    role = data.get('role') or ('teacher' if _is_teacher_email(email_lower) else 'student')
+    if scene == 'register':
+        role = _clean_value(role) or 'student'
+        if role not in ('student', 'teacher'):
+            return jsonify({'error': '身份信息错误'}), 400
+        if not _is_valid_email(email_lower):
+            return jsonify({'error': '邮箱格式不正确'}), 400
+
+        with closing(get_conn()) as conn, conn.cursor() as cursor:
+            account_row = _get_student_row_by_sid(cursor, account)
+            is_whitelisted_student = _is_student_in_registration_whitelist(cursor, account)
+            if _get_other_account_by_email(cursor, email_lower, account):
+                return jsonify({'error': '邮箱已被注册'}), 400
+
+            if role == 'teacher':
+                if not _is_teacher_email(email_lower):
+                    return jsonify({'error': '教师邮箱需使用 cqu.edu.cn 域名'}), 400
+                if account_row:
+                    return jsonify({'error': '账号已被注册'}), 400
+            elif account_row and not _is_claimable_student_row(account_row):
+                return jsonify({'error': '该学号已完成注册，请直接登录'}), 400
+
+            if role == 'student' and not is_whitelisted_student and not _is_student_email(email_lower):
+                return jsonify({'error': NON_WHITELIST_STUDENT_EMAIL_ERROR}), 400
 
     code = f"{random.randint(0, 999999):06d}"
     subject = "明月科创教育大模型｜验证码"
@@ -753,21 +822,30 @@ def send_verification_code():
     _bump_counters(ip_addr, account)
     return jsonify({'success': True, 'message': '验证码已发送'})
 
-# 新的注册逻辑，学号不在数据库中依然能够注册
+# 注册逻辑：白名单学号可使用任意邮箱，非白名单学生需使用校内学生邮箱
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     global user_global_store
     form_data = request.form if request.method == 'POST' else None
     if request.method == 'POST':
-        username = request.form.get('username')  # 学号 sid
-        email = request.form.get('email')
+        username = _clean_value(request.form.get('username'))  # 学号 sid
+        email = _clean_value(request.form.get('email')).lower()
         password = request.form.get('password')
-        role = request.form.get('role')
-        verification_code = request.form.get('verification_code')
-        
-    
+        confirm_password = request.form.get('confirm_password')
+        role = _clean_value(request.form.get('role'))
+        verification_code = _clean_value(request.form.get('verification_code'))
+
+        if not username or not email or not password:
+            flash('请完整填写注册信息')
+            return render_template('auth/register.html', form_data=form_data)
         if role not in ('student', 'teacher'):
             flash('身份信息错误')
+            return render_template('auth/register.html', form_data=form_data)
+        if not _is_valid_email(email):
+            flash('邮箱格式不正确')
+            return render_template('auth/register.html', form_data=form_data)
+        if password != confirm_password:
+            flash('两次输入的密码不一致，请重新输入')
             return render_template('auth/register.html', form_data=form_data)
         if not verification_code:
             flash('请填写邮箱验证码')
@@ -785,31 +863,51 @@ def register():
         except Exception as e:
             print(f"⚠️ 查询 MongoDB persons 失败: {e}")
         with closing(get_conn()) as conn, conn.cursor() as cursor:
-            cursor.execute(
-                "SELECT sid, email FROM student WHERE sid = %s OR email = %s",
-                (username, email)
-            )
-            rows = cursor.fetchall()
-            dup_username = any(str(row[0]) == str(username) for row in rows if row[0] is not None)
-            dup_email = any(str(row[1]) == str(email) for row in rows if row[1] is not None)
+            account_row = _get_student_row_by_sid(cursor, username, for_update=True)
+            is_whitelisted_student = _is_student_in_registration_whitelist(cursor, username)
+            if _get_other_account_by_email(cursor, email, username):
+                flash('邮箱已被注册')
+                return render_template('auth/register.html', form_data=form_data)
 
-            if dup_username or dup_email:
-                if dup_username and dup_email:
-                    flash('账号和邮箱已被注册')
-                elif dup_username:
+            should_update_preloaded = False
+            if role == 'teacher':
+                if not _is_teacher_email(email):
+                    flash('教师邮箱需使用 cqu.edu.cn 域名')
+                    return render_template('auth/register.html', form_data=form_data)
+                if account_row:
                     flash('账号已被注册')
-                else:
-                    flash('邮箱已被注册')
+                    return render_template('auth/register.html', form_data=form_data)
+            elif account_row and not _is_claimable_student_row(account_row):
+                flash('该学号已完成注册，请直接登录')
+                return render_template('auth/register.html', form_data=form_data)
+            elif account_row:
+                should_update_preloaded = True
+
+            if role == 'student' and not is_whitelisted_student and not _is_student_email(email):
+                flash(NON_WHITELIST_STUDENT_EMAIL_ERROR)
                 return render_template('auth/register.html', form_data=form_data)
 
             if not _verify_code("register", username, email, verification_code):
                 flash('验证码错误或已过期')
                 return render_template('auth/register.html', form_data=form_data)
 
-            cursor.execute(
-                "INSERT INTO student (sid, email, password, role, sis_id) VALUES (%s, %s, %s, %s)",
-                (username, email, password, role, sis_id_from_mongo)
-            )
+            if should_update_preloaded:
+                cursor.execute(
+                    """
+                    UPDATE student
+                    SET email = %s, password = %s, role = %s, sis_id = %s
+                    WHERE sid = %s
+                    """,
+                    (email, password, role, sis_id_from_mongo, username)
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO student (sid, email, password, role, sis_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (username, email, password, role, sis_id_from_mongo)
+                )
             conn.commit()
             flash('注册成功，正在登录', 'success')
             session['username'] = username
