@@ -156,6 +156,13 @@ ptams_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=vq
 hohc_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=ed78T6IEQ5hanDkXVovkQtjZ&studentUid="
 hotd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=xVJOQmaXZC2hxKkO2B75VrRs&studentUid="
 rdac_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=iecsnqtrFQeuOY4353ZZ1ilM&studentUid="
+ufct_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=r1DhxDlJNqqxg0YwGNly7Aam&studentUid="
+sas_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=amW0TPXufsrOwYD3oVNFxgs5&studentUid="
+ep_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=nMlH4UV6sPg6BhGiN8NWolWO&studentUid="
+ed_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=h26F3cIJqYSLw4H9w3NHLkJF&studentUid="
+he_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=llaiuXe8HwjymvXjkfpiLdhr&studentUid="
+rb_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=d15FrTplAcL52KMK3oKFmzRP&studentUid="
+pd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=jwv1RfhutIzIxvM8o6Ubgij3&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
@@ -252,6 +259,55 @@ agents = [
         "description": "学习运动学、轨迹规划、动力学与运动控制，掌握建模与控制核心技能。",
         "url": rdac_agent_class_url,
         "image_url": "/static/img/rdac.png"
+    },
+    {
+        "id": 12,
+        "name": "无人机飞控技术",
+        "description": "深入学习无人机状态估计与飞行控制，掌握自主导航系统全栈开发能力。",
+        "url": ufct_agent_class_url,
+        "image_url": "/static/img/ufct.png"
+    },
+    {
+        "id": 13,
+        "name": "信号与系统",
+        "description": "从电路设计到嵌入式开发，融合感知与路径规划，打造智能机器人系统。",
+        "url": sas_agent_class_url,
+        "image_url": "/static/img/sas.png"
+    },
+    {
+        "id": 14,
+        "name": "工程原理",
+        "description": "以电子琴项目为载体，培养电路系统设计思维与工程实践能力。",
+        "url": ep_agent_class_url,
+        "image_url": "/static/img/ep.png"
+    },
+    {
+        "id": 15,
+        "name": "工程设计",
+        "description": "以斯特林发动机为牵引，完成从理论计算到样机制造的全流程。",
+        "url": ed_agent_class_url,
+        "image_url": "/static/img/ed.png"
+    },
+    {
+        "id": 16,
+        "name": "工效学",
+        "description": "理解人的感知、认知与反应规律，掌握以用户为中心的设计评估方法。",
+        "url": he_agent_class_url,
+        "image_url": "/static/img/he.png"
+    },
+    {
+        "id": 17,
+        "name": "机器人基础",
+        "description": "学习机器人机构与感知技术，掌握机器人设计与系统集成的核心能力。",
+        "url": rb_agent_class_url,
+        "image_url": "/static/img/rb.png"
+    },
+    {
+        "id": 18,
+        "name": "产品设计",
+        "description": "经历完整产品创新流程，培养设计思维与原型制作综合能力。",
+        "url": pd_agent_class_url,
+        "image_url": "/static/img/pd.png"
     }
 ]
 
@@ -260,7 +316,11 @@ agents = [
 COURSES_LIST = [
     "定量工程设计方法", "自动控制原理", "程序设计实践", 
     "移动机器人应用与开发", "线性代数",
-    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计","机器人动力学与控制"
+    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计","机器人动力学与控制",
+    # 新增后三行
+    "机器人动力学与控制", "无人机飞控技术", "信号与系统", 
+    "工程原理", "工程设计", "工效学", 
+    "机器人基础", "产品设计"
 ]
 
 # 允许的学期ID列表
