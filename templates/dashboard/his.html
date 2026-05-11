@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "layout.html" %} 
 
 {% block title %}个人知识库 - 明月科创教育大模型{% endblock %}
 
@@ -164,6 +164,16 @@
             .kb-upload-icon { font-size: 32px; margin-bottom: 8px; }
             .kb-upload-text { color: #555; font-size: 13px; margin-bottom: 4px; }
             .kb-upload-hint { color: #999; font-size: 11px; line-height: 1.6; }
+
+            /* 上传限制提示 */
+            .kb-upload-limit-tip {
+                display: block;
+                color: #7c3aed;
+                font-size: 10.5px;
+                line-height: 1.5;
+                margin-top: 2px;
+                font-weight: 500;
+            }
             
             .kb-upload-btn {
                 margin-top: 12px;
@@ -181,6 +191,28 @@
             .kb-upload-btn:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+            }
+
+            .kb-format-tip {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 16px;
+                height: 16px;
+                background: #e0e0e0;
+                color: #666;
+                border-radius: 50%;
+                font-size: 10px;
+                font-style: normal;
+                cursor: help;
+                margin-left: 4px;
+                vertical-align: middle;
+                transition: all 0.2s;
+                position: relative;
+            }
+            .kb-format-tip:hover {
+                background: #7c3aed;
+                color: #fff;
             }
             
             /* ==================== 文件夹样式 ==================== */
@@ -697,7 +729,7 @@
             .kb-media-badge.video { background: #8b5cf6; }
             .kb-media-badge.ppt   { background: #f59e0b; }
 
-            /* ★ 图片文件名可点击预览 */
+            /* 图片文件名可点击预览 */
             .kb-doc-name-preview {
                 cursor: pointer;
                 color: #6366f1;
@@ -814,7 +846,7 @@
                 opacity: 1; transform: translateX(-50%) translateY(0);
             }
 
-            /* ==================== ★ 媒体预览弹窗 ==================== */
+            /* ==================== 媒体预览弹窗 ==================== */
             .media-preview-overlay {
                 display: none;
                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -878,9 +910,8 @@
                 border-radius: 8px; white-space: pre-wrap;
             }
 
-            /* ★★★ 新增 CSS — 实时计时器样式 ★★★ */
+            /* ==================== 实时计时器样式 ==================== */
 
-            /* ① 全局上传计时浮条（底部悬浮） */
             .kb-upload-timer-bar {
                 position: fixed;
                 bottom: 80px;
@@ -934,7 +965,6 @@
                 font-weight: 600;
             }
 
-            /* ② 文档列表行内计时器 */
             .kb-doc-timer {
                 display: inline-flex;
                 align-items: center;
@@ -976,11 +1006,12 @@
                         <div class="kb-upload-icon">📄</div>
                         <div class="kb-upload-text">拖拽文件到此处，或点击上传</div>
                         <div class="kb-upload-hint">
-                            📝 文档: PDF、TXT、MD、DOC、DOCX（100MB）<br>
-                            🖼️ 图片: JPG、PNG、GIF、BMP、WEBP（50MB）<br>
-                            🎬 视频: MP4、AVI、MOV、MKV（500MB）<br>
-                            📊 PPT: PPTX、PPT（100MB）<br>
-                            📋 每人最多 1000 个文档
+                            支持文档、图片、视频、PPT 等格式
+                            <span class="kb-format-tip"
+                                  title="📝 文档: PDF/TXT/MD/DOC/DOCX (≤100MB)&#10;🖼️ 图片: JPG/PNG/GIF/BMP/WEBP (≤50MB)&#10;🎬 视频: MP4/AVI/MOV/MKV/FLV/WMV/WEBM (≤500MB)&#10;📊 PPT: PPTX/PPT (≤100MB)&#10;📋 每人最多 200 个文件&#10;💾 每人总容量 5GB">ⓘ</span>
+                            <span class="kb-upload-limit-tip">
+                                文档/PPT ≤ 100MB，图片 ≤ 50MB，视频 ≤ 500MB；每人最多 200 个文件，总容量 5GB
+                            </span>
                         </div>
                         <button class="kb-upload-btn" onclick="document.getElementById('fileInput').click()">
                             选择文件
@@ -1096,7 +1127,7 @@
             </div>
         </div>
 
-        <!-- ★ 媒体预览弹窗 -->
+        <!-- 媒体预览弹窗 -->
         <div class="media-preview-overlay" id="mediaPreviewOverlay">
             <div class="media-preview-toolbar">
                 <a id="mediaPreviewDownload" href="#" download title="下载原始文件">⬇️ 下载</a>
@@ -1112,7 +1143,7 @@
             </details>
         </div>
 
-        <!-- ★ 上传计时浮条 (新增 HTML) -->
+        <!-- 上传计时浮条 -->
         <div class="kb-upload-timer-bar" id="uploadTimerBar">
             <div class="kb-upload-timer-spinner"></div>
             <span class="kb-upload-timer-name" id="uploadTimerName"></span>
@@ -1145,13 +1176,58 @@
     const MEDIA_EXTENSIONS = [...IMAGE_EXTENSIONS, ...VIDEO_EXTENSIONS, ...PPT_EXTENSIONS];
     const ALL_EXTENSIONS   = [...TEXT_EXTENSIONS, ...MEDIA_EXTENSIONS];
 
-    // ★★★ 新增 JS — 计时器全局变量与工具函数 ★★★
-    let activeUploadTimer = null;   // { filename, startTime, intervalId }
-    let docTimerIntervalId = null;  // 文档列表行内计时器的全局 setInterval ID
+    // 上传限制，必须和后端 routes/kb_routes.py 保持一致
+    const KB_MAX_DOCUMENTS_PER_USER = 200;
+    const KB_MAX_TOTAL_STORAGE_LABEL = '5GB';
 
-    /**
-     * ★ 格式化秒数为可读字符串
-     */
+    const KB_LIMITS = {
+        document: 100 * 1024 * 1024,
+        ppt:      100 * 1024 * 1024,
+        image:     50 * 1024 * 1024,
+        video:    500 * 1024 * 1024
+    };
+
+    function getUploadLimit(fileName) {
+        const ext = fileName.split('.').pop().toLowerCase();
+
+        if (VIDEO_EXTENSIONS.includes(ext)) {
+            return {
+                maxBytes: KB_LIMITS.video,
+                label: '视频文件最大支持 500MB'
+            };
+        }
+
+        if (IMAGE_EXTENSIONS.includes(ext)) {
+            return {
+                maxBytes: KB_LIMITS.image,
+                label: '图片文件最大支持 50MB'
+            };
+        }
+
+        if (PPT_EXTENSIONS.includes(ext)) {
+            return {
+                maxBytes: KB_LIMITS.ppt,
+                label: 'PPT 文件最大支持 100MB'
+            };
+        }
+
+        if (TEXT_EXTENSIONS.includes(ext)) {
+            return {
+                maxBytes: KB_LIMITS.document,
+                label: '文档文件最大支持 100MB'
+            };
+        }
+
+        return {
+            maxBytes: KB_LIMITS.document,
+            label: '该类型文件最大支持 100MB'
+        };
+    }
+
+    // ==================== 计时器全局变量与工具函数 ====================
+    let activeUploadTimer = null;
+    let docTimerIntervalId = null;
+
     function formatElapsedTime(seconds) {
         if (seconds < 0) return '0.0s';
         if (seconds < 60) return seconds.toFixed(1) + 's';
@@ -1160,9 +1236,6 @@
         return m + 'm' + s.toString().padStart(2, '0') + 's';
     }
 
-    /**
-     * ★ 启动全局上传计时浮条
-     */
     function startUploadTimerBar(filename) {
         stopUploadTimerBar();
         const bar    = document.getElementById('uploadTimerBar');
@@ -1187,11 +1260,6 @@
         bar.classList.add('show');
     }
 
-    /**
-     * ★ 停止全局上传计时浮条（带完成/失败提示）
-     * @param {string|null} resultText  显示的结果文字，null 则直接隐藏
-     * @param {number}      hideDelay   自动隐藏延迟(ms)
-     */
     function stopUploadTimerBar(resultText, hideDelay) {
         if (activeUploadTimer) {
             clearInterval(activeUploadTimer.intervalId);
@@ -1212,15 +1280,11 @@
         }
     }
 
-    /**
-     * ★ 启动文档列表行内计时器的全局刷新循环（每秒更新一次）
-     */
     function ensureDocTimerLoop() {
-        if (docTimerIntervalId) return;              // 已在运行
+        if (docTimerIntervalId) return;
         docTimerIntervalId = setInterval(() => {
             const els = document.querySelectorAll('.kb-doc-timer[data-start-ms]');
             if (els.length === 0) {
-                // 没有需要计时的文档 → 停止循环
                 clearInterval(docTimerIntervalId);
                 docTimerIntervalId = null;
                 return;
@@ -1250,11 +1314,10 @@
             if (e.key === 'Enter') confirmRename();
         });
 
-        // ★ 预览弹窗：点击背景关闭
         document.getElementById('mediaPreviewOverlay').addEventListener('click', function(e) {
             if (e.target === this) closeMediaPreview();
         });
-        // ★ ESC 关闭预览
+
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeMediaPreview();
         });
@@ -1269,7 +1332,6 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.chat_url) {
-                    // ★★★ 修复：直接用后端返回的 URL，不再追加 studentId ★★★
                     iframe.src = data.chat_url;
                 } else {
                     iframe.src = 'about:blank';
@@ -1289,8 +1351,7 @@
         };
     }
 
-
-    // ==================== ★ 媒体预览功能 ====================
+    // ==================== 媒体预览功能 ====================
     function openMediaPreview(docId, mediaUrl) {
         const overlay  = document.getElementById('mediaPreviewOverlay');
         const img      = document.getElementById('mediaPreviewImg');
@@ -1333,7 +1394,6 @@
         overlay.classList.remove('show');
         document.getElementById('mediaPreviewImg').src = '';
     }
-
     
     // ==================== 上传功能 ====================
     function initUploadZone() {
@@ -1363,7 +1423,6 @@
         });
     }
     
-    // ★★★ 完整替换 uploadFile — 带实时计时器 ★★★
     function uploadFile(file) {
         const ext = file.name.split('.').pop().toLowerCase();
         if (!ALL_EXTENSIONS.includes(ext)) {
@@ -1371,19 +1430,11 @@
             return;
         }
 
-        // ★ 更细粒度的前端大小校验
-        let maxSize;
-        if (VIDEO_EXTENSIONS.includes(ext)) {
-            maxSize = 500 * 1024 * 1024;   // 视频 500MB
-        } else if (IMAGE_EXTENSIONS.includes(ext)) {
-            maxSize = 50 * 1024 * 1024;    // 图片 50MB
-        } else if (PPT_EXTENSIONS.includes(ext)) {
-            maxSize = 100 * 1024 * 1024;   // PPT 100MB
-        } else {
-            maxSize = 100 * 1024 * 1024;   // 文档 100MB
-        }
-        if (file.size > maxSize) {
-            alert(`文件过大，最大支持 ${maxSize / (1024 * 1024)}MB`);
+        // 前端单文件大小校验
+        // 注意：用户总文件数/总容量仍以后端 routes/kb_routes.py 校验为准。
+        const limit = getUploadLimit(file.name);
+        if (file.size > limit.maxBytes) {
+            alert(`文件过大：当前文件 ${formatFileSize(file.size)}，${limit.label}`);
             return;
         }
         
@@ -1394,7 +1445,6 @@
         const btn = document.querySelector('.kb-upload-btn');
         const originalText = btn.textContent;
         const isMedia = MEDIA_EXTENSIONS.includes(ext);
-        const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
 
         if (isMedia) {
             const typeLabel = IMAGE_EXTENSIONS.includes(ext) ? '图片'
@@ -1405,7 +1455,6 @@
         }
         btn.disabled = true;
         
-        // ★ 启动计时浮条
         startUploadTimerBar(file.name);
         const uploadStartMs = Date.now();
 
@@ -1415,9 +1464,7 @@
             btn.textContent = originalText;
             btn.disabled = false;
 
-            // ★ 计算前端实测耗时
             const clientElapsed = ((Date.now() - uploadStartMs) / 1000).toFixed(1);
-            // 后端返回的耗时（如果有）
             const serverElapsed = data.upload_time_seconds
                 ? data.upload_time_seconds.toFixed(1) : null;
             const displayTime = serverElapsed || clientElapsed;
@@ -1425,7 +1472,6 @@
             if (data.success) {
                 _hadProcessing = true;
 
-                // ★ 浮条显示完成耗时
                 const doneText = `✅ ${displayTime}s`;
                 stopUploadTimerBar(doneText, 3500);
 
@@ -1440,7 +1486,6 @@
 
                 loadDocuments();
             } else {
-                // ★ 失败 → 浮条显示失败
                 stopUploadTimerBar(`❌ 失败 ${clientElapsed}s`, 4000);
                 alert('上传失败: ' + (data.error || '未知错误'));
             }
@@ -1453,7 +1498,6 @@
             alert('上传出错: ' + err.message);
         });
     }
-
     
     // ==================== 文档和文件夹加载 ====================
     function loadDocuments() {
@@ -1493,7 +1537,6 @@
         return result;
     }
     
-    // ==================== ★ 核心渲染（含计时器 + 媒体预览入口） ====================
     function renderList(folders, documents) {
         const list = document.getElementById('docList');
         
@@ -1503,9 +1546,8 @@
         }
         
         let html = '';
-        let hasTimerDocs = false;    // ★ 是否有需要计时的文档
+        let hasTimerDocs = false;
         
-        // 渲染文件夹
         for (const folder of folders) {
             html += `
                 <li class="kb-folder-item" 
@@ -1529,7 +1571,6 @@
                 </li>`;
         }
         
-        // 渲染文档
         for (const doc of documents) {
             const icon = getFileIcon(doc.file_type);
             const size = formatFileSize(doc.file_size);
@@ -1552,17 +1593,14 @@
             if (isParsing) metaText = `${size} · 正在解析...`;
             else if (isProcessing && totalCount > 0) metaText = `${size} · 已索引 ${dataCount}/${totalCount}`;
 
-            // 多媒体类型徽章
             let mediaBadge = '';
             if (mediaType) {
                 const badgeLabels = { image: '图片', video: '视频', ppt: 'PPT' };
                 mediaBadge = `<span class="kb-media-badge ${mediaType}">${badgeLabels[mediaType] || mediaType}</span>`;
             }
 
-            // ★ 判断是否可预览原图
             const canPreview = (mediaType === 'image') && doc.has_original_file && doc.media_url;
 
-            // ★ 文件名 HTML（图片可点击预览）
             let nameInnerHtml;
             if (canPreview) {
                 nameInnerHtml = `<span class="kb-doc-name-preview"
@@ -1576,7 +1614,6 @@
                 nameInnerHtml = escapeHtml(doc.filename);
             }
 
-            // 进度条
             let progressHtml = '';
             if (isProcessing && totalCount > 0) {
                 progressHtml = `
@@ -1594,7 +1631,6 @@
                 pctHtml = `<span class="kb-progress-pct">${progressPct}%</span>`;
             }
 
-            // 状态区域
             let shareOrStatusHtml = '';
             if (isReady) {
                 shareOrStatusHtml = `
@@ -1616,7 +1652,6 @@
                 shareOrStatusHtml = '<span class="kb-doc-status-icon" title="等待处理">⏳</span>';
             }
 
-            // ★★★ 新增：行内计时器 HTML（processing / parsing 状态） ★★★
             let timerHtml = '';
             if (isParsing || isProcessing) {
                 const uploadTimeStr = doc.upload_time || doc.uploaded_at || '';
@@ -1659,7 +1694,6 @@
         
         list.innerHTML = html;
 
-        // ★ 如果有需要计时的文档，启动全局刷新循环
         if (hasTimerDocs) {
             ensureDocTimerLoop();
         }
@@ -1944,7 +1978,7 @@
         .catch(err => { btn.disabled = false; btn.textContent = '移动'; alert('移动出错: ' + err.message); });
     }
     
-    // ★★★ 完整替换 checkProcessingDocs — 处理完成时显示耗时 ★★★
+    // ==================== 处理状态轮询 ====================
     let _hadProcessing = false;
     
     function checkProcessingDocs() {
@@ -1959,20 +1993,17 @@
                     _hadProcessing = true;
                     loadDocuments();
                 } else if (_hadProcessing) {
-                    // ★ 所有文档处理完成 → 显示完成提示
                     _hadProcessing = false;
                     loadDocuments();
 
-                    // 找出刚完成的文档，显示耗时
                     const justReady = docs.filter(d => {
                         if (d.status !== 'ready') return false;
                         const processedAt = d.processed_at ? new Date(d.processed_at).getTime() : 0;
-                        return processedAt && (Date.now() - processedAt) < 15000; // 15秒内完成的
+                        return processedAt && (Date.now() - processedAt) < 15000;
                     });
 
                     if (justReady.length > 0) {
                         const names = justReady.map(d => d.filename).join(', ');
-                        // 计算总耗时
                         let totalInfo = '';
                         if (justReady.length === 1) {
                             const d = justReady[0];
@@ -1990,7 +2021,6 @@
                         setTimeout(() => hideDropToast(), 3000);
                     }
 
-                    // ★ 停止行内计时器循环
                     if (docTimerIntervalId) {
                         clearInterval(docTimerIntervalId);
                         docTimerIntervalId = null;
@@ -1999,7 +2029,6 @@
             })
             .catch(() => {});
     }
-
     
     // ==================== 工具函数 ====================
     function getFileIcon(type) {
@@ -2013,10 +2042,20 @@
     }
     
     function formatFileSize(bytes) {
-        if (!bytes) return '0 B';
-        const units = ['B', 'KB', 'MB', 'GB'];
+        bytes = Number(bytes) || 0;
+        if (bytes <= 0) return '0 B';
+
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
         let i = 0;
-        while (bytes >= 1024 && i < units.length - 1) { bytes /= 1024; i++; }
+        while (bytes >= 1024 && i < units.length - 1) {
+            bytes /= 1024;
+            i++;
+        }
+
+        if (i === 0) {
+            return bytes.toFixed(0) + ' ' + units[i];
+        }
+
         return bytes.toFixed(1) + ' ' + units[i];
     }
     

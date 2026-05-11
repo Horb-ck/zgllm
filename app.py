@@ -1297,7 +1297,7 @@ def kg_page(course_id):
     优先按 override_mode (teacher/student/visitor)，否则按课程归属判定，无法匹配则访客。
     """
     role = session.get('role', 'student')
-    user_id = session.get('username', 'guest')
+    user_id = session.get('sis_id', 'guest')
     override_mode = request.args.get('mode')
 
     # TODO:似乎复杂度o(n)了，但是目前还能跑
@@ -1319,7 +1319,7 @@ def kg_page(course_id):
         selected = 'visitor'
 
     if selected == 'teacher':
-        target_url = url_for('app_kg.teacher_view', course_name=course_name, student_id=user_id)
+        target_url = url_for('app_kg.teacher_view', course_name=course_name, student_id=user_id) # 页面注入从学号改为统一身份认证号
     elif selected == 'student':
         target_url = url_for('app_kg.student_view', course_name=course_name, student_id=user_id)
     else:
@@ -1679,11 +1679,29 @@ except Exception as e:
 # ╚════════════════════════════════════════════════════════════════════════╝
 
 # ---- 1. KB 环境变量 ----
-os.environ.setdefault('FASTGPT_API_URL',        'http://180.85.206.30:3000/api')
-os.environ.setdefault('FASTGPT_API_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
-os.environ.setdefault('FASTGPT_APP_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
-os.environ.setdefault('FASTGPT_SHARE_ID',        'zDrmPPnh9rdi3WmnyWCFwDcb')
-os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  'http://180.85.206.30:3000')
+# os.environ.setdefault('FASTGPT_API_URL',        'http://180.85.206.30:3000/api')
+# os.environ.setdefault('FASTGPT_API_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
+# os.environ.setdefault('FASTGPT_APP_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
+# os.environ.setdefault('FASTGPT_SHARE_ID',        'zDrmPPnh9rdi3WmnyWCFwDcb')
+# os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  'http://180.85.206.30:3000')
+
+# ---- 1. KB 环境变量（从统一配置读取） 测试版fastgpt----
+from config_fastgpt import (
+    FASTGPT_API_URL   as _KB_API_URL,
+    FASTGPT_API_KEY   as _KB_API_KEY,
+    FASTGPT_APP_KEY   as _KB_APP_KEY,
+    FASTGPT_SHARE_ID  as _KB_SHARE_ID,
+    FASTGPT_SHARE_BASE_URL as _KB_SHARE_BASE,
+    WHISPER_API_URL    as _KB_WHISPER_URL,
+    VLM_MODELS, LLM_MODELS,
+)
+
+os.environ.setdefault('FASTGPT_API_URL',        _KB_API_URL)
+os.environ.setdefault('FASTGPT_API_KEY',         _KB_API_KEY)
+os.environ.setdefault('FASTGPT_APP_KEY',         _KB_APP_KEY)
+os.environ.setdefault('FASTGPT_SHARE_ID',        _KB_SHARE_ID)
+os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  _KB_SHARE_BASE)
+
 
 # ---- 1.5 多媒体解析 —— 多模型自动回退配置 ----
 # 📌 VLM 模型（视觉理解，用于图片/视频帧/PPT 页面分析）
@@ -1733,8 +1751,14 @@ LLM_MODELS = [
 ]
 
 # 📌 Whisper 语音转录（可选，视频中提取音频时使用）
+# WHISPER_CONFIG = {
+#     'api_url': 'http://180.85.206.30:3000/api/v1',
+#     'model':   'whisper-1',
+#     'api_key': os.environ.get('FASTGPT_API_KEY', ''),
+# }
+
 WHISPER_CONFIG = {
-    'api_url': 'http://180.85.206.30:3000/api/v1',
+    'api_url': _KB_WHISPER_URL,
     'model':   'whisper-1',
     'api_key': os.environ.get('FASTGPT_API_KEY', ''),
 }

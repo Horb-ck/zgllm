@@ -1,8 +1,20 @@
 # /home/zgllm/test_server/routes/kb_routes.py
 # -*- coding: utf-8 -*-
 """
-个人知识库路由模块 —— v4.1 移除本地文件存储，仅依赖 FastGPT 索引
-★ 变更：不再将用户上传的原始文件保存到本地 media_uploads 目录
+个人知识库路由模块 —— v4.4 本地原始文件兜底保存 + workflow-search 引用增强 + 引用去重
+
+★ v4.1 变更：不再将用户上传的原始文件保存到旧 media_uploads 目录
+★ v4.2 变更：修复 workflow-search 返回的 score 格式，匹配 FastGPT SearchDataResponseItemType
+★ v4.3 变更：
+    1. 新增 kb_raw_sources 本地原始文件兜底保存；
+    2. 图片/视频/PPT 等多媒体上传时，先保存原始文件；
+    3. 新增 /api/kb/raw-source/file/<doc_id> 下载接口；
+    4. 增强 /api/kb/raw-source/by-collection/<collection_id>；
+    5. 当 FastGPT 图片上传失败时，仍可通过 Flask 本地原始文件下载。
+★ v4.4 变更：
+    1. 新增 workflow-search quoteList 去重；
+    2. 清理 NBSP 等特殊空白，减少前端 KaTeX / Markdown warning；
+    3. 生成 answer_context 前先对引用列表去重，减少 React duplicate key warning。
 """
 
 import os
@@ -19,6 +31,12 @@ from datetime import datetime
 from flask import (
     Blueprint, session, render_template, request, jsonify, send_file
 )
+from config_fastgpt import (
+    FASTGPT_API_URL as _DEFAULT_FASTGPT_API_URL,
+    FASTGPT_SHARE_BASE_URL as _DEFAULT_FASTGPT_SHARE_BASE_URL,
+    FASTGPT_SHARE_ID as _DEFAULT_FASTGPT_SHARE_ID
+)
+
 
 # ================== 创建蓝图 ==================
 kb_bp = Blueprint('kb', __name__)
@@ -29,12 +47,55 @@ _db = None
 _login_required = None
 _process_user_courses = None
 _media_parser = None
-# ★ 已移除: _media_upload_dir, _server_base_url
 _fastgpt_api_url = None
 _fastgpt_api_key = None
 
-# ★ 新增：每个用户最大文档数量
-_MAX_DOCUMENTS_PER_USER = 1000
+# ================== 知识库上传/容量限制 ==================
+def _env_int(name, default):
+    try:
+        return int(os.environ.get(name, default))
+    except Exception:
+        return default
+
+
+def _mb(n):
+    return int(n) * 1024 * 1024
+
+
+_MAX_DOCUMENTS_PER_USER = _env_int('KB_MAX_DOCUMENTS_PER_USER', 200)
+_MAX_TOTAL_STORAGE_MB_PER_USER = _env_int('KB_MAX_TOTAL_STORAGE_MB', 5120)
+_MAX_TOTAL_STORAGE_BYTES_PER_USER = _mb(_MAX_TOTAL_STORAGE_MB_PER_USER)
+
+_MAX_VIDEO_MB = _env_int('KB_MAX_VIDEO_MB', 500)
+_MAX_DOCUMENT_MB = _env_int('KB_MAX_DOCUMENT_MB', 100)
+_MAX_IMAGE_MB = _env_int('KB_MAX_IMAGE_MB', 50)
+_MAX_PPT_MB = _env_int('KB_MAX_PPT_MB', 100)
+
+_MAX_VIDEO_BYTES = _mb(_MAX_VIDEO_MB)
+_MAX_DOCUMENT_BYTES = _mb(_MAX_DOCUMENT_MB)
+_MAX_IMAGE_BYTES = _mb(_MAX_IMAGE_MB)
+_MAX_PPT_BYTES = _mb(_MAX_PPT_MB)
+
+_TEXT_EXTS = {'pdf', 'txt', 'md', 'doc', 'docx'}
+_IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'}
+_VIDEO_EXTS = {'mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'webm'}
+_PPT_EXTS = {'pptx', 'ppt'}
+
+
+_RAW_SOURCE_DIR = os.environ.get(
+    'KB_RAW_SOURCE_DIR',
+    '/home/zgllm/test_server/kb_raw_sources'
+)
+
+_RAW_SOURCE_BASE_URL = os.environ.get(
+    'KB_RAW_SOURCE_BASE_URL',
+    'http://180.85.206.21:5003'
+)
+
+try:
+    os.makedirs(_RAW_SOURCE_DIR, exist_ok=True)
+except Exception as e:
+    print(f"⚠️ 创建原始文件保存目录失败: {_RAW_SOURCE_DIR}, error={e}")
 
 
 def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
@@ -49,7 +110,6 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
     _process_user_courses = process_user_courses_func
     _media_parser = media_parser
 
-    # ★ 读取 FastGPT API（优先从已有服务读取）
     _fastgpt_api_url = os.environ.get('FASTGPT_API_URL', '').rstrip('/')
     _fastgpt_api_key = os.environ.get('FASTGPT_API_KEY', '')
 
@@ -63,7 +123,7 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
             _fastgpt_api_key = getattr(_fastgpt_kb_service, 'api_key', '')
 
     if not _fastgpt_api_url:
-        _fastgpt_api_url = 'http://180.85.206.30:3000/api'
+        _fastgpt_api_url = _DEFAULT_FASTGPT_API_URL
 
     _fastgpt_base = _fastgpt_api_url.rsplit('/api', 1)[0] if '/api' in _fastgpt_api_url else _fastgpt_api_url
     if _fastgpt_api_key:
@@ -73,11 +133,11 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
     else:
         print("   ⚠️  FastGPT API Key 未找到，图片上传到 FastGPT 不可用")
 
-    # ★ 已移除: 本地 media_uploads 目录创建
-    print(f"   ★ 本地文件存储已禁用，所有文件仅索引到 FastGPT")
+    print(f"   ★ 本地原始文件兜底保存已启用: {_RAW_SOURCE_DIR}")
+    print(f"   ★ 文件仍索引到 FastGPT；多媒体原图若 FastGPT 上传失败，将通过 Flask 本地原始文件下载")
 
 
-# ================== FastGPT 图片上传（保留，用于在知识库文本中嵌入图片URL） ==================
+# ================== FastGPT 图片上传 ==================
 
 def _get_fastgpt_base():
     if '/api' in _fastgpt_api_url:
@@ -86,9 +146,6 @@ def _get_fastgpt_base():
 
 
 def _upload_image_to_fastgpt(file_content, filename, dataset_id=None):
-    """
-    尝试多种方式将图片上传到 FastGPT，获取可访问 URL
-    """
     if not _fastgpt_api_key:
         return {'success': False, 'url': '', 'error': 'FastGPT API Key 未配置'}
 
@@ -97,7 +154,6 @@ def _upload_image_to_fastgpt(file_content, filename, dataset_id=None):
     mime = mimetypes.guess_type(filename)[0] or 'image/jpeg'
     errors = []
 
-    # === 方式1: /common/file/upload (bucketName=chat) ===
     try:
         url = f"{_fastgpt_api_url}/common/file/upload"
         files = {'file': (filename, io.BytesIO(file_content), mime)}
@@ -111,19 +167,28 @@ def _upload_image_to_fastgpt(file_content, filename, dataset_id=None):
             if fid:
                 img_url = f"{fastgpt_base}/api/common/file/read/{fid}"
                 print(f"      ✅ 方式1成功: {img_url}")
-                return {'success': True, 'url': img_url, 'file_id': fid}
+                return {
+                    'success': True,
+                    'url': img_url,
+                    'file_id': fid,
+                    'bucket_name': 'chat'
+                }
             u = _extract_url(body)
             if u:
                 if u.startswith('/'):
                     u = fastgpt_base + u
-                return {'success': True, 'url': u}
+                return {
+                    'success': True,
+                    'url': u,
+                    'file_id': '',
+                    'bucket_name': 'chat'
+                }
             errors.append(f"chat bucket: 无file_id ({_safe_json(body)})")
         else:
             errors.append(f"chat bucket: HTTP {resp.status_code} ({resp.text[:150]})")
     except Exception as e:
         errors.append(f"chat bucket 异常: {e}")
 
-    # === 方式2: /common/file/upload (bucketName=dataset, 带 datasetId) ===
     if dataset_id:
         try:
             url = f"{_fastgpt_api_url}/common/file/upload"
@@ -139,19 +204,28 @@ def _upload_image_to_fastgpt(file_content, filename, dataset_id=None):
                 if fid:
                     img_url = f"{fastgpt_base}/api/common/file/read/{fid}"
                     print(f"      ✅ 方式2成功: {img_url}")
-                    return {'success': True, 'url': img_url, 'file_id': fid}
+                    return {
+                        'success': True,
+                        'url': img_url,
+                        'file_id': fid,
+                        'bucket_name': 'dataset'
+                    }
                 u = _extract_url(body)
                 if u:
                     if u.startswith('/'):
                         u = fastgpt_base + u
-                    return {'success': True, 'url': u}
+                    return {
+                        'success': True,
+                        'url': u,
+                        'file_id': '',
+                        'bucket_name': 'dataset'
+                    }
                 errors.append(f"dataset bucket: 无file_id ({_safe_json(body)})")
             else:
                 errors.append(f"dataset bucket: HTTP {resp.status_code} ({resp.text[:150]})")
         except Exception as e:
             errors.append(f"dataset bucket 异常: {e}")
 
-    # === 方式3: /common/file/uploadImage ===
     try:
         url = f"{_fastgpt_api_url}/common/file/uploadImage"
         files = {'file': (filename, io.BytesIO(file_content), mime)}
@@ -166,18 +240,27 @@ def _upload_image_to_fastgpt(file_content, filename, dataset_id=None):
                 if u.startswith('/'):
                     u = fastgpt_base + u
                 print(f"      ✅ 方式3成功: {u}")
-                return {'success': True, 'url': u}
+                return {
+                    'success': True,
+                    'url': u,
+                    'file_id': '',
+                    'bucket_name': 'chat'
+                }
             fid = _extract_file_id(body)
             if fid:
                 img_url = f"{fastgpt_base}/api/common/file/read/{fid}"
-                return {'success': True, 'url': img_url, 'file_id': fid}
+                return {
+                    'success': True,
+                    'url': img_url,
+                    'file_id': fid,
+                    'bucket_name': 'chat'
+                }
             errors.append(f"uploadImage: 无URL ({_safe_json(body)})")
         else:
             errors.append(f"uploadImage: HTTP {resp.status_code} ({resp.text[:150]})")
     except Exception as e:
         errors.append(f"uploadImage 异常: {e}")
 
-    # === 方式4: 无 bucketName ===
     try:
         url = f"{_fastgpt_api_url}/common/file/upload"
         files = {'file': (filename, io.BytesIO(file_content), mime)}
@@ -189,7 +272,12 @@ def _upload_image_to_fastgpt(file_content, filename, dataset_id=None):
             if fid:
                 img_url = f"{fastgpt_base}/api/common/file/read/{fid}"
                 print(f"      ✅ 方式4成功: {img_url}")
-                return {'success': True, 'url': img_url, 'file_id': fid}
+                return {
+                    'success': True,
+                    'url': img_url,
+                    'file_id': fid,
+                    'bucket_name': ''
+                }
             errors.append(f"无bucket: 无file_id ({_safe_json(body)})")
         else:
             errors.append(f"无bucket: HTTP {resp.status_code} ({resp.text[:150]})")
@@ -237,6 +325,221 @@ def _safe_json(body):
 
 # ================== 辅助函数 ==================
 
+def _safe_int(v, default=0):
+    try:
+        if v is None:
+            return default
+        return int(v)
+    except Exception:
+        return default
+
+
+def _format_size(num_bytes):
+    num_bytes = _safe_int(num_bytes)
+    if num_bytes >= 1024 * 1024 * 1024:
+        return f"{num_bytes / (1024 * 1024 * 1024):.2f}GB"
+    if num_bytes >= 1024 * 1024:
+        return f"{num_bytes / (1024 * 1024):.2f}MB"
+    if num_bytes >= 1024:
+        return f"{num_bytes / 1024:.2f}KB"
+    return f"{num_bytes}B"
+
+
+def _get_upload_file_limit(ext):
+    ext = (ext or '').lower().strip().lstrip('.')
+
+    if ext in _VIDEO_EXTS:
+        return _MAX_VIDEO_BYTES, f"视频文件最大支持 {_MAX_VIDEO_MB}MB"
+    if ext in _IMAGE_EXTS:
+        return _MAX_IMAGE_BYTES, f"图片文件最大支持 {_MAX_IMAGE_MB}MB"
+    if ext in _PPT_EXTS:
+        return _MAX_PPT_BYTES, f"PPT 文件最大支持 {_MAX_PPT_MB}MB"
+    if ext in _TEXT_EXTS:
+        return _MAX_DOCUMENT_BYTES, f"文档文件最大支持 {_MAX_DOCUMENT_MB}MB"
+
+    return _MAX_DOCUMENT_BYTES, f"该类型文件最大支持 {_MAX_DOCUMENT_MB}MB"
+
+
+def _get_document_storage_size(doc):
+    if not isinstance(doc, dict):
+        return 0
+
+    sizes = []
+
+    raw_source_size = _safe_int(doc.get('raw_source_size'), 0)
+    if raw_source_size > 0:
+        sizes.append(raw_source_size)
+
+    file_size = _safe_int(doc.get('file_size'), 0)
+    if file_size > 0:
+        sizes.append(file_size)
+
+    raw_path = doc.get('raw_source_path') or ''
+    try:
+        if raw_path and os.path.exists(raw_path):
+            sizes.append(os.path.getsize(raw_path))
+    except Exception:
+        pass
+
+    return max(sizes) if sizes else 0
+
+
+def _get_user_quota_usage(username):
+    usage = {
+        'document_count': 0,
+        'used_bytes': 0,
+        'max_documents': _MAX_DOCUMENTS_PER_USER,
+        'max_bytes': _MAX_TOTAL_STORAGE_BYTES_PER_USER,
+    }
+
+    if _db is None:
+        print("⚠️ MongoDB _db 未初始化，无法统计上传配额")
+        return usage
+
+    try:
+        usage['document_count'] = _db.kb_documents.count_documents({
+            'username': username,
+            'status': {'$nin': ['failed', 'deleted']}
+        })
+    except Exception as e:
+        print(f"⚠️ 文档数量统计失败: {e}")
+
+    try:
+        docs = _db.kb_documents.find(
+            {
+                'username': username,
+                'status': {'$ne': 'deleted'}
+            },
+            {
+                'file_size': 1,
+                'raw_source_size': 1,
+                'raw_source_path': 1
+            }
+        )
+
+        total = 0
+        for doc in docs:
+            total += _get_document_storage_size(doc)
+
+        usage['used_bytes'] = total
+
+    except Exception as e:
+        print(f"⚠️ 文档容量统计失败: {e}")
+
+    return usage
+
+
+def _check_user_upload_quota(username, incoming_size):
+    incoming_size = _safe_int(incoming_size)
+    usage = _get_user_quota_usage(username)
+
+    current_count = usage.get('document_count', 0)
+    used_bytes = usage.get('used_bytes', 0)
+
+    if current_count >= _MAX_DOCUMENTS_PER_USER:
+        return {
+            'ok': False,
+            'error': (
+                f"已达到文档数量上限（{_MAX_DOCUMENTS_PER_USER} 个）。"
+                f"当前已有 {current_count} 个文件，请删除部分文件后再上传。"
+            ),
+            'usage': usage
+        }
+
+    if used_bytes + incoming_size > _MAX_TOTAL_STORAGE_BYTES_PER_USER:
+        remaining = max(_MAX_TOTAL_STORAGE_BYTES_PER_USER - used_bytes, 0)
+        return {
+            'ok': False,
+            'error': (
+                f"已超过个人知识库总容量上限。"
+                f"当前已用 {_format_size(used_bytes)}，"
+                f"总上限 {_format_size(_MAX_TOTAL_STORAGE_BYTES_PER_USER)}，"
+                f"本次文件大小 {_format_size(incoming_size)}，"
+                f"剩余可用 {_format_size(remaining)}。"
+                f"请删除部分文件后再上传。"
+            ),
+            'usage': usage
+        }
+
+    usage['incoming_size'] = incoming_size
+    usage['after_upload_bytes'] = used_bytes + incoming_size
+
+    print(
+        f"✅ 上传配额检查通过: "
+        f"user={username}, "
+        f"count={current_count}/{_MAX_DOCUMENTS_PER_USER}, "
+        f"used={_format_size(used_bytes)}/{_format_size(_MAX_TOTAL_STORAGE_BYTES_PER_USER)}, "
+        f"incoming={_format_size(incoming_size)}"
+    )
+
+    return {
+        'ok': True,
+        'usage': usage
+    }
+
+
+def _is_path_inside(child_path, parent_path):
+    try:
+        child_path = os.path.abspath(child_path)
+        parent_path = os.path.abspath(parent_path)
+        return child_path == parent_path or child_path.startswith(parent_path + os.sep)
+    except Exception:
+        return False
+
+
+def _get_file_ext(filename):
+    if not filename or '.' not in filename:
+        return ''
+    ext = filename.rsplit('.', 1)[-1].lower().strip()
+    if not re.fullmatch(r'[a-zA-Z0-9]{1,10}', ext):
+        return ''
+    return f'.{ext}'
+
+
+def _build_raw_source_url(doc_id):
+    return f"{_RAW_SOURCE_BASE_URL.rstrip('/')}/api/kb/raw-source/file/{doc_id}"
+
+
+def _save_raw_source_file(file_content, filename, username, doc_id):
+    if not file_content:
+        return {
+            'raw_source_saved': False,
+            'raw_source_error': 'empty file content'
+        }
+
+    ext = _get_file_ext(filename)
+    base_dir = os.path.abspath(_RAW_SOURCE_DIR)
+    user_dir = os.path.abspath(os.path.join(base_dir, str(username)))
+
+    if not _is_path_inside(user_dir, base_dir):
+        raise ValueError('invalid raw source user path')
+
+    os.makedirs(user_dir, exist_ok=True)
+
+    save_name = f"{doc_id}{ext}"
+    save_path = os.path.abspath(os.path.join(user_dir, save_name))
+
+    if not _is_path_inside(save_path, base_dir):
+        raise ValueError('invalid raw source file path')
+
+    with open(save_path, 'wb') as f:
+        f.write(file_content)
+
+    raw_url = _build_raw_source_url(doc_id)
+
+    print(f"   ✅ 原始文件已保存: {save_path}")
+    print(f"   🔗 原始文件下载地址: {raw_url}")
+
+    return {
+        'raw_source_saved': True,
+        'raw_source_path': save_path,
+        'raw_source_url': raw_url,
+        'raw_source_filename': filename,
+        'raw_source_size': len(file_content),
+        'raw_source_saved_at': datetime.now()
+    }
+
+
 def _get_user_info():
     username = session.get('username', '')
     name = session.get('name', username)
@@ -266,11 +569,18 @@ def _get_kb_stats(username):
     return {'documents': 0, 'ready_documents': 0, 'chunks': 0, 'queries': 0, 'rag_enabled': False}
 
 
-# ★ 已简化: 移除 has_original_file / media_url / public_media_url 字段
 def _format_document(doc):
     shared_at = doc.get('shared_at')
     if shared_at and hasattr(shared_at, 'isoformat'):
         shared_at = shared_at.isoformat()
+
+    original_url = (
+        doc.get('fastgpt_image_url')
+        or doc.get('embedded_image_url')
+        or doc.get('raw_source_url')
+        or ''
+    )
+
     return {
         'doc_id': doc.get('doc_id', ''),
         'filename': doc.get('filename', '未知文件'),
@@ -289,9 +599,15 @@ def _format_document(doc):
         'parsed_from_media': doc.get('parsed_from_media', False),
         'parse_stage': doc.get('parse_stage', ''),
         'parse_progress': doc.get('parse_progress', 0),
-        # ★ 图片预览改为使用 FastGPT URL（如有）
-        'has_original_file': bool(doc.get('fastgpt_image_url')),
-        'media_url': doc.get('fastgpt_image_url', ''),
+        'has_original_file': bool(
+            doc.get('fastgpt_image_url')
+            or doc.get('embedded_image_url')
+            or doc.get('raw_source_url')
+            or doc.get('raw_source_path')
+        ),
+        'media_url': original_url,
+        'raw_source_saved': bool(doc.get('raw_source_saved')),
+        'raw_source_url': doc.get('raw_source_url', ''),
     }
 
 
@@ -304,9 +620,6 @@ def _require_login(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
-
-
-# ★ 已删除: _generate_public_token 函数
 
 
 # ================== 卡住文档检测 ==================
@@ -484,14 +797,41 @@ def api_kb_stats():
                         'documents': 0, 'chunks': 0, 'queries': 0, 'rag_enabled': False})
     try:
         stats = _get_kb_stats(username)
+        quota_usage = _get_user_quota_usage(username)
+
+        stats['quota'] = {
+            'document_count': quota_usage.get('document_count', 0),
+            'max_documents': quota_usage.get('max_documents', _MAX_DOCUMENTS_PER_USER),
+            'used_bytes': quota_usage.get('used_bytes', 0),
+            'used_display': _format_size(quota_usage.get('used_bytes', 0)),
+            'max_bytes': quota_usage.get('max_bytes', _MAX_TOTAL_STORAGE_BYTES_PER_USER),
+            'max_display': _format_size(quota_usage.get('max_bytes', _MAX_TOTAL_STORAGE_BYTES_PER_USER)),
+            'remaining_bytes': max(
+                quota_usage.get('max_bytes', _MAX_TOTAL_STORAGE_BYTES_PER_USER)
+                - quota_usage.get('used_bytes', 0),
+                0
+            ),
+            'remaining_display': _format_size(max(
+                quota_usage.get('max_bytes', _MAX_TOTAL_STORAGE_BYTES_PER_USER)
+                - quota_usage.get('used_bytes', 0),
+                0
+            )),
+            'limits': {
+                'document_mb': _MAX_DOCUMENT_MB,
+                'ppt_mb': _MAX_PPT_MB,
+                'image_mb': _MAX_IMAGE_MB,
+                'video_mb': _MAX_VIDEO_MB,
+            }
+        }
+
         return jsonify({'success': True, **stats})
+
     except Exception as e:
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e),
                         'documents': 0, 'chunks': 0, 'queries': 0, 'rag_enabled': False})
 
 
-# ★★★ 重写: 上传接口 —— 移除所有本地文件保存逻辑 ★★★
 @kb_bp.route('/api/kb/upload', methods=['POST'])
 @_require_login
 def api_kb_upload():
@@ -511,10 +851,11 @@ def api_kb_upload():
     filename = file.filename
     ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
 
-    text_extensions = {'pdf', 'txt', 'md', 'doc', 'docx'}
+    text_extensions = _TEXT_EXTS
     media_extensions = set()
     if _media_parser:
         media_extensions = _media_parser.ALL_EXTENSIONS
+
     all_allowed = text_extensions | media_extensions
 
     if ext not in all_allowed:
@@ -527,44 +868,53 @@ def api_kb_upload():
     file_size = file.tell()
     file.seek(0)
 
-    # ★★★ 改动：更细粒度的文件大小限制 ★★★
-    VIDEO_EXTS = {'mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'webm'}
-    IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'}
-    PPT_EXTS   = {'pptx', 'ppt'}
-
-    if ext in VIDEO_EXTS:
-        max_size = 500 * 1024 * 1024   # 视频 500MB
-    elif ext in IMAGE_EXTS:
-        max_size = 50 * 1024 * 1024    # 图片 50MB
-    elif ext in PPT_EXTS:
-        max_size = 100 * 1024 * 1024   # PPT 100MB
-    elif ext in text_extensions:
-        max_size = 100 * 1024 * 1024   # 文档 100MB
-    else:
-        max_size = 100 * 1024 * 1024   # 默认 100MB
+    max_size, limit_message = _get_upload_file_limit(ext)
 
     if file_size > max_size:
         return jsonify({
             'success': False,
-            'error': f'文件过大，最大支持 {max_size // (1024 * 1024)}MB'
+            'error': (
+                f'文件过大：当前文件 {_format_size(file_size)}，'
+                f'{limit_message}'
+            ),
+            'limit': {
+                'file_size': file_size,
+                'file_size_display': _format_size(file_size),
+                'max_size': max_size,
+                'max_size_display': _format_size(max_size),
+                'ext': ext
+            }
         })
 
-    # ★★★ 新增：文档数量上限检查（1000 个） ★★★
     try:
-        current_doc_count = _db.kb_documents.count_documents({
-            'username': username,
-            'status': {'$nin': ['failed']}       # 排除已失败的
-        })
-        if current_doc_count >= _MAX_DOCUMENTS_PER_USER:
+        quota_check = _check_user_upload_quota(username, file_size)
+
+        if not quota_check.get('ok'):
+            usage = quota_check.get('usage', {})
             return jsonify({
                 'success': False,
-                'error': f'已达到文档数量上限（{_MAX_DOCUMENTS_PER_USER} 个），'
-                         f'当前 {current_doc_count} 个，请删除部分文档后再上传'
+                'error': quota_check.get('error', '已超过个人知识库限制'),
+                'quota': {
+                    'document_count': usage.get('document_count', 0),
+                    'max_documents': usage.get('max_documents', _MAX_DOCUMENTS_PER_USER),
+                    'used_bytes': usage.get('used_bytes', 0),
+                    'used_display': _format_size(usage.get('used_bytes', 0)),
+                    'max_bytes': usage.get('max_bytes', _MAX_TOTAL_STORAGE_BYTES_PER_USER),
+                    'max_display': _format_size(usage.get('max_bytes', _MAX_TOTAL_STORAGE_BYTES_PER_USER)),
+                    'incoming_size': file_size,
+                    'incoming_display': _format_size(file_size),
+                }
             })
-    except Exception as e:
-        print(f"⚠️ 文档数量检查失败（不影响上传）: {e}")
 
-    # ── 多媒体解析分支 ──
+    except Exception as e:
+        print(f"⚠️ 上传配额检查失败，为安全起见拒绝上传: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': '上传配额检查失败，请稍后重试',
+            'detail': str(e)
+        })
+
     if ext in media_extensions and _media_parser:
         try:
             file_content = file.read()
@@ -575,31 +925,46 @@ def api_kb_upload():
             doc_id = f"doc_{username}_{_h}"
             media_type_val = _media_parser.get_media_type(filename)
 
-            # ★ 提前获取 dataset_id（给异步线程用）
             captured_dataset_id = _get_user_dataset_id(username)
 
-            # ★ MongoDB 创建记录 —— 不再写入本地文件相关字段
+            try:
+                raw_source_info = _save_raw_source_file(
+                    file_content=file_content,
+                    filename=filename,
+                    username=username,
+                    doc_id=doc_id
+                )
+            except Exception as e:
+                traceback.print_exc()
+                raw_source_info = {
+                    'raw_source_saved': False,
+                    'raw_source_error': str(e)
+                }
+                print(f"   ⚠️ 原始文件本地保存失败: {e}")
+
+            init_doc_fields = {
+                'doc_id': doc_id,
+                'username': username,
+                'filename': filename,
+                'file_type': ext,
+                'dataset_id': captured_dataset_id,
+                'folder_id': folder_id,
+                'status': 'parsing',
+                'upload_time': datetime.now(),
+                'file_size': file_size,
+                'parsed_from_media': True,
+                'media_type': media_type_val,
+                'shared': False,
+            }
+
+            init_doc_fields.update(raw_source_info)
+
             _db.kb_documents.update_one(
                 {'doc_id': doc_id},
-                {'$set': {
-                    'doc_id': doc_id,
-                    'username': username,
-                    'filename': filename,
-                    'file_type': ext,
-                    'folder_id': folder_id,
-                    'status': 'parsing',
-                    'upload_time': datetime.now(),
-                    'file_size': file_size,
-                    'parsed_from_media': True,
-                    'media_type': media_type_val,
-                    'shared': False,
-                    # ★ 已移除: has_original_file, media_file_path,
-                    #           media_url, public_media_url, public_media_token
-                }},
+                {'$set': init_doc_fields},
                 upsert=True
             )
 
-            # ★★★ 异步解析（不保存本地文件） ★★★
             def _async_parse():
                 try:
                     def _on_progress(stage, pct):
@@ -636,7 +1001,6 @@ def api_kb_upload():
                         )
                         return
 
-                    # ★★★ 图片：仅尝试上传到 FastGPT 获取URL ★★★
                     embedded_img_url = ''
 
                     if media_type_val == 'image':
@@ -646,19 +1010,20 @@ def api_kb_upload():
                         if fastgpt_result.get('success'):
                             embedded_img_url = fastgpt_result['url']
                             print(f"   ✅ 图片已上传到 FastGPT: {embedded_img_url}")
+
                             _db.kb_documents.update_one(
                                 {'doc_id': doc_id},
                                 {'$set': {
                                     'fastgpt_image_url': embedded_img_url,
                                     'image_url_source': 'fastgpt',
+                                    'fastgpt_image_file_id': fastgpt_result.get('file_id', ''),
+                                    'fastgpt_image_bucket': fastgpt_result.get('bucket_name', ''),
                                 }}
                             )
                         else:
                             print(f"   ⚠️ 图片上传到 FastGPT 失败: "
                                   f"{fastgpt_result.get('error', '?')[:120]}")
-                            # ★ 已移除: 方案B(本地URL) 和 方案C(构建URL)
 
-                    # 嵌入图片链接到知识库文本
                     if embedded_img_url and media_type_val == 'image':
                         image_header = (
                             f"## 📎 图片文件：{filename}\n\n"
@@ -670,7 +1035,6 @@ def api_kb_upload():
                         parsed_text = image_header + parsed_text
                         print(f"   🖼️ 已嵌入图片链接 (来源: fastgpt)")
 
-                    # 存到 MongoDB
                     _db.kb_documents.update_one(
                         {'doc_id': doc_id},
                         {'$set': {
@@ -680,13 +1044,41 @@ def api_kb_upload():
                         }}
                     )
 
-                    # 上传到 FastGPT 知识库
+                    metadata_for_upload = dict(metadata) if isinstance(metadata, dict) else {
+                        'raw_metadata': metadata
+                    }
+
+                    metadata_for_upload.update({
+                        'doc_id': doc_id,
+                        'source_doc_id': doc_id,
+                        'original_doc_id': doc_id,
+
+                        'username': username,
+                        'filename': filename,
+                        'file_type': ext,
+                        'folder_id': folder_id,
+                        'dataset_id': captured_dataset_id,
+
+                        'media_type': media_type_val,
+                        'parsed_from_media': True,
+
+                        'file_size': file_size,
+                        'raw_source_size': raw_source_info.get('raw_source_size', file_size),
+                        'raw_source_path': raw_source_info.get('raw_source_path', ''),
+                        'raw_source_url': raw_source_info.get('raw_source_url', ''),
+                        'raw_source_saved': raw_source_info.get('raw_source_saved', False),
+                        'raw_source_filename': raw_source_info.get('raw_source_filename', filename),
+
+                        'embedded_image_url': embedded_img_url,
+                        'fastgpt_image_url': embedded_img_url,
+                    })
+
                     upload_result = _fastgpt_kb_service.upload_parsed_text(
                         username=username,
                         text_content=parsed_text,
                         original_filename=filename,
                         folder_id=folder_id,
-                        metadata=metadata,
+                        metadata=metadata_for_upload,
                     )
 
                     if not upload_result.get('success'):
@@ -703,34 +1095,46 @@ def api_kb_upload():
                     chunk_count = upload_result.get('chunk_count', 0)
 
                     if not collection_id:
-                        dup = _db.kb_documents.find_one({
-                            'username': username, 'filename': filename,
-                            'doc_id': {'$ne': doc_id},
-                            'collection_id': {'$exists': True, '$ne': ''},
-                        }, sort=[('upload_time', -1)])
-                        if dup:
-                            collection_id = dup.get('collection_id', '')
-                            chunk_count = chunk_count or dup.get('chunk_count', 0)
+                        _db.kb_documents.update_one(
+                            {
+                                'username': username,
+                                'doc_id': doc_id
+                            },
+                            {'$set': {
+                                'status': 'failed',
+                                'error_message': '解析文本已上传，但未返回 collection_id',
+                            }}
+                        )
+                        return
 
                     update_fields = {
                         'status': 'processing',
+                        'collection_id': collection_id,
                         'chunk_count': chunk_count,
                         'data_count': chunk_count,
+                        'updated_at': datetime.now(),
                     }
-                    if collection_id:
-                        update_fields['collection_id'] = collection_id
 
                     _db.kb_documents.update_one(
-                        {'doc_id': doc_id},
+                        {
+                            'username': username,
+                            'doc_id': doc_id
+                        },
                         {'$set': update_fields}
                     )
 
-                    if collection_id:
-                        _db.kb_documents.delete_many({
-                            'username': username,
-                            'collection_id': collection_id,
-                            'doc_id': {'$ne': doc_id},
-                        })
+                    delete_result = _db.kb_documents.delete_many({
+                        'username': username,
+                        'collection_id': collection_id,
+                        'doc_id': {'$ne': doc_id},
+                    })
+
+                    if delete_result.deleted_count > 0:
+                        print(
+                            f"   🧹 清理重复临时文档: "
+                            f"collection_id={collection_id}, "
+                            f"deleted={delete_result.deleted_count}"
+                        )
 
                     print(f"✅ 异步解析完成: {filename} → {chunk_count} 块")
 
@@ -763,7 +1167,6 @@ def api_kb_upload():
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)})
 
-    # ── 传统文本上传 ──
     try:
         result = _fastgpt_kb_service.upload_file(username, file, file.filename, folder_id)
         return jsonify(result)
@@ -934,6 +1337,438 @@ def api_kb_smart_chat():
         return jsonify({'success': False, 'error': str(e)})
 
 
+def _normalize_workflow_score(score):
+    if isinstance(score, (list, tuple)):
+        if len(score) > 0:
+            if isinstance(score[0], dict):
+                try:
+                    return float(score[0].get('value', 0))
+                except Exception:
+                    return 0.0
+            try:
+                return float(score[0])
+            except Exception:
+                return 0.0
+        return 0.0
+
+    try:
+        return float(score) if score else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _clean_quote_text(text):
+    if text is None:
+        return ''
+
+    return (
+        str(text)
+        .replace('\u00a0', ' ')
+        .replace('\u202f', ' ')
+        .replace('\ufeff', '')
+    )
+
+
+def _normalize_quote_content_for_dedupe(text):
+    s = _clean_quote_text(text)
+
+    s = re.sub(r'^【文件】.*?【正文片段】\s*', '', s, flags=re.S)
+    s = re.sub(r'^【文件名命中】.*?【正文片段\s*\d*】\s*', '', s, flags=re.S)
+    s = re.sub(r'引用ID：[a-fA-F0-9]{24}', '', s)
+    s = re.sub(r'\s+', '', s)
+
+    return s[:500]
+
+
+def _dedupe_quote_list(quote_list):
+    seen_ids = set()
+    seen_content = set()
+    deduped = []
+
+    for item in quote_list or []:
+        if not isinstance(item, dict):
+            continue
+
+        item = item.copy()
+
+        qid = str(item.get('id') or item.get('_id') or '').strip()
+
+        source = (
+            item.get('sourceName')
+            or item.get('source')
+            or item.get('filename')
+            or ''
+        )
+        source = _clean_quote_text(source)
+
+        if 'sourceName' in item:
+            item['sourceName'] = source
+        if 'source' in item:
+            item['source'] = source
+
+        item['q'] = _clean_quote_text(item.get('q', ''))
+        item['a'] = _clean_quote_text(item.get('a', ''))
+
+        if qid:
+            if qid in seen_ids:
+                continue
+            seen_ids.add(qid)
+
+        content_sig = (
+            source,
+            _normalize_quote_content_for_dedupe(
+                (item.get('q') or '') + '\n' + (item.get('a') or '')
+            )
+        )
+
+        if content_sig[1] and content_sig in seen_content:
+            continue
+
+        seen_content.add(content_sig)
+        deduped.append(item)
+
+    return deduped
+
+
+def _is_fastgpt_object_id(val):
+    if not val:
+        return False
+    return bool(re.fullmatch(r'[a-fA-F0-9]{24}', str(val).strip()))
+
+
+def _extract_fastgpt_chunk_id(item):
+    if not isinstance(item, dict):
+        return ''
+
+    candidates = []
+
+    for key in (
+        '_id',
+        'id',
+        'dataId',
+        'data_id',
+        'datasetDataId',
+        'datasetData_id',
+        'datasetDataID'
+    ):
+        val = item.get(key)
+        if val:
+            candidates.append(str(val))
+
+    for parent_key in (
+        'data',
+        'datasetData',
+        'datasetDataItem',
+        'rawData',
+        'item'
+    ):
+        sub = item.get(parent_key)
+        if isinstance(sub, dict):
+            for key in (
+                '_id',
+                'id',
+                'dataId',
+                'data_id',
+                'datasetDataId',
+                'datasetData_id'
+            ):
+                val = sub.get(key)
+                if val:
+                    candidates.append(str(val))
+
+    for val in candidates:
+        if _is_fastgpt_object_id(val):
+            return val
+
+    return candidates[0] if candidates else ''
+
+
+def _looks_like_filename_only_hit(text, source=''):
+    s = (text or '').strip()
+    if not s:
+        return False
+
+    head = s[:200]
+
+    filename_hit_signals = [
+        '文件：',
+        '[文件：',
+        '共',
+        '知识块',
+        '文件名命中',
+    ]
+
+    if len(s) < 800 and ('文件' in head and '知识块' in head):
+        return True
+
+    if len(s) < 500 and any(x in head for x in filename_hit_signals):
+        return True
+
+    return False
+
+
+def _extract_list_from_fastgpt_response(body):
+    if isinstance(body, list):
+        return body
+
+    if not isinstance(body, dict):
+        return []
+
+    data = body.get('data', body)
+
+    if isinstance(data, list):
+        return data
+
+    if isinstance(data, dict):
+        for key in ('list', 'data', 'records', 'items', 'rows'):
+            val = data.get(key)
+            if isinstance(val, list):
+                return val
+
+    for key in ('list', 'data', 'records', 'items', 'rows'):
+        val = body.get(key)
+        if isinstance(val, list):
+            return val
+
+    return []
+
+
+def _fetch_collection_chunks_from_fastgpt(collection_id, dataset_id='', limit=5):
+    if not collection_id or not _fastgpt_api_url or not _fastgpt_api_key:
+        return []
+
+    url = f"{_fastgpt_api_url}/core/dataset/data/list"
+    headers = {
+        'Authorization': f'Bearer {_fastgpt_api_key}',
+        'Content-Type': 'application/json'
+    }
+
+    base_payload = {
+        'collectionId': collection_id
+    }
+    if dataset_id:
+        base_payload['datasetId'] = dataset_id
+
+    payload_candidates = [
+        {**base_payload, 'pageNum': 1, 'pageSize': limit},
+        {**base_payload, 'offset': 0, 'pageSize': limit},
+        {**base_payload, 'limit': limit},
+        {**base_payload, 'pageSize': limit}
+    ]
+
+    for payload in payload_candidates:
+        try:
+            resp = http_requests.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=8
+            )
+
+            if resp.status_code != 200:
+                continue
+
+            body = resp.json()
+            items = _extract_list_from_fastgpt_response(body)
+
+            chunks = []
+            for idx, it in enumerate(items[:limit]):
+                if not isinstance(it, dict):
+                    continue
+
+                q = (
+                    it.get('q')
+                    or it.get('content')
+                    or it.get('text')
+                    or it.get('question')
+                    or ''
+                )
+                a = it.get('a') or it.get('answer') or ''
+
+                q = _clean_quote_text(q).strip()
+                a = _clean_quote_text(a).strip()
+
+                if not q and not a:
+                    continue
+
+                data_id = _extract_fastgpt_chunk_id(it)
+
+                if not data_id:
+                    print(f"   ⚠️ 回查到 chunk 但未提取到真实 data_id: keys={list(it.keys())}")
+
+                chunks.append({
+                    'id': str(data_id) if data_id else '',
+                    'q': q,
+                    'a': a,
+                    'chunkIndex': it.get('chunkIndex', idx)
+                })
+
+            if chunks:
+                chunk_ids = [c.get('id', '') for c in chunks]
+                print(f"   ✅ 文件名命中回查 FastGPT chunk 成功: collection={collection_id[:8]}..., chunks={len(chunks)}")
+                print(f"   🔎 回查 chunk 引用ID列表: {chunk_ids}")
+                return chunks
+
+        except Exception as e:
+            print(f"   ⚠️ 回查 FastGPT chunk 失败 payload={payload}: {str(e)[:120]}")
+
+    return []
+
+
+def _get_local_parsed_text_by_collection(student_id, collection_id, source_name='', limit_chars=2500):
+    try:
+        query = {
+            'username': student_id,
+            'collection_id': collection_id
+        }
+
+        doc = _db.kb_documents.find_one(query)
+
+        if not doc and source_name:
+            doc = _db.kb_documents.find_one({
+                'username': student_id,
+                'filename': source_name
+            })
+
+        if not doc:
+            return ''
+
+        text = (
+            doc.get('parsed_text')
+            or doc.get('content')
+            or doc.get('text')
+            or ''
+        )
+
+        text = _clean_quote_text(text).strip()
+        if not text:
+            return ''
+
+        return text[:limit_chars]
+
+    except Exception as e:
+        print(f"   ⚠️ 本地 parsed_text 回退失败: {str(e)[:120]}")
+        return ''
+
+
+def _enrich_filename_hit_content(student_id, source, collection_id, dataset_id, original_q):
+    source = _clean_quote_text(source or '未知文件')
+    original_q = _clean_quote_text(original_q or '')
+
+    chunks = _fetch_collection_chunks_from_fastgpt(
+        collection_id=collection_id,
+        dataset_id=dataset_id,
+        limit=5
+    )
+
+    if chunks:
+        parts = [
+            f"【文件名命中】{source}",
+            f"【说明】用户问题命中了该文件名，已自动补充该文件下的正文知识块。"
+        ]
+
+        for idx, ch in enumerate(chunks, 1):
+            chunk_text = ch.get('q', '')
+            if ch.get('a'):
+                chunk_text += "\n" + ch.get('a', '')
+
+            chunk_text = _clean_quote_text(chunk_text).strip()
+            cite_id = ch.get('id', '')
+
+            if chunk_text:
+                parts.append(
+                    f"\n【正文片段 {idx}】\n"
+                    f"引用ID：{cite_id}\n"
+                    f"{chunk_text[:1200]}"
+                )
+
+        print(f"   🔎 文件名命中增强后的 chunk IDs: {[c.get('id', '') for c in chunks]}")
+
+        return {
+            'text': '\n'.join(parts),
+            'first_data_id': chunks[0].get('id', ''),
+            'chunks': chunks
+        }
+
+    local_text = _get_local_parsed_text_by_collection(
+        student_id=student_id,
+        collection_id=collection_id,
+        source_name=source,
+        limit_chars=2500
+    )
+
+    if local_text:
+        return {
+            'text': (
+                f"【文件名命中】{source}\n"
+                f"【说明】用户问题命中了该文件名，以下为本地解析内容片段。\n\n"
+                f"{local_text}"
+            ),
+            'first_data_id': '',
+            'chunks': []
+        }
+
+    return {
+        'text': (
+            f"【文件名命中】{source}\n"
+            f"【说明】用户问题命中了该文件，但暂未回查到更多正文 chunk。"
+            f"请基于文件名和已有摘要回答，严禁回答未找到。\n\n"
+            f"【已有摘要】\n{original_q}"
+        ),
+        'first_data_id': '',
+        'chunks': []
+    }
+
+
+def _build_workflow_answer_context(query, quote_list):
+    query = _clean_quote_text(query)
+
+    if not quote_list:
+        return (
+            "【检索状态】found=false\n"
+            "【result_count】0\n"
+            "【must_answer】false\n"
+            "【说明】个人知识库未返回相关结果。\n"
+        )
+
+    file_names = []
+    for q in quote_list:
+        name = _clean_quote_text(q.get('sourceName') or q.get('source') or '')
+        if name and name not in file_names:
+            file_names.append(name)
+
+    lines = [
+        "【检索状态】found=true",
+        f"【result_count】{len(quote_list)}",
+        "【must_answer】true",
+        "【强制规则】已经在个人知识库中找到相关文件或片段，必须基于以下内容回答，严禁回答“未找到相关信息”。",
+        f"【用户问题】{query}",
+    ]
+
+    if file_names:
+        lines.append("【参考文件】" + "、".join([f"《{x}》" for x in file_names]))
+
+    for idx, item in enumerate(quote_list, 1):
+        cite_id = _clean_quote_text(item.get('id', ''))
+        source_name = _clean_quote_text(item.get('sourceName', ''))
+        q_text = _clean_quote_text(item.get('q', ''))
+        a_text = _clean_quote_text(item.get('a', ''))
+
+        content = q_text
+        if a_text:
+            content += "\n" + a_text
+
+        lines.append(
+            f"\n【检索结果 {idx}】\n"
+            f"引用ID：{cite_id}\n"
+            f"文件名：{source_name}\n"
+            f"内容：\n{content}\n"
+            f"引用格式要求：回答使用 [{cite_id}](CITE)"
+        )
+
+    return "\n".join(lines)
+
+
 @kb_bp.route('/api/kb/workflow-search', methods=['POST'])
 def api_kb_workflow_search():
     data = request.get_json() or {}
@@ -941,54 +1776,255 @@ def api_kb_workflow_search():
     query = (data.get('query') or '').strip()
     top_k = data.get('top_k', 5)
 
-    # ★★★ 新增：过滤无效值 ★★★
     if student_id in ('null', 'undefined', 'None', ''):
         student_id = ''
         print(f"   ⚠️ workflow-search: student_id 无效，原始数据: {data}")
 
     if not student_id or not query or not _fastgpt_kb_service:
-        return jsonify([])
+        print(f"   ⚠️ workflow-search: 参数不足 student_id={student_id!r}, query={query[:30]!r}")
+        response_data = {
+            'success': False,
+            'found': False,
+            'must_answer': False,
+            'result_count': 0,
+            'message': '参数不足或知识库服务未初始化',
+            'answer_context': '',
+            'results': [],
+            'quoteList': []
+        }
+        return jsonify(response_data)
+
+    query = _clean_quote_text(query).strip()
 
     print(f"   ✅ workflow-search: 用户={student_id}, query={query[:50]}")
-    
-    if not student_id or not query or not _fastgpt_kb_service:
-        return jsonify([])
+
     try:
         dataset_id = _fastgpt_kb_service.get_or_create_user_dataset(student_id)
+
         result = _fastgpt_kb_service.search(student_id, query, top_k)
+
+        raw_results = []
         if result.get('success') and result.get('results'):
-            quote_list = []
-            for i, item in enumerate(result['results']):
-                content = item.get('content', '').strip()
-                source = item.get('source', '未知来源')
-                score = item.get('score', 0)
-                collection_id = item.get('collection_id', '')
-                if source.startswith('['):
-                    source = re.sub(r'^\[.*?\]\s*', '', source) or source
-                data_id = item.get('data_id', '')
-                item_dataset_id = item.get('dataset_id', '') or dataset_id or ''
-                if isinstance(score, (list, tuple)):
-                    score = score[0] if len(score) > 0 else 0
-                try:
-                    score = float(score) if score else 0.0
-                except (TypeError, ValueError):
-                    score = 0.0
-                if content:
-                    quote_list.append({
-                        'id': data_id or f'search_{i}',
-                        'datasetId': item_dataset_id,
-                        'collectionId': collection_id or '',
-                        'sourceName': source,
-                        'sourceId': collection_id or '',
-                        'q': item.get('q', '') or content[:500],
-                        'a': item.get('a', ''),
-                        'score': round(score, 4)
-                    })
-            return jsonify(quote_list)
-        return jsonify([])
+            raw_results = result.get('results', [])
+
+        quote_list = []
+
+        for i, item in enumerate(raw_results):
+            content = (
+                item.get('content')
+                or item.get('q')
+                or item.get('text')
+                or ''
+            )
+            content = _clean_quote_text(content).strip()
+
+            source = (
+                item.get('source')
+                or item.get('sourceName')
+                or item.get('filename')
+                or '未知来源'
+            )
+            source = _clean_quote_text(source).strip()
+
+            score = item.get('score', 0)
+            collection_id = (
+                item.get('collection_id')
+                or item.get('collectionId')
+                or ''
+            )
+
+            if source.startswith('['):
+                source = re.sub(r'^\[.*?\]\s*', '', source) or source
+
+            data_id = (
+                item.get('data_id')
+                or item.get('dataId')
+                or item.get('id')
+                or item.get('_id')
+                or item.get('doc_id')
+                or ''
+            )
+
+            item_dataset_id = (
+                item.get('dataset_id')
+                or item.get('datasetId')
+                or dataset_id
+                or ''
+            )
+
+            score_val = _normalize_workflow_score(score)
+
+            q_text = (
+                item.get('q')
+                or content
+                or ''
+            )
+            q_text = _clean_quote_text(q_text).strip()
+
+            a_text = _clean_quote_text(item.get('a') or '').strip()
+
+            is_filename_hit = _looks_like_filename_only_hit(q_text, source)
+
+            if is_filename_hit:
+                enriched = _enrich_filename_hit_content(
+                    student_id=student_id,
+                    source=source,
+                    collection_id=collection_id,
+                    dataset_id=item_dataset_id,
+                    original_q=q_text
+                )
+
+                chunks = enriched.get('chunks') or []
+
+                if chunks:
+                    print(f"   ✅ 文件名命中拆分为 {len(chunks)} 条 chunk 引用结果")
+
+                    for cidx, ch in enumerate(chunks):
+                        chunk_q = _clean_quote_text(ch.get('q') or '').strip()
+                        chunk_a = _clean_quote_text(ch.get('a') or '').strip()
+                        chunk_id = str(ch.get('id') or '').strip()
+
+                        if not chunk_q and not chunk_a:
+                            continue
+
+                        final_chunk_id = (
+                            chunk_id
+                            or data_id
+                            or item.get('doc_id')
+                            or collection_id
+                            or f'search_{i}_{cidx}'
+                        )
+
+                        if chunk_id and str(data_id).startswith('doc_'):
+                            print(f"   🔁 文件名命中引用ID替换: {data_id} -> {chunk_id}")
+
+                        quote_list.append({
+                            'id': str(final_chunk_id),
+                            'datasetId': str(item_dataset_id),
+                            'collectionId': str(collection_id or ''),
+                            'sourceName': source,
+                            'sourceId': str(collection_id or ''),
+                            'q': (
+                                f"【文件】{source}\n"
+                                f"【正文片段】\n{chunk_q}"
+                            )[:4000],
+                            'a': chunk_a[:2000],
+                            'chunkIndex': ch.get('chunkIndex', cidx),
+                            'score': [
+                                {
+                                    'type': 'embedding',
+                                    'value': round(max(score_val - cidx * 0.001, 0), 4),
+                                    'index': cidx
+                                }
+                            ]
+                        })
+
+                    continue
+
+                q_text = _clean_quote_text(enriched.get('text') or q_text)
+
+                first_data_id = enriched.get('first_data_id') or ''
+
+                if first_data_id and (
+                    not data_id
+                    or str(data_id).startswith('search_')
+                    or str(data_id).startswith('doc_')
+                ):
+                    print(f"   🔁 文件名命中引用ID替换: {data_id} -> {first_data_id}")
+                    data_id = first_data_id
+
+            if not q_text and not a_text:
+                continue
+
+            final_id = (
+                data_id
+                or item.get('doc_id')
+                or collection_id
+                or f'search_{i}'
+            )
+
+            quote_list.append({
+                'id': str(final_id),
+                'datasetId': str(item_dataset_id),
+                'collectionId': str(collection_id or ''),
+                'sourceName': source,
+                'sourceId': str(collection_id or ''),
+                'q': q_text[:4000],
+                'a': a_text[:2000],
+                'chunkIndex': i,
+                'score': [
+                    {
+                        'type': 'embedding',
+                        'value': round(score_val, 4),
+                        'index': i
+                    }
+                ]
+            })
+
+        before_dedupe_count = len(quote_list)
+        quote_list = _dedupe_quote_list(quote_list)
+        after_dedupe_count = len(quote_list)
+
+        if after_dedupe_count != before_dedupe_count:
+            print(f"   🧹 workflow-search 引用去重: {before_dedupe_count} -> {after_dedupe_count}")
+
+        found = len(quote_list) > 0
+        answer_context = _clean_quote_text(
+            _build_workflow_answer_context(query, quote_list)
+        )
+
+        response_data = {
+            'success': True,
+            'found': found,
+            'must_answer': found,
+            'result_count': len(quote_list),
+            'message': (
+                '已在个人知识库中找到相关文件或片段，必须基于结果回答。'
+                if found else
+                '个人知识库未找到相关结果。'
+            ),
+            'answer_context': answer_context,
+            'results': quote_list,
+            'quoteList': quote_list,
+            'student_id': student_id,
+            'query': query
+        }
+
+        print(f"   📊 workflow-search 返回结构化结果给 FastGPT: "
+              f"found={found}, result_count={len(quote_list)}")
+
+        for idx, q in enumerate(quote_list):
+            score_val = 0.0
+            try:
+                score_val = q.get('score', [{}])[0].get('value', 0.0)
+            except Exception:
+                pass
+
+            q_preview = _clean_quote_text(q.get('q', ''))[:80].replace(chr(10), ' ')
+            print(f"      [{idx}] id={str(q.get('id', ''))[:32]}, "
+                  f"source={str(q.get('sourceName', ''))[:30]}, "
+                  f"score={score_val}, "
+                  f"q={q_preview}...")
+
+        return jsonify(response_data)
+
     except Exception as e:
         traceback.print_exc()
-        return jsonify([])
+        print(f"   ❌ workflow-search 异常: {e}")
+
+        response_data = {
+            'success': False,
+            'found': False,
+            'must_answer': False,
+            'result_count': 0,
+            'message': f'workflow-search 异常: {str(e)}',
+            'answer_context': '',
+            'results': [],
+            'quoteList': [],
+            'student_id': student_id,
+            'query': query
+        }
+        return jsonify(response_data)
 
 
 @kb_bp.route('/api/kb/workflow-search', methods=['GET'])
@@ -1006,8 +2042,8 @@ def api_kb_workflow_search_get():
         if result.get('success') and result.get('results'):
             context_parts = []
             for i, item in enumerate(result['results']):
-                content = item.get('content', '').strip()
-                source = item.get('source', '')
+                content = _clean_quote_text(item.get('content', '')).strip()
+                source = _clean_quote_text(item.get('source', ''))
                 if content:
                     context_parts.append(f"[{i+1}] （来源：{source}）\n{content}")
             return jsonify({
@@ -1036,7 +2072,6 @@ def api_kb_sync_from_fastgpt():
         return jsonify({'success': False, 'error': str(e)})
 
 
-# ★ 简化: 删除文档时不再处理本地文件
 @kb_bp.route('/api/kb/document/<doc_id>', methods=['DELETE'])
 @_require_login
 def api_kb_delete_document(doc_id):
@@ -1259,15 +2294,16 @@ def api_kb_folder_documents(folder_id):
         return jsonify({'success': False, 'error': str(e), 'documents': []})
 
 
+# ★★★ 已恢复：删除了 &uid={username} 那一行，回到原始 chat-url 实现 ★★★
 @kb_bp.route('/api/kb/chat-url', methods=['GET'])
 @_require_login
 def api_kb_chat_url():
     username, _, _ = _get_user_info()
-    share_id = os.environ.get('FASTGPT_SHARE_ID', 'zDrmPPnh9rdi3WmnyWCFwDcb')
-    base_url = os.environ.get('FASTGPT_SHARE_BASE_URL', 'http://180.85.206.30:3000')
+    share_id = os.environ.get('FASTGPT_SHARE_ID', _DEFAULT_FASTGPT_SHARE_ID)
+    base_url = os.environ.get('FASTGPT_SHARE_BASE_URL', _DEFAULT_FASTGPT_SHARE_BASE_URL)
+
     user_auth_token = hashlib.md5(f"pkb_auth_{username}".encode()).hexdigest()
 
-    # ★★★ 关键修复：URL 参数名必须是「用户学号」，与工作流 {{用户学号}} 一致 ★★★
     from urllib.parse import quote
     chat_url = (
         f"{base_url}/chat/share"
@@ -1276,21 +2312,14 @@ def api_kb_chat_url():
         f"&{quote('用户学号')}={username}"
     )
     return jsonify({
-        'success': True, 'chat_url': chat_url,
-        'share_id': share_id, 'auth_token': user_auth_token,
+        'success': True,
+        'chat_url': chat_url,
+        'share_id': share_id,
+        'auth_token': user_auth_token,
         'username': username
     })
 
 
-
-
-# ★★★ 已删除以下 3 个本地媒体文件服务路由 ★★★
-# - /api/kb/media/<doc_id>           (api_kb_serve_media)
-# - /api/kb/media/<doc_id>/download  (api_kb_download_media)
-# - /api/kb/media/public/<doc_id>/<token>  (api_kb_serve_media_public)
-
-
-# ★ 简化: 文档内容查询，移除本地文件相关字段
 @kb_bp.route('/api/kb/document/<doc_id>/content', methods=['GET'])
 @_require_login
 def api_kb_document_content(doc_id):
@@ -1299,16 +2328,258 @@ def api_kb_document_content(doc_id):
     if not doc:
         return jsonify({'error': '文档不存在'}), 404
     return jsonify({
-        'success': True, 'doc_id': doc_id,
+        'success': True,
+        'doc_id': doc_id,
         'filename': doc.get('filename', ''),
         'media_type': doc.get('media_type', ''),
         'fastgpt_image_url': doc.get('fastgpt_image_url', ''),
         'embedded_image_url': doc.get('embedded_image_url', ''),
         'image_url_source': doc.get('image_url_source', ''),
+        'raw_source_saved': bool(doc.get('raw_source_saved')),
+        'raw_source_url': doc.get('raw_source_url', ''),
         'parsed_text': doc.get('parsed_text', ''),
         'status': doc.get('status', ''),
         'metadata': doc.get('parse_metadata', {}),
     })
+
+
+@kb_bp.route('/api/kb/raw-source/file/<doc_id>', methods=['GET'])
+def api_kb_raw_source_file(doc_id):
+    try:
+        doc = _db.kb_documents.find_one(
+            {'doc_id': doc_id},
+            {
+                '_id': 0,
+                'doc_id': 1,
+                'filename': 1,
+                'raw_source_path': 1,
+                'raw_source_saved': 1,
+                'file_type': 1,
+                'media_type': 1
+            }
+        )
+
+        if not doc:
+            return jsonify({
+                'success': False,
+                'error': 'doc_id 不存在',
+                'doc_id': doc_id
+            }), 404
+
+        raw_path = doc.get('raw_source_path') or ''
+        base_dir = os.path.abspath(_RAW_SOURCE_DIR)
+        raw_path_abs = os.path.abspath(raw_path) if raw_path else ''
+
+        if not raw_path_abs or not _is_path_inside(raw_path_abs, base_dir):
+            return jsonify({
+                'success': False,
+                'error': '原始文件路径非法或未保存',
+                'doc_id': doc_id,
+                'raw_source_path': raw_path
+            }), 404
+
+        if not os.path.exists(raw_path_abs):
+            return jsonify({
+                'success': False,
+                'error': '原始文件不存在或未保存',
+                'doc_id': doc_id,
+                'raw_source_path': raw_path
+            }), 404
+
+        filename = doc.get('filename') or os.path.basename(raw_path_abs)
+        mime = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+        return send_file(
+            raw_path_abs,
+            mimetype=mime,
+            as_attachment=True,
+            download_name=filename,
+            conditional=True
+        )
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'doc_id': doc_id
+        }), 500
+
+
+@kb_bp.route('/api/kb/raw-source/by-collection/<collection_id>', methods=['GET'])
+def api_kb_raw_source_by_collection(collection_id):
+    try:
+        projection = {
+            '_id': 0,
+            'doc_id': 1,
+            'username': 1,
+            'filename': 1,
+            'file_type': 1,
+            'media_type': 1,
+
+            'collection_id': 1,
+
+            'shared': 1,
+            'shared_collection_id': 1,
+            'shared_dataset_id': 1,
+            'shared_display_name': 1,
+            'shared_original_filename': 1,
+
+            'fastgpt_image_url': 1,
+            'embedded_image_url': 1,
+            'fastgpt_image_file_id': 1,
+            'fastgpt_image_bucket': 1,
+
+            'raw_source_saved': 1,
+            'raw_source_path': 1,
+            'raw_source_url': 1,
+            'raw_source_filename': 1,
+            'raw_source_size': 1,
+
+            'shared_raw_source_url': 1,
+            'shared_raw_source_path': 1,
+            'shared_fastgpt_image_url': 1,
+            'shared_fastgpt_image_file_id': 1,
+            'shared_fastgpt_image_bucket': 1,
+
+            'parsed_from_media': 1,
+            'status': 1
+        }
+
+        matched_by = ''
+
+        doc = _db.kb_documents.find_one(
+            {'collection_id': collection_id},
+            projection
+        )
+        if doc:
+            matched_by = 'collection_id'
+
+        if not doc:
+            doc = _db.kb_documents.find_one(
+                {'shared_collection_id': collection_id},
+                projection
+            )
+            if doc:
+                matched_by = 'shared_collection_id'
+
+        if not doc:
+            print(
+                f"   ⚠️ raw-source/by-collection 未找到映射: "
+                f"collection_id={collection_id}"
+            )
+            return jsonify({
+                'success': False,
+                'error': 'collection_id 未找到对应文档',
+                'collection_id': collection_id
+            })
+
+        file_id = (
+            doc.get('fastgpt_image_file_id')
+            or doc.get('shared_fastgpt_image_file_id')
+            or ''
+        )
+
+        bucket = (
+            doc.get('fastgpt_image_bucket')
+            or doc.get('shared_fastgpt_image_bucket')
+            or ''
+        )
+
+        url = (
+            doc.get('fastgpt_image_url')
+            or doc.get('shared_fastgpt_image_url')
+            or doc.get('embedded_image_url')
+            or doc.get('shared_raw_source_url')
+            or doc.get('raw_source_url')
+            or ''
+        )
+
+        if not url:
+            raw_path = (
+                doc.get('raw_source_path')
+                or doc.get('shared_raw_source_path')
+                or ''
+            )
+
+            if raw_path:
+                raw_path_abs = os.path.abspath(raw_path)
+                base_dir = os.path.abspath(_RAW_SOURCE_DIR)
+
+                if _is_path_inside(raw_path_abs, base_dir) and os.path.exists(raw_path_abs):
+                    url = _build_raw_source_url(doc.get('doc_id'))
+
+        if not url and not file_id:
+            print(
+                f"   ⚠️ raw-source 找到文档但没有可用源文件: "
+                f"collection_id={collection_id}, "
+                f"matched_by={matched_by}, "
+                f"doc_id={doc.get('doc_id')}, "
+                f"filename={doc.get('filename')}"
+            )
+
+            return jsonify({
+                'success': False,
+                'error': '该文档没有可用的原始文件 URL 或 file_id',
+                'collection_id': collection_id,
+                'matched_by': matched_by,
+                'doc': doc
+            })
+
+        display_filename = (
+            doc.get('shared_display_name')
+            if matched_by == 'shared_collection_id'
+            else ''
+        ) or doc.get('filename', '') or doc.get('raw_source_filename', '')
+
+        print(
+            f"   ✅ raw-source 命中: "
+            f"collection_id={collection_id}, "
+            f"matched_by={matched_by}, "
+            f"doc_id={doc.get('doc_id')}, "
+            f"filename={display_filename}, "
+            f"url={'yes' if url else 'no'}, "
+            f"file_id={'yes' if file_id else 'no'}"
+        )
+
+        return jsonify({
+            'success': True,
+            'type': 'url' if url else 'fileId',
+            'value': url or file_id,
+
+            'url': url,
+            'rawUrl': url,
+            'file_id': file_id,
+            'bucket': bucket or 'chat',
+
+            'filename': display_filename,
+            'original_filename': doc.get('filename', ''),
+            'media_type': doc.get('media_type', ''),
+            'file_type': doc.get('file_type', ''),
+
+            'collection_id': collection_id,
+            'source_collection_id': doc.get('collection_id', ''),
+            'shared_collection_id': doc.get('shared_collection_id', ''),
+            'matched_by': matched_by,
+
+            'doc_id': doc.get('doc_id', ''),
+            'username': doc.get('username', ''),
+            'raw_source_saved': bool(doc.get('raw_source_saved')),
+            'raw_source_url': doc.get('raw_source_url', ''),
+            'raw_source_path_exists': bool(
+                doc.get('raw_source_path')
+                and os.path.exists(doc.get('raw_source_path'))
+            ),
+            'shared': bool(doc.get('shared')),
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'collection_id': collection_id
+        })
 
 
 # ================== 解析进度查询 ==================
@@ -1399,7 +2670,6 @@ def api_kb_clear_health_cache():
 @kb_bp.route('/api/kb/debug/test-image-upload', methods=['POST'])
 @_require_login
 def api_kb_debug_test_image_upload():
-    """调试：测试 FastGPT 图片上传各端点"""
     username, _, _ = _get_user_info()
     if 'file' not in request.files:
         return jsonify({'error': '请上传一个图片文件 (form field: file)'})
@@ -1442,7 +2712,6 @@ def api_kb_debug_test_image_upload():
         'fastgpt_api_key_set': bool(_fastgpt_api_key),
         'fastgpt_api_key_preview': _fastgpt_api_key[:8] + '...' if _fastgpt_api_key else 'N/A',
         'dataset_id': dataset_id,
-        # ★ 已移除: media_upload_dir, server_base_url
     }
 
     return jsonify({'success': True, 'results': results})
@@ -1462,7 +2731,7 @@ def api_kb_health():
 
     return jsonify({
         'status': 'ok',
-        'version': 'v4.1.0-no-local-storage',  # ★ 版本号更新
+        'version': 'v4.4.0-raw-source-save-quote-dedupe',
         'features': {
             'fastgpt_kb': kb_ready,
             'mongodb': _db is not None,
@@ -1472,7 +2741,11 @@ def api_kb_health():
             'fastgpt_image_upload': bool(_fastgpt_api_key),
             'supported_media': sorted(list(_media_parser.ALL_EXTENSIONS)) if media_ready else [],
             'embedding_note': '索引由 FastGPT 内部管理',
-            'local_storage': False,  # ★ 标记本地存储已禁用
+            'local_raw_source_storage': True,
+            'raw_source_dir': _RAW_SOURCE_DIR,
+            'raw_source_base_url': _RAW_SOURCE_BASE_URL,
+            'workflow_quote_dedupe': True,
+            'quote_text_clean': True,
         },
         'fastgpt_api_url': _fastgpt_api_url,
         'timestamp': datetime.now().isoformat()

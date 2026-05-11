@@ -24,6 +24,8 @@ FastGPT 知识库服务
 🔧 新增：每个 chunk 注入文件名，支持按文件名检索
 🔧 新增：搜索增加文件名匹配回退（覆盖新旧文档）
 🔧 新增：上传/写入耗时统计，控制台输出详细报告
+🔧 修复：多处 doc_filter 未定义问题
+🔧 修复：unshare_document 取消共享逻辑错误
 """
 
 import os
@@ -34,8 +36,20 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 import hashlib
 import traceback
-from urllib.parse import quote
 import time
+
+from config_fastgpt import (
+    FASTGPT_ENV as _DEFAULT_FASTGPT_ENV,
+    FASTGPT_API_URL as _DEFAULT_API_URL,
+    FASTGPT_API_KEY as _DEFAULT_API_KEY,
+    FASTGPT_SHARED_DATASET_ID as _DEFAULT_SHARED_DATASET_ID,
+    FASTGPT_SHARED_DATASET_NAME as _DEFAULT_SHARED_DATASET_NAME,
+    FASTGPT_SHARED_FILENAME_MODE as _DEFAULT_SHARED_FILENAME_MODE,
+    FASTGPT_SHARED_FILENAME_TAG as _DEFAULT_SHARED_FILENAME_TAG,
+    FASTGPT_SHARED_FILENAME_TAG_POSITION as _DEFAULT_SHARED_FILENAME_TAG_POSITION,
+    LLM_API_URL as _DEFAULT_LLM_URL,
+    LLM_FALLBACK_ENDPOINTS
+)
 
 
 class FastGPTKBService:
@@ -43,10 +57,71 @@ class FastGPTKBService:
 
     def __init__(self, db, base_url: str = None, api_key: str = None):
         self.db = db
-        self.base_url = base_url or os.environ.get('FASTGPT_API_URL', 'http://180.85.206.30:3000/api')
-        self.api_key = api_key or os.environ.get('FASTGPT_API_KEY', '')
 
-        self.llm_base_url = os.environ.get('LLM_API_URL', 'http://180.85.206.30:3000/api/v1')
+        # 当前 FastGPT 环境：test / prod
+        self.fastgpt_env = os.environ.get(
+            'FASTGPT_ENV',
+            _DEFAULT_FASTGPT_ENV
+        ).strip().lower() or _DEFAULT_FASTGPT_ENV
+
+        # FastGPT API 地址与 Key
+        self.base_url = (
+            base_url
+            or os.environ.get('FASTGPT_API_URL')
+            or _DEFAULT_API_URL
+        ).rstrip('/')
+
+        self.api_key = (
+            api_key
+            or os.environ.get('FASTGPT_API_KEY')
+            or _DEFAULT_API_KEY
+            or ''
+        )
+
+        # 共享知识库配置：按环境隔离，避免 test/prod 共用同一个 shared_dataset_id
+        self.configured_shared_dataset_id = (
+            os.environ.get('FASTGPT_SHARED_DATASET_ID')
+            or _DEFAULT_SHARED_DATASET_ID
+            or ''
+        ).strip()
+
+        self.shared_dataset_name = (
+            os.environ.get('FASTGPT_SHARED_DATASET_NAME')
+            or _DEFAULT_SHARED_DATASET_NAME
+            or '共享知识库'
+        ).strip()
+
+        # 共享文件名模式：
+        # anonymous       -> shared_xxx.docx
+        # original        -> 原文件名
+        # tagged_original -> 【用户共享】原文件名，推荐
+        self.shared_filename_mode = (
+            os.environ.get('FASTGPT_SHARED_FILENAME_MODE')
+            or _DEFAULT_SHARED_FILENAME_MODE
+            or 'tagged_original'
+        ).strip().lower()
+
+        if self.shared_filename_mode not in ('anonymous', 'original', 'tagged_original'):
+            self.shared_filename_mode = 'tagged_original'
+
+        self.shared_filename_tag = (
+            os.environ.get('FASTGPT_SHARED_FILENAME_TAG')
+            or _DEFAULT_SHARED_FILENAME_TAG
+            or '【用户共享】'
+        ).strip()
+
+        self.shared_filename_tag_position = (
+            os.environ.get('FASTGPT_SHARED_FILENAME_TAG_POSITION')
+            or _DEFAULT_SHARED_FILENAME_TAG_POSITION
+            or 'prefix'
+        ).strip().lower()
+
+        if self.shared_filename_tag_position not in ('prefix', 'suffix'):
+            self.shared_filename_tag_position = 'prefix'
+
+        self._shared_config_key = f"shared_dataset_id_{self.fastgpt_env}"
+
+        self.llm_base_url = os.environ.get('LLM_API_URL', _DEFAULT_LLM_URL)
         self.llm_api_key = os.environ.get('LLM_API_KEY', self.api_key)
         self.llm_model = os.environ.get('LLM_MODEL', 'Qwen3-8B')
         self.app_api_key = os.environ.get('FASTGPT_APP_KEY', '')
@@ -66,6 +141,13 @@ class FastGPTKBService:
         print(f"✅ FastGPT KB Service 初始化")
         print(f"   API URL: {self.base_url}")
         print(f"   API Key: {'已配置' if self.api_key else '未配置'}")
+        print(f"   FastGPT 环境: {self.fastgpt_env}")
+        print(f"   共享知识库名称: {self.shared_dataset_name}")
+        print(f"   共享知识库固定ID: {self.configured_shared_dataset_id or '未配置，将自动查找/创建'}")
+        print(f"   共享文件名模式: {self.shared_filename_mode}")
+        print(f"   共享文件名标记: {self.shared_filename_tag}")
+        print(f"   共享标记位置: {self.shared_filename_tag_position}")
+        print(f"   Mongo共享配置Key: {self._shared_config_key}")
         print(f"   支持功能: 文件夹管理（纯逻辑分组）+ FastGPT 文档同步 + 共享知识库")
         print(f"   🔧 架构: 文件夹仅为 MongoDB 逻辑标签，所有文档始终在根 Dataset")
         print(f"   🔧 修复: 使用 list API 获取真实 trainingAmount")
@@ -101,31 +183,134 @@ class FastGPTKBService:
     # ================== 🔒 隐私工具方法 ==================
 
     def _generate_shared_anonymous_name(self, doc_id: str, filename: str) -> str:
-        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'txt'
+        ext = filename.rsplit('.', 1)[-1].lower() if filename and '.' in filename else 'txt'
         anonymous_hash = hashlib.sha256(
             f"shared_{doc_id}_pkb_anonymous_salt_v1".encode()
         ).hexdigest()[:12]
         return f"shared_{anonymous_hash}.{ext}"
 
+    def _remove_shared_tag_from_filename(self, filename: str) -> str:
+        """
+        去掉已有的共享标记，避免重复变成：
+        【用户共享】【用户共享】xxx.docx
+        或
+        xxx【用户共享】【用户共享】.docx
+        """
+        name = (filename or '').strip()
+        tag = (getattr(self, 'shared_filename_tag', '') or '【用户共享】').strip()
+
+        if not name or not tag:
+            return name
+
+        while name.startswith(tag):
+            name = name[len(tag):].strip()
+
+        stem, ext = os.path.splitext(name)
+        while stem.endswith(tag):
+            stem = stem[:-len(tag)].strip()
+
+        return f"{stem}{ext}" if stem else name
+
+    def _get_shared_display_filename(self, doc_id: str, filename: str) -> str:
+        """
+        共享知识库中的 Collection 显示名。
+
+        anonymous:
+            shared_xxx.docx
+
+        original:
+            移动开发-期末报告-肖含蕊.docx
+
+        tagged_original:
+            prefix: 【用户共享】移动开发-期末报告-肖含蕊.docx
+            suffix: 移动开发-期末报告-肖含蕊【用户共享】.docx
+        """
+        raw_filename = (filename or '').strip()
+
+        if not raw_filename:
+            raw_filename = self._generate_shared_anonymous_name(doc_id, filename)
+
+        if self.shared_filename_mode == 'anonymous':
+            return self._generate_shared_anonymous_name(doc_id, raw_filename)
+
+        clean_filename = self._remove_shared_tag_from_filename(raw_filename)
+
+        if self.shared_filename_mode == 'original':
+            return clean_filename
+
+        # 推荐模式：tagged_original
+        tag = self.shared_filename_tag or '【用户共享】'
+
+        if self.shared_filename_tag_position == 'suffix':
+            stem, ext = os.path.splitext(clean_filename)
+            if stem.endswith(tag):
+                return f"{stem}{ext}"
+            return f"{stem}{tag}{ext}"
+
+        # 默认 prefix，前端截断时更容易看到来源
+        if clean_filename.startswith(tag):
+            return clean_filename
+
+        return f"{tag}{clean_filename}"
+
     def _generate_shared_doc_id(self, doc_id: str) -> str:
         return f"shared_{hashlib.sha256(doc_id.encode()).hexdigest()[:16]}"
 
-    def _resolve_shared_source(self, username: str, source_name: str,
-                                collection_id: str) -> str:
+    def _resolve_shared_source(
+        self,
+        username: str,
+        source_name: str,
+        collection_id: str
+    ) -> str:
+        """
+        解析共享知识库引用来源。
+
+        目标：
+        1. 官方资料保持原样。
+        2. 用户共享资料显示为：【用户共享】原文件名。
+        3. 不再显示 shared_xxx.docx。
+        """
+        source_name = (source_name or '').strip()
+
         if not collection_id:
-            return "共享文档"
+            return source_name or "共享文档"
 
         try:
             doc = self.db.kb_documents.find_one(
                 {'shared_collection_id': collection_id},
-                {'username': 1, 'filename': 1}
+                {
+                    'doc_id': 1,
+                    'username': 1,
+                    'filename': 1,
+                    'shared_display_name': 1,
+                    'shared_original_filename': 1,
+                    'shared_filename_mode': 1,
+                    'shared_anonymous_name': 1,
+                }
             )
 
             if doc:
-                if doc.get('username') == username:
-                    return doc.get('filename', source_name or '共享文档')
-                else:
-                    return "共享文档"
+                # 优先使用共享时保存的显示名
+                if doc.get('shared_display_name'):
+                    return doc['shared_display_name']
+
+                # 旧数据兼容：用原文件名重新生成带标记名称
+                original = (
+                    doc.get('shared_original_filename')
+                    or doc.get('filename')
+                    or source_name
+                )
+
+                if original:
+                    return self._get_shared_display_filename(
+                        doc.get('doc_id', ''),
+                        original
+                    )
+
+            # 如果 MongoDB 查不到，但 FastGPT 返回的 source_name 已经有值，就直接返回
+            if source_name:
+                return source_name
+
         except Exception as e:
             print(f"   ⚠️ 解析共享来源失败: {e}")
 
@@ -143,7 +328,7 @@ class FastGPTKBService:
         if not force and not self._should_sync(username):
             return {'success': True, 'synced': 0, 'message': '跳过同步（冷却中）'}
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"🔄 开始从 FastGPT 同步文档到 MongoDB")
         print(f"👤 用户: {username}")
 
@@ -183,8 +368,12 @@ class FastGPTKBService:
         if not missing_ids:
             print(f"✅ 无需同步，所有文档都已在 MongoDB 中")
             self._last_sync_time[username] = datetime.now()
-            return {'success': True, 'synced': 0, 'existing': len(existing_collection_ids),
-                    'total': len(fastgpt_collections)}
+            return {
+                'success': True,
+                'synced': 0,
+                'existing': len(existing_collection_ids),
+                'total': len(fastgpt_collections)
+            }
 
         print(f"🔍 发现 {len(missing_ids)} 个需要同步的文档")
 
@@ -209,7 +398,35 @@ class FastGPTKBService:
                 if '.' in fastgpt_name:
                     file_type = fastgpt_name.rsplit('.', 1)[-1].lower()
 
-                doc_id = self._generate_doc_id(username, fastgpt_name)
+                # 先查是否已有同名的本地占位记录。
+                # 多媒体上传时 routes/kb_routes.py 会先创建 parsing 记录，
+                # 如果 FastGPT collection 已创建但 collection_id 还没及时写回，
+                # sync 可能会误认为这是一个“新文档”。
+                pending_doc = self.db.kb_documents.find_one(
+                    {
+                        'username': username,
+                        'filename': fastgpt_name,
+                        'status': {'$in': ['parsing', 'processing', 'uploading', 'pending']},
+                        '$or': [
+                            {'collection_id': {'$exists': False}},
+                            {'collection_id': None},
+                            {'collection_id': ''},
+                        ]
+                    },
+                    {
+                        'doc_id': 1,
+                        'upload_time': 1
+                    },
+                    sort=[('upload_time', -1)]
+                )
+
+                if pending_doc and pending_doc.get('doc_id'):
+                    doc_id = pending_doc['doc_id']
+                    attach_to_pending_doc = True
+                    print(f"   🔗 同步时发现本地占位记录，复用 doc_id: {doc_id}")
+                else:
+                    doc_id = self._generate_doc_id(username, fastgpt_name)
+                    attach_to_pending_doc = False
 
                 data_count = (
                     collection.get('dataAmount', 0) or
@@ -245,10 +462,32 @@ class FastGPTKBService:
                     'shared': False
                 }
 
-                self.db.kb_documents.insert_one(doc_record)
-                synced += 1
-
-                print(f"   ✅ 同步: {fastgpt_name} (status={status}, chunks={data_count})")
+                if attach_to_pending_doc:
+                    # 把 FastGPT collection_id 挂回已有占位记录，不新增第二条文档。
+                    self.db.kb_documents.update_one(
+                        {
+                            'username': username,
+                            'doc_id': doc_id
+                        },
+                        {
+                            '$set': doc_record
+                        }
+                    )
+                    print(f"   🔗 已将 FastGPT Collection 挂回本地占位文档: {fastgpt_name}")
+                else:
+                    # 正常历史同步：避免 collection_id 重复插入。
+                    self.db.kb_documents.update_one(
+                        {
+                            'username': username,
+                            'collection_id': collection_id
+                        },
+                        {
+                            '$setOnInsert': doc_record
+                        },
+                        upsert=True
+                    )
+                    synced += 1
+                    print(f"   ✅ 同步: {fastgpt_name} (status={status}, chunks={data_count})")
 
             except Exception as e:
                 error_msg = f"同步 {collection.get('name', collection_id)} 失败: {str(e)}"
@@ -259,7 +498,7 @@ class FastGPTKBService:
         self._last_sync_time[username] = datetime.now()
 
         print(f"🔄 同步完成: 新同步 {synced} 个, 已存在 {len(existing_collection_ids)} 个, 错误 {len(errors)} 个")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
         return {
             'success': True,
@@ -478,6 +717,11 @@ class FastGPTKBService:
             current_status = doc.get('status', 'pending')
             filename = doc.get('filename', '')
 
+            doc_filter = {
+                'username': username,
+                'doc_id': doc_id
+            }
+
             if current_status == 'processing' and collection_id:
                 try:
                     fastgpt_status = batch_statuses.get(collection_id)
@@ -496,7 +740,7 @@ class FastGPTKBService:
 
                         if real_status == 'ready':
                             self.db.kb_documents.update_one(
-                                {'doc_id': doc_id},
+                                doc_filter,
                                 {'$set': {
                                     'status': 'ready',
                                     'chunk_count': data_count,
@@ -513,7 +757,7 @@ class FastGPTKBService:
                                 if name_sync_result.get('success'):
                                     print(f"   ✅ 文件名同步成功")
                                     self.db.kb_documents.update_one(
-                                        {'doc_id': doc_id},
+                                        doc_filter,
                                         {'$set': {
                                             'name_synced': True,
                                             'name_synced_at': datetime.now()
@@ -527,7 +771,7 @@ class FastGPTKBService:
                         elif real_status == 'error':
                             error_msg = fastgpt_status.get('error', '处理失败')
                             self.db.kb_documents.update_one(
-                                {'doc_id': doc_id},
+                                doc_filter,
                                 {'$set': {'status': 'failed', 'error_message': error_msg}}
                             )
                             doc['status'] = 'failed'
@@ -810,7 +1054,13 @@ class FastGPTKBService:
         ))
 
         if not docs:
-            return {'success': True, 'message': '没有需要同步的文档', 'total': 0, 'updated': 0, 'failed': 0}
+            return {
+                'success': True,
+                'message': '没有需要同步的文档',
+                'total': 0,
+                'updated': 0,
+                'failed': 0
+            }
 
         updated = 0
         failed = 0
@@ -821,6 +1071,11 @@ class FastGPTKBService:
             filename = doc.get('filename')
             doc_id = doc.get('doc_id')
 
+            doc_filter = {
+                'username': username,
+                'doc_id': doc_id
+            }
+
             if not collection_id or not filename:
                 continue
 
@@ -829,7 +1084,7 @@ class FastGPTKBService:
             if result.get('success'):
                 updated += 1
                 self.db.kb_documents.update_one(
-                    {'doc_id': doc_id},
+                    doc_filter,
                     {'$set': {'name_synced': True, 'name_synced_at': datetime.now()}}
                 )
             else:
@@ -852,7 +1107,7 @@ class FastGPTKBService:
             {
                 'username': username,
                 'status': 'ready',
-                'collection_id': {'$exists': True, '$ne': None, '$ne': ''},
+                'collection_id': {'$exists': True, '$nin': [None, '']},
                 '$or': [
                     {'name_synced': {'$exists': False}},
                     {'name_synced': False}
@@ -872,6 +1127,11 @@ class FastGPTKBService:
             filename = doc.get('filename')
             doc_id = doc.get('doc_id')
 
+            doc_filter = {
+                'username': username,
+                'doc_id': doc_id
+            }
+
             if not collection_id or not filename:
                 continue
 
@@ -881,7 +1141,7 @@ class FastGPTKBService:
                 if result.get('success'):
                     synced += 1
                     self.db.kb_documents.update_one(
-                        {'doc_id': doc_id},
+                        doc_filter,
                         {'$set': {'name_synced': True, 'name_synced_at': datetime.now()}}
                     )
                 else:
@@ -922,6 +1182,11 @@ class FastGPTKBService:
             doc_id = doc.get('doc_id')
             filename = doc.get('filename', '')
 
+            doc_filter = {
+                'username': username,
+                'doc_id': doc_id
+            }
+
             if not collection_id:
                 continue
 
@@ -937,7 +1202,7 @@ class FastGPTKBService:
 
                     if fastgpt_status in ['ready', 'finish', 'active']:
                         self.db.kb_documents.update_one(
-                            {'doc_id': doc_id},
+                            doc_filter,
                             {'$set': {
                                 'status': 'ready',
                                 'chunk_count': status_info.get('dataCount', 0),
@@ -949,7 +1214,7 @@ class FastGPTKBService:
 
                     elif fastgpt_status in ['failed', 'error']:
                         self.db.kb_documents.update_one(
-                            {'doc_id': doc_id},
+                            doc_filter,
                             {'$set': {
                                 'status': 'failed',
                                 'error_message': status_info.get('error', '处理失败')
@@ -1001,8 +1266,11 @@ class FastGPTKBService:
         if dataset_id:
             self.db.user_fastgpt_kb.update_one(
                 {'username': username},
-                {'$set': {'dataset_id': dataset_id, 'created_at': datetime.now(),
-                          'updated_at': datetime.now()}},
+                {'$set': {
+                    'dataset_id': dataset_id,
+                    'created_at': datetime.now(),
+                    'updated_at': datetime.now()
+                }},
                 upsert=True
             )
             self._user_dataset_cache[username] = dataset_id
@@ -1073,7 +1341,12 @@ class FastGPTKBService:
     def _verify_dataset_exists(self, dataset_id: str) -> bool:
         url = f"{self.base_url}/core/dataset/detail"
         try:
-            response = requests.get(url, headers=self._get_headers(), params={'id': dataset_id}, timeout=10)
+            response = requests.get(
+                url,
+                headers=self._get_headers(),
+                params={'id': dataset_id},
+                timeout=10
+            )
             return response.status_code == 200 and response.json().get('code') == 200
         except Exception as e:
             print(f"⚠️ 验证知识库失败: {e}")
@@ -1174,20 +1447,88 @@ class FastGPTKBService:
 
     # ================== 共享知识库管理 ==================
 
+    def _save_shared_dataset_config(self, dataset_id: str, source: str = ''):
+        """
+        保存当前环境的共享知识库 ID。
+        注意：不同环境使用不同 key：
+        - shared_dataset_id_test
+        - shared_dataset_id_prod
+        """
+        try:
+            self.db.system_config.update_one(
+                {'key': self._shared_config_key},
+                {'$set': {
+                    'value': dataset_id,
+                    'env': self.fastgpt_env,
+                    'fastgpt_api_url': self.base_url,
+                    'name': self.shared_dataset_name,
+                    'source': source,
+                    'updated_at': datetime.now()
+                }},
+                upsert=True
+            )
+        except Exception as e:
+            print(f"⚠️ 保存共享知识库配置失败: {e}")
+
     def _get_or_create_shared_dataset(self) -> Optional[str]:
+        """
+        获取或创建共享知识库 Dataset。
+
+        优先级：
+        1. config_fastgpt.py / 环境变量中显式配置的 FASTGPT_SHARED_DATASET_ID
+        2. MongoDB 当前环境缓存 shared_dataset_id_test / shared_dataset_id_prod
+        3. 在当前 FastGPT 环境中按名称查找“共享知识库”
+        4. 如果找不到，则在当前 FastGPT 环境中创建“共享知识库”
+
+        重要：
+        不再使用旧的全局 key: shared_dataset_id
+        避免测试版和正式版互相污染。
+        """
         if self._shared_dataset_id:
             return self._shared_dataset_id
 
-        shared_record = self.db.system_config.find_one({'key': 'shared_dataset_id'})
-        if shared_record and shared_record.get('value'):
-            dataset_id = shared_record['value']
+        # 1. 优先使用配置文件中固定的共享知识库 ID
+        if self.configured_shared_dataset_id:
+            dataset_id = self.configured_shared_dataset_id
+            print(f"🔎 使用配置中的共享知识库 ID: {dataset_id}")
+            print(f"   环境: {self.fastgpt_env}")
+            print(f"   API: {self.base_url}")
+
             if self._verify_dataset_exists(dataset_id):
                 self._shared_dataset_id = dataset_id
-                print(f"✅ 共享知识库已存在: {dataset_id}")
+                self._save_shared_dataset_config(dataset_id, source='config')
+                print(f"✅ 配置的共享知识库可用: {dataset_id}")
                 return dataset_id
 
-        shared_name = "共享知识库"
+            print(f"❌ 配置的共享知识库不可用或无权限: {dataset_id}")
+            print(f"   请检查 FASTGPT_SHARED_DATASET_ID 是否属于当前 FastGPT 环境，")
+            print(f"   以及 FASTGPT_API_KEY 是否对该知识库有权限。")
+            return None
+
+        # 2. 查 MongoDB 中当前环境的缓存
+        try:
+            shared_record = self.db.system_config.find_one({
+                'key': self._shared_config_key
+            })
+
+            if shared_record and shared_record.get('value'):
+                dataset_id = shared_record['value']
+                print(f"🔎 从 MongoDB 读取共享知识库缓存: {self._shared_config_key}={dataset_id}")
+
+                if self._verify_dataset_exists(dataset_id):
+                    self._shared_dataset_id = dataset_id
+                    print(f"✅ 共享知识库缓存有效: {dataset_id}")
+                    return dataset_id
+
+                print(f"⚠️ 共享知识库缓存无效或无权限，将重新查找/创建: {dataset_id}")
+
+        except Exception as e:
+            print(f"⚠️ 读取共享知识库缓存失败: {e}")
+
+        # 3. 在当前 FastGPT 环境按名称查找
+        shared_name = self.shared_dataset_name or "共享知识库"
         url = f"{self.base_url}/core/dataset/list"
+
         try:
             response = requests.post(
                 url,
@@ -1197,22 +1538,22 @@ class FastGPTKBService:
             )
             response.raise_for_status()
             result = response.json()
+
             if result.get('code') == 200:
                 for ds in result.get('data', []):
                     if ds.get('name') == shared_name and ds.get('type') == 'dataset':
                         dataset_id = ds.get('_id')
-                        print(f"✅ 找到已有共享知识库: {dataset_id}")
-                        self.db.system_config.update_one(
-                            {'key': 'shared_dataset_id'},
-                            {'$set': {'value': dataset_id, 'updated_at': datetime.now()}},
-                            upsert=True
-                        )
+                        print(f"✅ 在当前环境找到已有共享知识库: {dataset_id}")
                         self._shared_dataset_id = dataset_id
+                        self._save_shared_dataset_config(dataset_id, source='found_by_name')
                         return dataset_id
+
         except Exception as e:
             print(f"⚠️ 搜索共享知识库失败: {e}")
 
-        print(f"📁 创建共享知识库...")
+        # 4. 创建共享知识库
+        print(f"📁 当前环境未找到共享知识库，开始创建: {shared_name}")
+
         create_url = f"{self.base_url}/core/dataset/create"
         payload = {
             "parentId": None,
@@ -1237,25 +1578,25 @@ class FastGPTKBService:
             if result.get('code') == 200:
                 dataset_id = result.get('data')
                 print(f"✅ 共享知识库创建成功: {dataset_id}")
-                self.db.system_config.update_one(
-                    {'key': 'shared_dataset_id'},
-                    {'$set': {'value': dataset_id, 'created_at': datetime.now(),
-                              'updated_at': datetime.now()}},
-                    upsert=True
-                )
                 self._shared_dataset_id = dataset_id
+                self._save_shared_dataset_config(dataset_id, source='created')
                 return dataset_id
-            else:
-                print(f"❌ 创建共享知识库失败: {result}")
-                return None
+
+            print(f"❌ 创建共享知识库失败: {result}")
+            return None
+
         except Exception as e:
             print(f"❌ 创建共享知识库异常: {e}")
             return None
-
     def share_document(self, username: str, doc_id: str) -> Dict[str, Any]:
         print(f"\n🌐 共享文档: doc_id={doc_id}, user={username}")
 
-        doc = self.db.kb_documents.find_one({'username': username, 'doc_id': doc_id})
+        doc_filter = {
+            'username': username,
+            'doc_id': doc_id
+        }
+
+        doc = self.db.kb_documents.find_one(doc_filter)
         if not doc:
             return {'success': False, 'error': '文档不存在'}
 
@@ -1263,7 +1604,10 @@ class FastGPTKBService:
             return {'success': False, 'error': '文档尚未处理完成，无法共享'}
 
         if doc.get('shared'):
-            return {'success': True, 'message': '文档已处于共享状态'}
+            if doc.get('shared_collection_id'):
+                return {'success': True, 'message': '文档已处于共享状态'}
+
+            print(f"   ⚠️ 文档之前被标记为共享，但没有共享副本，将重新复制")
 
         filename = doc.get('filename', '')
         if not filename:
@@ -1273,67 +1617,109 @@ class FastGPTKBService:
         if not shared_dataset_id:
             return {'success': False, 'error': '无法获取共享知识库'}
 
-        anonymous_filename = self._generate_shared_anonymous_name(doc_id, filename)
-        anonymous_doc_id = self._generate_shared_doc_id(doc_id)
+        shared_display_filename = self._get_shared_display_filename(doc_id, filename)
+        shared_doc_id = self._generate_shared_doc_id(doc_id)
 
-        print(f"   🔒 匿名文件名: {anonymous_filename}")
-        print(f"   🔒 匿名 doc_id: {anonymous_doc_id}")
+        print(f"   📄 共享显示文件名: {shared_display_filename}")
+        print(f"   🔒 共享内部 doc_id: {shared_doc_id}")
 
         shared_collection_id = None
         share_method = None
+        copy_error = ''
 
         collection_id = doc.get('collection_id')
         if collection_id:
-            print(f"   📤 从 FastGPT 数据块复制到共享知识库（匿名）")
+            print(f"   📤 从 FastGPT 数据块复制到共享知识库")
             result = self._copy_collection_data_to_shared(
-                collection_id, shared_dataset_id,
-                anonymous_filename,
-                anonymous_doc_id,
+                collection_id,
+                shared_dataset_id,
+                shared_display_filename,
+                shared_doc_id,
                 username
             )
+
             if result.get('success'):
                 shared_collection_id = result.get('collection_id')
                 share_method = 'data_copy'
                 print(f"   ✅ 数据复制成功: {shared_collection_id}")
             else:
-                print(f"   ⚠️ 数据复制失败: {result.get('error')}")
+                copy_error = result.get('error') or '数据复制失败'
+                print(f"   ⚠️ 数据复制失败: {copy_error}")
+        else:
+            copy_error = '源文档没有 collection_id，无法复制到共享知识库'
 
         if not shared_collection_id:
-            print(f"   ⚠️ 复制失败，仅标记共享状态")
+            error_msg = copy_error or '复制到共享知识库失败'
+
+            print(f"   ❌ 共享失败，未标记共享状态: {error_msg}")
+            print(f"      目标共享 dataset_id: {shared_dataset_id}")
+            print(f"      FastGPT API: {self.base_url}")
+
             self.db.kb_documents.update_one(
-                {'doc_id': doc_id},
-                {'$set': {
-                    'shared': True,
-                    'shared_at': datetime.now(),
-                    'shared_collection_id': None,
-                    'shared_no_file': True,
-                    'shared_anonymous_name': anonymous_filename
-                }}
+                doc_filter,
+                {
+                    '$set': {
+                        'shared': False,
+                        'shared_last_error': error_msg,
+                        'shared_last_failed_at': datetime.now(),
+                        'shared_target_dataset_id': shared_dataset_id,
+                    },
+                    '$unset': {
+                        'shared_at': '',
+                        'shared_collection_id': '',
+                        'shared_no_file': '',
+                        'share_method': '',
+                        'shared_anonymous_name': '',
+                    }
+                }
             )
+
             return {
-                'success': True,
-                'message': '文档已标记为共享，但内容无法同步到共享知识库',
-                'warning': 'no_content_available'
+                'success': False,
+                'error': '复制到共享知识库失败，文档未公开',
+                'detail': error_msg,
+                'shared_dataset_id': shared_dataset_id
             }
 
         self.db.kb_documents.update_one(
-            {'doc_id': doc_id},
+            doc_filter,
             {'$set': {
                 'shared': True,
                 'shared_at': datetime.now(),
                 'shared_collection_id': shared_collection_id,
                 'shared_dataset_id': shared_dataset_id,
                 'share_method': share_method,
-                'shared_anonymous_name': anonymous_filename
+
+                # 共享显示名
+                'shared_display_name': shared_display_filename,
+                'shared_original_filename': filename,
+                'shared_filename_mode': self.shared_filename_mode,
+                'shared_filename_tag': self.shared_filename_tag,
+
+                # 关键：建立共享 Collection 到原始文档/源文件的映射
+                'shared_source_doc_id': doc_id,
+                'shared_source_collection_id': collection_id,
+                'shared_raw_source_url': doc.get('raw_source_url', ''),
+                'shared_raw_source_path': doc.get('raw_source_path', ''),
+                'shared_raw_source_filename': doc.get('raw_source_filename') or filename,
+                'shared_fastgpt_image_url': doc.get('fastgpt_image_url', ''),
+                'shared_fastgpt_image_file_id': doc.get('fastgpt_image_file_id', ''),
+                'shared_fastgpt_image_bucket': doc.get('fastgpt_image_bucket', ''),
+
+                # 兼容旧字段
+                'shared_anonymous_name': (
+                    shared_display_filename
+                    if self.shared_filename_mode == 'anonymous'
+                    else ''
+                )
             }}
         )
 
         if shared_collection_id:
             time.sleep(0.5)
-            self.update_collection_name(shared_collection_id, anonymous_filename)
+            self.update_collection_name(shared_collection_id, shared_display_filename)
 
-        print(f"   ✅ 文档共享成功（匿名）: method={share_method}, "
-              f"shared_collection_id={shared_collection_id}")
+        print(f"   ✅ 文档共享成功: method={share_method}, shared_collection_id={shared_collection_id}")
 
         return {
             'success': True,
@@ -1344,11 +1730,14 @@ class FastGPTKBService:
 
     # ================== 从 FastGPT 内部复制数据块到共享知识库（多级回退） ==================
 
-    def _copy_collection_data_to_shared(self, source_collection_id: str,
-                                         shared_dataset_id: str,
-                                         filename: str,
-                                         doc_id: str,
-                                         username: str) -> Dict[str, Any]:
+    def _copy_collection_data_to_shared(
+        self,
+        source_collection_id: str,
+        shared_dataset_id: str,
+        filename: str,
+        doc_id: str,
+        username: str
+    ) -> Dict[str, Any]:
         print(f"      源 collection_id: {source_collection_id}")
 
         all_data = self._fetch_all_collection_data(source_collection_id)
@@ -1556,7 +1945,10 @@ class FastGPTKBService:
             dataset_id = doc_record['dataset_id']
             filename = doc_record.get('filename', '内容')
 
-            search_terms = [filename, filename.rsplit('.', 1)[0] if '.' in filename else filename]
+            search_terms = [
+                filename,
+                filename.rsplit('.', 1)[0] if '.' in filename else filename
+            ]
 
             all_results = []
             seen_ids = set()
@@ -1670,9 +2062,12 @@ class FastGPTKBService:
             print(f"      [detail] 异常: {e}")
             return []
 
-    def _create_text_collection(self, dataset_id: str,
-                                 name: str,
-                                 doc_id: str) -> Optional[str]:
+    def _create_text_collection(
+        self,
+        dataset_id: str,
+        name: str,
+        doc_id: str
+    ) -> Optional[str]:
         url = f"{self.base_url}/core/dataset/collection/create"
 
         payload = {
@@ -1714,9 +2109,12 @@ class FastGPTKBService:
             print(f"      ⚠️ 创建 Collection 异常: {e}")
             return None
 
-    def _create_virtual_collection_v2(self, dataset_id: str,
-                                       name: str,
-                                       doc_id: str) -> Optional[str]:
+    def _create_virtual_collection_v2(
+        self,
+        dataset_id: str,
+        name: str,
+        doc_id: str
+    ) -> Optional[str]:
         url = f"{self.base_url}/core/dataset/collection/create"
 
         for coll_type in ['virtual', 'file', 'link']:
@@ -1759,8 +2157,11 @@ class FastGPTKBService:
 
         return None
 
-    def _batch_insert_data(self, collection_id: str,
-                            data_list: List[Dict]) -> int:
+    def _batch_insert_data(
+        self,
+        collection_id: str,
+        data_list: List[Dict]
+    ) -> int:
         push_url = f"{self.base_url}/core/dataset/data/pushData"
         insert_url = f"{self.base_url}/core/dataset/data/insertData"
 
@@ -1871,7 +2272,12 @@ class FastGPTKBService:
     def unshare_document(self, username: str, doc_id: str) -> Dict[str, Any]:
         print(f"\n🔒 取消共享: doc_id={doc_id}, user={username}")
 
-        doc = self.db.kb_documents.find_one({'username': username, 'doc_id': doc_id})
+        doc_filter = {
+            'username': username,
+            'doc_id': doc_id
+        }
+
+        doc = self.db.kb_documents.find_one(doc_filter)
         if not doc:
             return {'success': False, 'error': '文档不存在'}
 
@@ -1879,6 +2285,7 @@ class FastGPTKBService:
             return {'success': True, 'message': '文档已处于非共享状态'}
 
         shared_collection_id = doc.get('shared_collection_id')
+
         if shared_collection_id:
             try:
                 url = f"{self.base_url}/core/dataset/collection/delete"
@@ -1888,27 +2295,48 @@ class FastGPTKBService:
                     params={'id': shared_collection_id},
                     timeout=30
                 )
+
                 if response.status_code == 200:
                     print(f"   ✅ 已从共享知识库删除 Collection: {shared_collection_id}")
                 else:
-                    print(f"   ⚠️ 删除共享 Collection 返回: {response.status_code}")
+                    print(
+                        f"   ⚠️ 删除共享 Collection 返回: "
+                        f"{response.status_code}, {response.text[:200]}"
+                    )
+
             except Exception as e:
                 print(f"   ⚠️ 删除共享 Collection 失败: {e}")
 
         self.db.kb_documents.update_one(
-            {'doc_id': doc_id},
+            doc_filter,
             {
                 '$set': {
                     'shared': False,
-                    'unshared_at': datetime.now()
+                    'unshared_at': datetime.now(),
+                    'updated_at': datetime.now()
                 },
                 '$unset': {
+                    'shared_at': '',
                     'shared_collection_id': '',
                     'shared_dataset_id': '',
-                    'shared_at': '',
-                    'shared_no_file': '',
                     'share_method': '',
-                    'shared_anonymous_name': ''
+                    'shared_display_name': '',
+                    'shared_original_filename': '',
+                    'shared_filename_mode': '',
+                    'shared_filename_tag': '',
+                    'shared_anonymous_name': '',
+                    'shared_source_doc_id': '',
+                    'shared_source_collection_id': '',
+                    'shared_raw_source_url': '',
+                    'shared_raw_source_path': '',
+                    'shared_raw_source_filename': '',
+                    'shared_fastgpt_image_url': '',
+                    'shared_fastgpt_image_file_id': '',
+                    'shared_fastgpt_image_bucket': '',
+                    'shared_last_error': '',
+                    'shared_last_failed_at': '',
+                    'shared_target_dataset_id': '',
+                    'shared_no_file': '',
                 }
             }
         )
@@ -2090,7 +2518,7 @@ class FastGPTKBService:
             return {'success': False, 'error': '同名文件夹已存在'}
 
         self.db.kb_folders.update_one(
-            {'folder_id': folder_id},
+            {'username': username, 'folder_id': folder_id},
             {'$set': {'name': new_name, 'updated_at': datetime.now()}}
         )
 
@@ -2098,8 +2526,12 @@ class FastGPTKBService:
 
         return {'success': True, 'message': '重命名成功'}
 
-    def move_document_to_folder(self, username: str, doc_id: str,
-                                 target_folder_id: str = None) -> Dict[str, Any]:
+    def move_document_to_folder(
+        self,
+        username: str,
+        doc_id: str,
+        target_folder_id: str = None
+    ) -> Dict[str, Any]:
         doc = self.db.kb_documents.find_one({
             'username': username,
             'doc_id': doc_id
@@ -2116,8 +2548,13 @@ class FastGPTKBService:
             if not target_folder:
                 return {'success': False, 'error': '目标文件夹不存在'}
 
+        doc_filter = {
+            'username': username,
+            'doc_id': doc_id
+        }
+
         self.db.kb_documents.update_one(
-            {'doc_id': doc_id},
+            doc_filter,
             {'$set': {
                 'folder_id': target_folder_id,
                 'updated_at': datetime.now()
@@ -2151,7 +2588,11 @@ class FastGPTKBService:
 
         docs = list(self.db.kb_documents.find(query, {'_id': 0}).sort('upload_time', -1))
 
-        processing_docs = [d for d in docs if d.get('status') == 'processing' and d.get('collection_id')]
+        processing_docs = [
+            d for d in docs
+            if d.get('status') == 'processing' and d.get('collection_id')
+        ]
+
         batch_statuses = {}
         if processing_docs:
             dataset_id = self.get_or_create_user_dataset(username)
@@ -2165,6 +2606,11 @@ class FastGPTKBService:
             collection_id = doc.get('collection_id', '')
             current_status = doc.get('status', 'pending')
             filename = doc.get('filename', '')
+
+            doc_filter = {
+                'username': username,
+                'doc_id': doc_id
+            }
 
             if current_status == 'processing' and collection_id:
                 try:
@@ -2181,7 +2627,7 @@ class FastGPTKBService:
 
                         if real_status == 'ready':
                             self.db.kb_documents.update_one(
-                                {'doc_id': doc_id},
+                                doc_filter,
                                 {'$set': {
                                     'status': 'ready',
                                     'chunk_count': data_count,
@@ -2197,8 +2643,11 @@ class FastGPTKBService:
                                 name_sync_result = self.update_collection_name(collection_id, filename)
                                 if name_sync_result.get('success'):
                                     self.db.kb_documents.update_one(
-                                        {'doc_id': doc_id},
-                                        {'$set': {'name_synced': True, 'name_synced_at': datetime.now()}}
+                                        doc_filter,
+                                        {'$set': {
+                                            'name_synced': True,
+                                            'name_synced_at': datetime.now()
+                                        }}
                                     )
 
                             self._clear_filename_cache(username)
@@ -2206,7 +2655,7 @@ class FastGPTKBService:
                         elif real_status == 'error':
                             error_msg = fastgpt_status.get('error', '处理失败')
                             self.db.kb_documents.update_one(
-                                {'doc_id': doc_id},
+                                doc_filter,
                                 {'$set': {'status': 'failed', 'error_message': error_msg}}
                             )
                             doc['status'] = 'failed'
@@ -2232,11 +2681,17 @@ class FastGPTKBService:
 
     # ================== 文件上传（★ 已添加耗时统计） ==================
 
-    def upload_file(self, username: str, file, filename: str, folder_id: str = None) -> Dict[str, Any]:
+    def upload_file(
+        self,
+        username: str,
+        file,
+        filename: str,
+        folder_id: str = None
+    ) -> Dict[str, Any]:
         # ★ 总计时
         total_start = time.time()
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"📤 开始上传文件: {filename}")
         print(f"👤 用户: {username}")
         print(f"📁 逻辑文件夹: {folder_id or '根目录'}")
@@ -2256,6 +2711,11 @@ class FastGPTKBService:
 
         doc_id = self._generate_doc_id(username, filename)
 
+        doc_filter = {
+            'username': username,
+            'doc_id': doc_id
+        }
+
         try:
             file.seek(0, 2)
             file_size = file.tell()
@@ -2266,7 +2726,7 @@ class FastGPTKBService:
             return {'success': False, 'error': f'读取文件失败: {e}'}
 
         self.db.kb_documents.update_one(
-            {'doc_id': doc_id},
+            doc_filter,
             {
                 '$set': {
                     'doc_id': doc_id,
@@ -2291,13 +2751,13 @@ class FastGPTKBService:
             # ★ FastGPT 上传计时
             t_upload_start = time.time()
             result = self._upload_file_to_fastgpt(dataset_id, file_content, filename, doc_id)
-            t_upload_elapsed = time.time() - t_upload_start                # ★
+            t_upload_elapsed = time.time() - t_upload_start
 
             if result.get('success'):
                 collection_id = result.get('collection_id')
 
                 self.db.kb_documents.update_one(
-                    {'doc_id': doc_id},
+                    doc_filter,
                     {
                         '$set': {
                             'status': 'processing',
@@ -2316,7 +2776,7 @@ class FastGPTKBService:
                 # ★ 打印耗时报告
                 total_elapsed = time.time() - total_start
                 file_size_mb = file_size / 1024 / 1024
-                print(f"\n{'─'*60}")
+                print(f"\n{'─' * 60}")
                 print(f"⏱️  文件上传耗时报告")
                 print(f"   📄 文件名:      {filename}")
                 print(f"   👤 用户:        {username}")
@@ -2327,7 +2787,7 @@ class FastGPTKBService:
                 if file_size_mb > 0 and t_upload_elapsed > 0:
                     print(f"   📊 上传速度:    {file_size_mb / t_upload_elapsed:.2f} MB/s")
                 print(f"   ✅ 上传成功，等待 FastGPT 索引")
-                print(f"{'─'*60}")
+                print(f"{'─' * 60}")
 
                 return {
                     'success': True,
@@ -2336,28 +2796,28 @@ class FastGPTKBService:
                     'folder_id': folder_id,
                     'status': 'processing',
                     'message': '文件上传成功，正在处理中...',
-                    'upload_time_seconds': round(total_elapsed, 2),         # ★
+                    'upload_time_seconds': round(total_elapsed, 2),
                 }
             else:
                 error_msg = result.get('error', '上传失败')
                 self.db.kb_documents.update_one(
-                    {'doc_id': doc_id},
+                    doc_filter,
                     {'$set': {'status': 'failed', 'error_message': error_msg}}
                 )
 
                 # ★ 失败也打印耗时
                 total_elapsed = time.time() - total_start
-                print(f"\n{'─'*60}")
+                print(f"\n{'─' * 60}")
                 print(f"⏱️  文件上传耗时报告 (失败)")
                 print(f"   📄 文件名: {filename} | ⏱️ {total_elapsed:.2f}s | ❌ {error_msg}")
-                print(f"{'─'*60}")
+                print(f"{'─' * 60}")
 
                 return {'success': False, 'doc_id': doc_id, 'error': error_msg}
 
         except Exception as e:
             error_msg = str(e)
             self.db.kb_documents.update_one(
-                {'doc_id': doc_id},
+                doc_filter,
                 {'$set': {'status': 'failed', 'error_message': error_msg}}
             )
             # ★ 异常也打印耗时
@@ -2379,11 +2839,18 @@ class FastGPTKBService:
         """
         将解析后的纯文本上传到知识库
         用于多媒体文件（图片/视频/PPT）解析后的文本入库
+
+        重要修复：
+        - 多媒体文件在 routes/kb_routes.py 中通常已经先保存了原始文件大小 file_size/raw_source_size；
+        - 这里不再无条件用解析文本大小覆盖 file_size；
+        - 解析文本大小单独记录到 parsed_text_size。
         """
+        metadata = metadata or {}
+
         # ★ 总计时
         total_start = time.time()
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"📤 上传解析文本到知识库")
         print(f"👤 用户: {username}")
         print(f"📄 原始文件: {original_filename}")
@@ -2404,33 +2871,88 @@ class FastGPTKBService:
         if not dataset_id:
             return {'success': False, 'error': '无法获取或创建知识库'}
 
-        # 生成文档 ID
-        doc_id = self._generate_doc_id(username, original_filename)
+        # 生成/复用文档 ID
+        # 多媒体上传时，routes/kb_routes.py 会先创建一条原始文件记录。
+        # 这里必须复用那条记录的 doc_id，不能重新生成，否则前端会短暂显示两条同名文档。
+        if not isinstance(metadata, dict):
+            metadata = {'raw_metadata': metadata}
+
+        doc_id = (
+            metadata.get('doc_id')
+            or metadata.get('source_doc_id')
+            or metadata.get('original_doc_id')
+            or self._generate_doc_id(username, original_filename)
+        )
+
+        # 后续所有 Mongo 更新都使用这个过滤条件，避免误更新其他用户同名 doc_id。
+        doc_filter = {
+            'username': username,
+            'doc_id': doc_id
+        }
 
         # 记录到 MongoDB
-        media_type = (metadata or {}).get('media_type', 'unknown')
-        self.db.kb_documents.update_one(
-            {'doc_id': doc_id},
+        media_type = metadata.get('media_type', 'unknown')
+        parsed_text_size = len(text_content.encode('utf-8'))
+
+        # 如果 routes/kb_routes.py 已经先创建了文档记录，
+        # 那里保存的是原始文件大小，这里不要覆盖成解析文本大小。
+        existing_doc = self.db.kb_documents.find_one(
+            doc_filter,
             {
-                '$set': {
-                    'doc_id': doc_id,
-                    'username': username,
-                    'filename': original_filename,
-                    'file_type': original_filename.rsplit('.', 1)[-1].lower()
-                                 if '.' in original_filename else '',
-                    'dataset_id': dataset_id,
-                    'folder_id': folder_id,
-                    'status': 'processing',
-                    'upload_time': datetime.now(),
-                    'file_size': len(text_content.encode('utf-8')),
-                    'name_synced': False,
-                    'shared': False,
-                    'parsed_from_media': True,
-                    'media_type': media_type,
-                    'parse_metadata': metadata or {},
-                    'parsed_text': text_content[:5000],
-                }
-            },
+                'file_size': 1,
+                'raw_source_size': 1,
+                'raw_source_path': 1,
+                'raw_source_url': 1,
+                'upload_time': 1
+            }
+        )
+
+        set_fields = {
+            'doc_id': doc_id,
+            'username': username,
+            'filename': original_filename,
+            'file_type': original_filename.rsplit('.', 1)[-1].lower()
+                         if '.' in original_filename else '',
+            'dataset_id': dataset_id,
+            'folder_id': folder_id,
+            'status': 'processing',
+            'name_synced': False,
+            'shared': False,
+            'parsed_from_media': True,
+            'media_type': media_type,
+            'parse_metadata': metadata,
+            'parsed_text': text_content[:5000],
+
+            # 单独记录解析文本大小，不再覆盖原始文件大小
+            'parsed_text_size': parsed_text_size,
+        }
+
+        # 不要覆盖 routes 中原始上传记录的 upload_time。
+        # 只有新建兼容记录时才写 upload_time。
+        if not existing_doc or not existing_doc.get('upload_time'):
+            set_fields['upload_time'] = datetime.now()
+
+        # 如果 metadata 里带有原始文件信息，且当前记录缺失，则补充进去。
+        if metadata.get('raw_source_size') and not (existing_doc or {}).get('raw_source_size'):
+            set_fields['raw_source_size'] = metadata.get('raw_source_size')
+
+        if metadata.get('raw_source_path') and not (existing_doc or {}).get('raw_source_path'):
+            set_fields['raw_source_path'] = metadata.get('raw_source_path')
+
+        if metadata.get('raw_source_url') and not (existing_doc or {}).get('raw_source_url'):
+            set_fields['raw_source_url'] = metadata.get('raw_source_url')
+
+        if metadata.get('raw_source_filename'):
+            set_fields['raw_source_filename'] = metadata.get('raw_source_filename')
+
+        # 只有历史兼容场景下没有 file_size 时，才写入 parsed_text_size
+        # 如果已存在 file_size，说明 routes 层大概率已经写入了原始文件大小。
+        if not existing_doc or not existing_doc.get('file_size'):
+            set_fields['file_size'] = parsed_text_size
+
+        self.db.kb_documents.update_one(
+            doc_filter,
+            {'$set': set_fields},
             upsert=True
         )
 
@@ -2440,46 +2962,70 @@ class FastGPTKBService:
             # ★ 创建 Collection 计时
             t_create_start = time.time()
             collection_id = self._create_text_collection(
-                dataset_id, original_filename, doc_id)
+                dataset_id, original_filename, doc_id
+            )
 
             if not collection_id:
                 collection_id = self._create_virtual_collection_v2(
-                    dataset_id, original_filename, doc_id)
+                    dataset_id, original_filename, doc_id
+                )
 
-            t_create_elapsed = time.time() - t_create_start                # ★
+            t_create_elapsed = time.time() - t_create_start
             print(f"   ⏱️  创建 Collection: {t_create_elapsed:.2f}s")
 
             if not collection_id:
                 self.db.kb_documents.update_one(
-                    {'doc_id': doc_id},
-                    {'$set': {'status': 'failed',
-                              'error_message': '在 FastGPT 中创建 Collection 失败'}}
+                    doc_filter,
+                    {'$set': {
+                        'status': 'failed',
+                        'error_message': '在 FastGPT 中创建 Collection 失败'
+                    }}
                 )
                 return {'success': False, 'error': '在 FastGPT 中创建文档容器失败'}
 
+            # 关键修复：
+            # Collection 一创建成功就立刻写回原始文档记录。
+            # 否则前端轮询时 sync_documents_from_fastgpt 可能会把这个 collection
+            # 当成新文档同步到 MongoDB，从而短暂出现两条同名文档。
+            self.db.kb_documents.update_one(
+                doc_filter,
+                {'$set': {
+                    'collection_id': collection_id,
+                    'status': 'processing',
+                    'collection_created_at': datetime.now(),
+                    'name_synced': False,
+                }}
+            )
+
             # ★ 文本切分计时
             t_split_start = time.time()
-            chunks = self._split_text_to_chunks(text_content, filename=original_filename)
-            t_split_elapsed = time.time() - t_split_start                  # ★
+
+            chunks = self._split_text_to_chunks(
+                text_content,
+                filename=original_filename
+            )
+            t_split_elapsed = time.time() - t_split_start
             print(f"   ⏱️  文本切分: {t_split_elapsed:.2f}s ({len(chunks)} 个数据块)")
 
             # ★ 批量写入计时
             t_insert_start = time.time()
             success_count = self._batch_insert_data(collection_id, chunks)
-            t_insert_elapsed = time.time() - t_insert_start                # ★
+            t_insert_elapsed = time.time() - t_insert_start
             print(f"   ⏱️  批量写入: {t_insert_elapsed:.2f}s ({success_count}/{len(chunks)} 块)")
 
             if success_count == 0:
                 self.db.kb_documents.update_one(
-                    {'doc_id': doc_id},
-                    {'$set': {'status': 'failed',
-                              'error_message': '数据块写入失败'}}
+                    doc_filter,
+                    {'$set': {
+                        'status': 'failed',
+                        'error_message': '数据块写入失败'
+                    }}
                 )
                 return {'success': False, 'error': '数据块写入 FastGPT 失败'}
 
             # 更新状态
             self.db.kb_documents.update_one(
-                {'doc_id': doc_id},
+                doc_filter,
                 {'$set': {
                     'status': 'ready',
                     'collection_id': collection_id,
@@ -2492,12 +3038,16 @@ class FastGPTKBService:
             # 同步文件名
             time.sleep(0.5)
             name_result = self.update_collection_name(
-                collection_id, original_filename)
+                collection_id,
+                original_filename
+            )
             if name_result.get('success'):
                 self.db.kb_documents.update_one(
-                    {'doc_id': doc_id},
-                    {'$set': {'name_synced': True,
-                              'name_synced_at': datetime.now()}}
+                    doc_filter,
+                    {'$set': {
+                        'name_synced': True,
+                        'name_synced_at': datetime.now()
+                    }}
                 )
 
             self._clear_filename_cache(username)
@@ -2507,8 +3057,8 @@ class FastGPTKBService:
 
             # ★ 打印完整耗时报告
             total_elapsed = time.time() - total_start
-            text_size_kb = len(text_content.encode('utf-8')) / 1024
-            print(f"\n{'─'*60}")
+            text_size_kb = parsed_text_size / 1024
+            print(f"\n{'─' * 60}")
             print(f"⏱️  知识库写入耗时报告")
             print(f"   📄 文件名:        {original_filename}")
             print(f"   👤 用户:          {username}")
@@ -2520,7 +3070,7 @@ class FastGPTKBService:
             print(f"   ⏱️  批量写入:      {t_insert_elapsed:.2f}s")
             print(f"   ⏱️  总写入耗时:    {total_elapsed:.2f}s")
             print(f"   ✅ 写入完成")
-            print(f"{'─'*60}")
+            print(f"{'─' * 60}")
 
             return {
                 'success': True,
@@ -2530,21 +3080,23 @@ class FastGPTKBService:
                 'status': 'ready',
                 'chunk_count': success_count,
                 'message': f'多媒体文件解析完成，已生成 {success_count} 个知识块',
-                'upload_time_seconds': round(total_elapsed, 2),            # ★
+                'upload_time_seconds': round(total_elapsed, 2),
             }
 
         except Exception as e:
             error_msg = str(e)
             self.db.kb_documents.update_one(
-                {'doc_id': doc_id},
-                {'$set': {'status': 'failed', 'error_message': error_msg}}
+                doc_filter,
+                {'$set': {
+                    'status': 'failed',
+                    'error_message': error_msg
+                }}
             )
             # ★ 异常也打印耗时
             total_elapsed = time.time() - total_start
             print(f"   ⏱️  异常耗时: {total_elapsed:.2f}s | ❌ {error_msg}")
             traceback.print_exc()
             return {'success': False, 'doc_id': doc_id, 'error': error_msg}
-
     # ★★★ 修改点① _split_text_to_chunks — 每个 chunk 前注入文件名 ★★★
     def _split_text_to_chunks(
         self,
@@ -2580,8 +3132,7 @@ class FastGPTKBService:
                         continue
 
                     if len(current) + len(para) + 2 > chunk_size and current:
-                        chunks.append(
-                            {'q': current.strip(), 'a': '', 'indexes': []})
+                        chunks.append({'q': current.strip(), 'a': '', 'indexes': []})
                         # 保留 overlap
                         if overlap > 0 and len(current) > overlap:
                             current = current[-overlap:] + '\n\n' + para
@@ -2591,12 +3142,12 @@ class FastGPTKBService:
                         current = (current + '\n\n' + para).strip()
 
                 if current.strip():
-                    chunks.append(
-                        {'q': current.strip(), 'a': '', 'indexes': []})
+                    chunks.append({'q': current.strip(), 'a': '', 'indexes': []})
 
         # 如果没切出来，强制按字符数切分
         if not chunks and text.strip():
-            for i in range(0, len(text), chunk_size - overlap):
+            step = max(1, chunk_size - overlap)
+            for i in range(0, len(text), step):
                 chunk = text[i:i + chunk_size].strip()
                 if chunk:
                     chunks.append({'q': chunk, 'a': '', 'indexes': []})
@@ -2613,8 +3164,13 @@ class FastGPTKBService:
 
         return chunks
 
-    def _upload_file_to_fastgpt(self, dataset_id: str, file_content: bytes,
-                                 filename: str, doc_id: str) -> Dict:
+    def _upload_file_to_fastgpt(
+        self,
+        dataset_id: str,
+        file_content: bytes,
+        filename: str,
+        doc_id: str
+    ) -> Dict:
         url = f"{self.base_url}/core/dataset/collection/create/localFile"
 
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'txt'
@@ -2674,8 +3230,11 @@ class FastGPTKBService:
             else:
                 try:
                     error_data = response.json()
-                    error_msg = (error_data.get('message', '') or
-                                 error_data.get('statusText', '') or response.text)
+                    error_msg = (
+                        error_data.get('message', '')
+                        or error_data.get('statusText', '')
+                        or response.text
+                    )
                 except Exception:
                     error_msg = response.text or f'HTTP {response.status_code}'
                 return {'success': False, 'error': f'FastGPT返回错误: {error_msg}'}
@@ -2713,21 +3272,54 @@ class FastGPTKBService:
     # ================== 搜索与问答 ==================
 
     def _get_shared_dataset_id_cached(self) -> Optional[str]:
-        """获取共享知识库 ID（仅查询缓存和 MongoDB，不创建）"""
+        """
+        获取共享知识库 ID。
+        只读取当前环境对应的共享知识库：
+        - shared_dataset_id_test
+        - shared_dataset_id_prod
+
+        不再读取旧的 shared_dataset_id，避免 test/prod 冲突。
+        """
         if self._shared_dataset_id:
             return self._shared_dataset_id
+
+        # 优先使用配置文件固定的共享知识库 ID
+        if self.configured_shared_dataset_id:
+            dataset_id = self.configured_shared_dataset_id
+            if self._verify_dataset_exists(dataset_id):
+                self._shared_dataset_id = dataset_id
+                self._save_shared_dataset_config(dataset_id, source='config_cached')
+                return dataset_id
+
+            print(f"⚠️ 配置的共享知识库不可用，跳过共享搜索: {dataset_id}")
+            return None
+
         try:
-            shared_record = self.db.system_config.find_one({'key': 'shared_dataset_id'})
+            shared_record = self.db.system_config.find_one({
+                'key': self._shared_config_key
+            })
+
             if shared_record and shared_record.get('value'):
-                self._shared_dataset_id = shared_record['value']
-                return self._shared_dataset_id
-        except Exception:
-            pass
+                dataset_id = shared_record['value']
+                if self._verify_dataset_exists(dataset_id):
+                    self._shared_dataset_id = dataset_id
+                    return dataset_id
+
+                print(f"⚠️ 当前环境共享知识库缓存不可用，跳过共享搜索: {dataset_id}")
+
+        except Exception as e:
+            print(f"⚠️ 获取共享知识库缓存失败: {e}")
+
         return None
 
-    def _search_single_dataset(self, dataset_id: str, username: str,
-                                query: str, top_k: int = 5,
-                                is_shared: bool = False) -> List[Dict]:
+    def _search_single_dataset(
+        self,
+        dataset_id: str,
+        username: str,
+        query: str,
+        top_k: int = 5,
+        is_shared: bool = False
+    ) -> List[Dict]:
         """
         搜索单个 Dataset，返回标准化结果列表
         """
@@ -2742,8 +3334,12 @@ class FastGPTKBService:
         }
 
         try:
-            response = requests.post(url, headers=self._get_headers(),
-                                     json=payload, timeout=30)
+            response = requests.post(
+                url,
+                headers=self._get_headers(),
+                json=payload,
+                timeout=30
+            )
             response.raise_for_status()
             result = response.json()
 
@@ -2778,15 +3374,24 @@ class FastGPTKBService:
                 data_id = item.get('id', '') or item.get('_id', '')
                 collection_id = item.get('collectionId', '')
                 dataset_id_item = item.get('datasetId', '') or dataset_id
-                fastgpt_source = (item.get('sourceName', '') or
-                                  item.get('collectionName', '') or '')
+                fastgpt_source = (
+                    item.get('sourceName', '')
+                    or item.get('collectionName', '')
+                    or ''
+                )
 
                 if is_shared:
                     original_filename = self._resolve_shared_source(
-                        username, fastgpt_source, collection_id)
+                        username,
+                        fastgpt_source,
+                        collection_id
+                    )
                 else:
                     original_filename = self._resolve_filename(
-                        username, collection_id, fastgpt_source)
+                        username,
+                        collection_id,
+                        fastgpt_source
+                    )
 
                     if original_filename and original_filename.startswith('['):
                         cleaned = re.sub(r'^\[.*?\]\s*', '', original_filename)
@@ -2819,8 +3424,13 @@ class FastGPTKBService:
             print(f"⚠️ 搜索 Dataset {dataset_id[:8]}... 失败: {e}")
             return []
 
-    def search(self, username: str, query: str, top_k: int = 5,
-               include_shared: bool = True) -> Dict[str, Any]:
+    def search(
+        self,
+        username: str,
+        query: str,
+        top_k: int = 5,
+        include_shared: bool = True
+    ) -> Dict[str, Any]:
         """
         搜索用户知识库
         ★ 增加文件名匹配回退：当用户按文件名搜索时也能命中
@@ -2837,7 +3447,12 @@ class FastGPTKBService:
         dataset_id = self.get_or_create_user_dataset(username)
         if dataset_id:
             personal = self._search_single_dataset(
-                dataset_id, username, query, top_k, is_shared=False)
+                dataset_id,
+                username,
+                query,
+                top_k,
+                is_shared=False
+            )
             for r in personal:
                 r['source_type'] = 'personal'
             all_results.extend(personal)
@@ -2849,7 +3464,12 @@ class FastGPTKBService:
             shared_dataset_id = self._get_shared_dataset_id_cached()
             if shared_dataset_id and shared_dataset_id != dataset_id:
                 shared = self._search_single_dataset(
-                    shared_dataset_id, username, query, top_k, is_shared=True)
+                    shared_dataset_id,
+                    username,
+                    query,
+                    top_k,
+                    is_shared=True
+                )
                 for r in shared:
                     r['source_type'] = 'shared'
                 all_results.extend(shared)
@@ -2873,8 +3493,10 @@ class FastGPTKBService:
 
             if key in seen:
                 existing = seen[key]
-                if (existing.get('source_type') == 'personal'
-                        and r.get('source_type') == 'shared'):
+                if (
+                    existing.get('source_type') == 'personal'
+                    and r.get('source_type') == 'shared'
+                ):
                     idx = deduped.index(existing)
                     deduped[idx] = r
                     seen[key] = r
@@ -2890,7 +3512,12 @@ class FastGPTKBService:
             'total': len(final)
         }
 
-    def _search_by_filename(self, username: str, query: str, max_results: int = 3) -> List[Dict]:
+    def _search_by_filename(
+        self,
+        username: str,
+        query: str,
+        max_results: int = 3
+    ) -> List[Dict]:
         """
         ★ 按文件名模糊匹配搜索（覆盖历史文档和新文档）
         当用户输入的 query 与某个文件名匹配时，返回该文件的摘要内容
@@ -2907,9 +3534,14 @@ class FastGPTKBService:
                     'filename': {'$regex': re.escape(query), '$options': 'i'}
                 },
                 {
-                    'collection_id': 1, 'filename': 1, 'dataset_id': 1,
-                    'parsed_text': 1, 'doc_id': 1, 'media_type': 1,
-                    'file_type': 1, 'chunk_count': 1
+                    'collection_id': 1,
+                    'filename': 1,
+                    'dataset_id': 1,
+                    'parsed_text': 1,
+                    'doc_id': 1,
+                    'media_type': 1,
+                    'file_type': 1,
+                    'chunk_count': 1
                 }
             ).limit(max_results))
 
@@ -2935,7 +3567,7 @@ class FastGPTKBService:
                     'content': content,
                     'q': content[:500],
                     'a': '',
-                    'score': 1.0,  # 文件名精确匹配给高分
+                    'score': 1.0,
                     'source': filename,
                     'data_id': doc.get('doc_id', ''),
                     'collection_id': collection_id,
@@ -2945,7 +3577,10 @@ class FastGPTKBService:
                     'match_type': 'filename',
                 })
 
-                print(f"   📎 文件名命中: {filename} (collection={collection_id[:8] if collection_id else 'N/A'}...)")
+                print(
+                    f"   📎 文件名命中: {filename} "
+                    f"(collection={collection_id[:8] if collection_id else 'N/A'}...)"
+                )
 
             return results
 
@@ -2953,14 +3588,22 @@ class FastGPTKBService:
             print(f"⚠️ 文件名搜索失败: {e}")
             return []
 
-    def chat(self, username: str, question: str, top_k: int = 5,
-             chat_id: str = None) -> Dict[str, Any]:
+    def chat(
+        self,
+        username: str,
+        question: str,
+        top_k: int = 5,
+        chat_id: str = None
+    ) -> Dict[str, Any]:
         start_time = time.time()
 
         search_result = self.search(username, question, top_k)
 
         if not search_result.get('success') or not search_result.get('results'):
-            doc_count = self.db.kb_documents.count_documents({'username': username, 'status': 'ready'})
+            doc_count = self.db.kb_documents.count_documents({
+                'username': username,
+                'status': 'ready'
+            })
 
             if doc_count == 0:
                 return {
@@ -2982,7 +3625,7 @@ class FastGPTKBService:
         for idx, item in enumerate(search_result['results']):
             content = item.get('content', '')
             if content:
-                contexts.append(f"[{idx+1}] {content}")
+                contexts.append(f"[{idx + 1}] {content}")
                 sources.append({
                     'index': idx + 1,
                     'content': content[:200] + '...' if len(content) > 200 else content,
@@ -3089,12 +3732,7 @@ class FastGPTKBService:
         return None
 
     def _call_direct_llm(self, question: str, context: str) -> Optional[str]:
-        llm_endpoints = [
-            self.llm_base_url,
-            'http://180.85.206.30:8000/v1',
-            'http://180.85.206.30:11434/v1',
-        ]
-
+        llm_endpoints = [self.llm_base_url] + LLM_FALLBACK_ENDPOINTS
         llm_endpoints = list(dict.fromkeys([ep for ep in llm_endpoints if ep]))
 
         system_prompt = """你是一个专业的学习助手。请根据用户提供的知识库内容，准确回答用户的问题。"""
@@ -3174,7 +3812,10 @@ class FastGPTKBService:
         return doc
 
     def delete_document(self, username: str, doc_id: str) -> bool:
-        doc = self.db.kb_documents.find_one({'username': username, 'doc_id': doc_id})
+        doc = self.db.kb_documents.find_one({
+            'username': username,
+            'doc_id': doc_id
+        })
         if not doc:
             return False
 
@@ -3207,12 +3848,20 @@ class FastGPTKBService:
             except Exception as e:
                 print(f"⚠️ 删除FastGPT集合失败: {e}")
 
-        self.db.kb_documents.delete_one({'username': username, 'doc_id': doc_id})
+        self.db.kb_documents.delete_one({
+            'username': username,
+            'doc_id': doc_id
+        })
         self._clear_filename_cache(username)
 
         return True
 
-    def rename_document(self, username: str, doc_id: str, new_name: str) -> Dict[str, Any]:
+    def rename_document(
+        self,
+        username: str,
+        doc_id: str,
+        new_name: str
+    ) -> Dict[str, Any]:
         doc = self.db.kb_documents.find_one({
             'username': username,
             'doc_id': doc_id
@@ -3220,6 +3869,11 @@ class FastGPTKBService:
 
         if not doc:
             return {'success': False, 'error': '文档不存在'}
+
+        doc_filter = {
+            'username': username,
+            'doc_id': doc_id
+        }
 
         collection_id = doc.get('collection_id')
         if collection_id:
@@ -3229,15 +3883,27 @@ class FastGPTKBService:
 
         if doc.get('shared') and doc.get('shared_collection_id'):
             shared_cid = doc['shared_collection_id']
-            new_anonymous_name = self._generate_shared_anonymous_name(doc_id, new_name)
-            self.update_collection_name(shared_cid, new_anonymous_name)
+            new_shared_display_name = self._get_shared_display_filename(doc_id, new_name)
+
+            self.update_collection_name(shared_cid, new_shared_display_name)
+
             self.db.kb_documents.update_one(
-                {'doc_id': doc_id},
-                {'$set': {'shared_anonymous_name': new_anonymous_name}}
+                doc_filter,
+                {'$set': {
+                    'shared_display_name': new_shared_display_name,
+                    'shared_original_filename': new_name,
+                    'shared_filename_mode': self.shared_filename_mode,
+                    'shared_filename_tag': self.shared_filename_tag,
+                    'shared_anonymous_name': (
+                        new_shared_display_name
+                        if self.shared_filename_mode == 'anonymous'
+                        else ''
+                    )
+                }}
             )
 
         self.db.kb_documents.update_one(
-            {'doc_id': doc_id},
+            doc_filter,
             {'$set': {
                 'filename': new_name,
                 'name_synced': True,
@@ -3290,15 +3956,71 @@ class FastGPTKBService:
             elif status == 'failed':
                 result['failed_documents'] = count
 
-        result['folder_count'] = self.db.kb_folders.count_documents({'username': username})
+        result['folder_count'] = self.db.kb_folders.count_documents({
+            'username': username
+        })
 
-        query_count = self.db.kb_queries.count_documents({'username': username})
+        query_count = self.db.kb_queries.count_documents({
+            'username': username
+        })
         result['queries'] = query_count
         result['rag_enabled'] = result['ready_documents'] > 0
 
-        if result['total_size'] > 1024 * 1024:
-            result['total_size_display'] = f"{result['total_size'] / (1024*1024):.2f} MB"
-        elif result['total_size'] > 1024:
+        # 使用 raw_source_size / raw_source_path / file_size 重新计算更准确的容量
+        # 原因：
+        # - 多媒体文件解析后，file_size 可能是解析文本大小；
+        # - raw_source_size 或 raw_source_path 才代表真实原始文件大小；
+        # - 对每个文档取 max(raw_source_size, raw_source_path_size, file_size) 更稳。
+        try:
+            size_docs = self.db.kb_documents.find(
+                {
+                    'username': username,
+                    'status': {'$ne': 'deleted'}
+                },
+                {
+                    'file_size': 1,
+                    'raw_source_size': 1,
+                    'raw_source_path': 1
+                }
+            )
+
+            accurate_total_size = 0
+
+            for d in size_docs:
+                candidates = []
+
+                try:
+                    if d.get('raw_source_size'):
+                        candidates.append(int(d.get('raw_source_size') or 0))
+                except Exception:
+                    pass
+
+                try:
+                    if d.get('file_size'):
+                        candidates.append(int(d.get('file_size') or 0))
+                except Exception:
+                    pass
+
+                try:
+                    raw_path = d.get('raw_source_path') or ''
+                    if raw_path and os.path.exists(raw_path):
+                        candidates.append(os.path.getsize(raw_path))
+                except Exception:
+                    pass
+
+                if candidates:
+                    accurate_total_size += max(candidates)
+
+            result['total_size'] = accurate_total_size
+
+        except Exception as e:
+            print(f"⚠️ 重新计算知识库容量失败: {e}")
+
+        if result['total_size'] >= 1024 * 1024 * 1024:
+            result['total_size_display'] = f"{result['total_size'] / (1024 * 1024 * 1024):.2f} GB"
+        elif result['total_size'] >= 1024 * 1024:
+            result['total_size_display'] = f"{result['total_size'] / (1024 * 1024):.2f} MB"
+        elif result['total_size'] >= 1024:
             result['total_size_display'] = f"{result['total_size'] / 1024:.2f} KB"
         else:
             result['total_size_display'] = f"{result['total_size']} B"
