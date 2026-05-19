@@ -121,6 +121,7 @@ def get_courses_by_student_id(sis_id: str, timeout: int = 10):
     Returns:
         去重后的课程列表，每个课程包含course_id, name, sis_course_id
     """
+    BASE_URL = "https://eiecanvas.cqu.edu.cn/api/v1"
     # 构建API请求URL
     url = f"{BASE_URL}/users/sis_user_id:{sis_id}/courses"
     

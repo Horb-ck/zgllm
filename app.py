@@ -564,6 +564,8 @@ def process_user_courses(username, role, sis_id):
     返回处理后的用户课程数据和当前课程信息
     """
     # 1. 根据身份获取原始课程列表
+    print(f"身份 {role}")
+    print(f"教务号 {sis_id}")
     user_courses = []
     if role == 'teacher':
         try:

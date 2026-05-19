@@ -1645,9 +1645,9 @@ html {
         }
     }
 
+    // 核心修改：移除了这里所有的 showLoading() 调用
     async function loadStudentData(courseId = null) {
         try {
-            showLoading(true);
             let url = '/dashboard/study_situation/student/overview';
             if (courseId) url += `?course_id=${courseId}`;
             const response = await fetch(url);
@@ -1657,17 +1657,14 @@ html {
             const hasCourses = data.course_info && data.course_info.student_courses && data.course_info.student_courses.length > 0;
             if (!hasCourses) {
                 toggleNoCourseWarning(true);
-                showLoading(false);
                 return;
             }
             toggleNoCourseWarning(false);
             updateCourseSelector(data.course_info || { student_courses: [] });
             updateStudentDashboard(data);
-            showLoading(false);
         } catch (error) {
             console.error('加载失败:', error);
             toggleNoCourseWarning(true);
-            showLoading(false);
         }
     }
 
@@ -1731,25 +1728,20 @@ html {
     }
 
     function updatePublishedTasks(data) {
-        // 更新总任务角标
         const assignTotal = (data.assignment_analysis?.pending_assignments?.length || 0) + (data.assignment_analysis?.completed_assignments?.length || 0);
         const quizTotal = (data.quiz_analysis?.pending_quizzes?.length || 0) + (data.quiz_analysis?.completed_quizzes?.length || 0);
         document.getElementById('published-tasks-count').textContent = assignTotal + quizTotal;
 
-        // 渲染作业和测验列表
         updatePublishedAssignments(data);
         updatePublishedQuizzes(data);
     }
 
-    // 核心修复：渲染所有作业（未完成 + 已完成）
     function updatePublishedAssignments(data) {
         const container = document.getElementById('published-assignments-list');
         
-        // 从后端分别拿到未完成和已完成的数组
         const pending = data.assignment_analysis?.pending_assignments || [];
         const completed = data.assignment_analysis?.completed_assignments || [];
         
-        // 将它们合并在一起，并带上 completed 标记
         const allAssignments = [
             ...pending.map(a => ({ ...a, isCompleted: false })),
             ...completed.map(a => ({ ...a, isCompleted: true }))
@@ -1760,7 +1752,6 @@ html {
             return;
         }
         
-        // 按时间排序：未交的逾期排前面，然后是未交未逾期，最后是已交的
         allAssignments.sort((a, b) => {
             if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
             const aDue = a.due_at ? new Date(a.due_at).getTime() : 9999999999999;
@@ -1773,7 +1764,6 @@ html {
             const dueDate = assign.due_at ? new Date(assign.due_at) : null;
             const now = new Date();
             
-            // 核心修复：根据后端的 assignment_name 提取名称
             const displayName = assign.assignment_name || assign.name || assign.title || '未命名作业';
             
             if (assign.isCompleted) { 
@@ -1809,7 +1799,6 @@ html {
         }).join('');
     }
 
-    // 核心修复：渲染所有测验（未完成 + 已完成）
     function updatePublishedQuizzes(data) {
         const container = document.getElementById('published-quizzes-list');
         
@@ -1838,7 +1827,6 @@ html {
             const dueDate = quiz.due_at ? new Date(quiz.due_at) : null;
             const now = new Date();
             
-            // 后端测验名字段是 quiz_title
             const displayName = quiz.quiz_title || quiz.title || '未命名测验';
 
             if (quiz.isCompleted) { 
@@ -1989,19 +1977,6 @@ html {
                 if (success) loadStudentData(courseId);
             });
         });
-    }
-
-    function showLoading(isLoading) {
-        let overlay = document.getElementById('loadingOverlay');
-        if (isLoading && !overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'loadingOverlay';
-            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;justify-content:center;align-items:center;z-index:9999;';
-            overlay.innerHTML = '<div style="text-align:center;"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p style="margin-top:1rem;color:#666;">加载中...</p></div>';
-            document.body.appendChild(overlay);
-        } else if (!isLoading && overlay) {
-            overlay.remove();
-        }
     }
 
     function showError(message) {
