@@ -1,6 +1,7 @@
 from flask import request, Blueprint,jsonify,session
 import os
 import json
+import concurrent.futures
 from datetime import datetime, timedelta, timezone
 from utils.canvas_utils import get_courses_by_teacher_id,get_courses_by_student_id,get_course_assignments,get_assignment_submissions,get_assignment_submission_summary,get_gradeable_students,get_course_enrollments,get_course_quizzes,get_course_modules,get_module_items,get_quiz_submissions,get_student_assignment_submission,get_student_quiz_submissions
 study_situation_canvas = Blueprint('study_situation_canvas', __name__)
@@ -18,28 +19,16 @@ ALLOWED_TERM_IDS = [13]
 
 @study_situation_canvas.route('/dashboard/study_situation/comprehensive/overview')
 def get_comprehensive_overview():
-    """获取班级整体学习情况综合分析"""
-    # 从session获取教师课程信息
+    """获取班级整体学习情况综合分析 (全链路并发优化版)"""
     user_courses = session.get('user_courses', [])
-    print("user_courses:", user_courses)
-    
     if not user_courses:
         return jsonify({"error": "未找到课程信息"}), 400
     
-    # 筛选符合条件的课程
     filtered_courses = []
     for course in user_courses:
         course_name = course.get('name', '')
         term_id = course.get('enrollment_term_id')
-        
-        # 检查课程名称是否在COURSES_LIST中
-        is_valid_name = any(allowed_name in course_name for allowed_name in COURSES_LIST)
-        
-        # 检查学期ID是否在允许的列表中
-        is_valid_term = term_id in ALLOWED_TERM_IDS
-        
-        if is_valid_name and is_valid_term:
-            # 添加课程ID到筛选后的列表
+        if any(allowed_name in course_name for allowed_name in COURSES_LIST) and term_id in ALLOWED_TERM_IDS:
             filtered_courses.append({
                 'course_id': course.get('course_id'),
                 'name': course.get('name', '未命名课程'),
@@ -48,79 +37,48 @@ def get_comprehensive_overview():
                 'workflow_state': course.get('workflow_state', '')
             })
     
-    print("筛选后的课程:", filtered_courses)
-    
     if not filtered_courses:
         return jsonify({"error": "未找到符合条件的课程"}), 400
     
-    # 获取课程ID，优先级：URL参数 > session中的当前课程 > 第一个课程
-    course_id = request.args.get('course_id')
+    course_id = request.args.get('course_id') or session.get('current_course', {}).get('course_id') or filtered_courses[0]['course_id']
+    if not course_id: return jsonify({"error": "未指定课程ID"}), 400
     
-    # 如果URL中没有参数，尝试从session中获取当前课程
-    if not course_id and 'current_course' in session:
-        course_id = session['current_course'].get('course_id')
+    try: course_id = int(course_id)
+    except ValueError: return jsonify({"error": "课程ID格式错误"}), 400
     
-    # 如果还没有课程ID，使用第一个筛选后的课程
-    if not course_id and filtered_courses:
+    if not any(str(course.get('course_id')) == str(course_id) for course in filtered_courses):
         course_id = filtered_courses[0]['course_id']
-    
-    if not course_id:
-        return jsonify({"error": "未指定课程ID"}), 400
-    
-    try:
-        course_id = int(course_id)
-    except ValueError:
-        return jsonify({"error": "课程ID格式错误"}), 400
-    
-    # 验证课程是否在筛选后的列表中
-    is_valid_course = any(
-        str(course.get('course_id')) == str(course_id) 
-        for course in filtered_courses
-    )
-    
-    if not is_valid_course:
-        # 如果课程不在筛选后的列表中，使用第一个课程
-        if filtered_courses:
-            course_id = filtered_courses[0]['course_id']
-        else:
-            return jsonify({"error": "未找到有效的课程信息"}), 400
-    
-    # 获取基础数据
-    assignments = get_course_assignments(course_id)
-    quizzes = get_course_quizzes(course_id)
-    modules = get_course_modules(course_id, include_items=True, include_content_details=True)
-    enrollments = get_course_enrollments(course_id)
-    
-    # 学生统计
+
+    # ================= 优化点 1：最外层四大基础 API 并发请求 =================
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        future_assignments = executor.submit(get_course_assignments, course_id)
+        future_quizzes = executor.submit(get_course_quizzes, course_id)
+        future_modules = executor.submit(get_course_modules, course_id, include_items=True, include_content_details=True)
+        future_enrollments = executor.submit(get_course_enrollments, course_id)
+
+        assignments = future_assignments.result()
+        quizzes = future_quizzes.result()
+        modules = future_modules.result()
+        enrollments = future_enrollments.result()
+
     students = [e for e in enrollments if e.get('type') == 'StudentEnrollment']
     total_students = len(students)
     
-    # 作业分析
-    assignment_stats = analyze_assignments_comprehensive(assignments, course_id)
-    
-    # 测验分析
+    # 核心分析计算
+    assignment_stats = analyze_assignments_comprehensive(assignments, course_id, total_students)
     quiz_stats = analyze_quizzes_comprehensive(quizzes, course_id)
-    
-    # 单元分析
     module_stats = analyze_modules_comprehensive(modules, total_students, course_id)
-    
-    # 学生表现分析
     student_performance = analyze_students_performance(students)
     
-    # 获取当前课程信息
     current_course = next((course for course in filtered_courses if str(course.get('course_id')) == str(course_id)), None)
     
-    # 标准化课程数据，确保字段名一致
-    standardized_courses = []
-    for course in filtered_courses:
-        standardized_course = {
-            'course_id': course.get('course_id'),
-            'course_name': course.get('name', '未命名课程'),  # 注意这里从'name'映射到'course_name'
-            'sis_course_id': course.get('sis_course_id', ''),
-            'enrollment_term_id': course.get('enrollment_term_id'),
-            'workflow_state': course.get('workflow_state', '')
-        }
-        standardized_courses.append(standardized_course)
+    standardized_courses = [{
+        'course_id': course.get('course_id'),
+        'course_name': course.get('name', '未命名课程'),
+        'sis_course_id': course.get('sis_course_id', ''),
+        'enrollment_term_id': course.get('enrollment_term_id'),
+        'workflow_state': course.get('workflow_state', '')
+    } for course in filtered_courses]
     
     return jsonify({
         "course_info": {
@@ -144,127 +102,91 @@ def get_comprehensive_overview():
     })
 
     
-def analyze_assignments_comprehensive(assignments,course_id):
-    """综合分析作业情况"""
-    # total_points = 0
+def analyze_assignments_comprehensive(assignments, course_id, total_students):
+    """综合分析作业情况 (并发拉取底层数据)"""
     published_count = 0
     graded_count = 0
-    submission_stats = {
-        "total_submitted": 0,
-        "total_graded": 0,
-        "average_submission_rate": 0
-    }
-    
-    assignment_categories = {
-        "individual": [],
-        "group": [],
-        "late_submissions": 0,
-        "upcoming_deadlines": []
-    }
-    
-    # 获取课程注册信息
-    enrollments = get_course_enrollments(course_id)
-    total_students = len([e for e in enrollments if e.get('type') == 'StudentEnrollment'])
-    
-    for assignment in assignments:
+    submission_stats = {"total_submitted": 0, "total_graded": 0, "average_submission_rate": 0}
+    assignment_categories = {"individual": [], "group": [], "late_submissions": 0, "upcoming_deadlines": []}
+    assignments_with_ungraded = []
+
+    # ================= 优化点 2：将循环内的 3 个 API 封装并并发 =================
+    def fetch_single_assign_data(assignment):
+        a_id = assignment.get('id')
+        return {
+            'assignment': assignment,
+            'summary': get_assignment_submission_summary(course_id, a_id),
+            'submissions': get_assignment_submissions(course_id, a_id),
+            'gradeable_students': get_gradeable_students(course_id, a_id)
+        }
+
+    # 使用最多 20 个工作线程并发处理所有作业
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        assign_results = list(executor.map(fetch_single_assign_data, assignments))
+
+    # 在内存中快速处理并发拉取回来的数据
+    for result in assign_results:
+        assignment = result['assignment']
         assignment_id = assignment.get('id')
         assignment_name = assignment.get('name')
-        # total_points += assignment.get('points_possible', 0)
+        summary = result['summary']
+        submissions = result['submissions']
+        gradeable_students = result['gradeable_students']
+
+        if assignment.get('published'): published_count += 1
+        if assignment.get('graded_submissions_exist'): graded_count += 1
         
-        if assignment.get('published'):
-            published_count += 1
-        
-        if assignment.get('graded_submissions_exist'):
-            graded_count += 1
-        
-        # 判断是否为小组作业
         is_group_assignment = assignment.get('grade_group_students_individually') == False
-        if is_group_assignment:
-            assignment_categories["group"].append(assignment)
-        else:
-            assignment_categories["individual"].append(assignment)
+        if is_group_assignment: assignment_categories["group"].append(assignment)
+        else: assignment_categories["individual"].append(assignment)
         
-        # 获取提交摘要和详细提交信息
-        summary = get_assignment_submission_summary(course_id, assignment_id)
-        submissions = get_assignment_submissions(course_id, assignment_id)
-        gradeable_students = get_gradeable_students(course_id, assignment_id)
-        
-        # 统计提交情况
         submitted_count = summary.get('graded', 0) + summary.get('ungraded', 0)
         ungraded_count = summary.get('ungraded', 0)
         not_submitted_count = summary.get('not_submitted', 0)
         
         submission_stats["total_submitted"] += submitted_count
         submission_stats["total_graded"] += summary.get('graded', 0)
+        submission_rate = round((submitted_count / total_students) * 100, 2) if total_students > 0 else 0
         
-        # 计算每个作业的提交率
-        if total_students > 0:
-            submission_rate = round((submitted_count / total_students) * 100, 2)
-        else:
-            submission_rate = 0
-        
-        # 检查即将截止的作业（离截止日期还剩两天）
         due_at = assignment.get('due_at')
-        upcoming_deadline_info = None
-        
         if due_at:
             due_date = datetime.fromisoformat(due_at.replace('Z', '+00:00'))
             now = datetime.now().replace(tzinfo=due_date.tzinfo)
             days_remaining = (due_date - now).days
             
-            if 0 <= days_remaining <= 2:  # 还剩0-2天
-                # 获取未提交的学生/小组名单
+            if 0 <= days_remaining <= 2:
                 unsubmitted_list = get_unsubmitted_students(assignment_id, gradeable_students, submissions, is_group_assignment)
-                
-                upcoming_deadline_info = {
-                    "assignment_id": assignment_id,
-                    "assignment_name": assignment_name,
-                    "due_at": due_at,
+                assignment_categories["upcoming_deadlines"].append({
+                    "assignment_id": assignment_id, "assignment_name": assignment_name, "due_at": due_at,
                     "days_remaining": days_remaining,
                     "submission_status": {
-                        "submitted_count": submitted_count,
-                        "not_submitted_count": not_submitted_count,
-                        "submission_rate": submission_rate,
-                        "all_submitted": not_submitted_count == 0,
+                        "submitted_count": submitted_count, "not_submitted_count": not_submitted_count,
+                        "submission_rate": submission_rate, "all_submitted": not_submitted_count == 0,
                         "ungraded_count": ungraded_count
                     },
                     "unsubmitted_students": unsubmitted_list
-                }
-                
-                assignment_categories["upcoming_deadlines"].append(upcoming_deadline_info)
+                })
         
-        # 为每个作业添加详细的提交和评分信息
+        has_ungraded = ungraded_count > 0
         assignment['submission_analysis'] = {
-            "submission_rate": submission_rate,
-            "submitted_count": submitted_count,
-            "not_submitted_count": not_submitted_count,
-            "ungraded_count": ungraded_count,
-            "has_ungraded_submissions": ungraded_count > 0,
-            "total_students": total_students,
+            "submission_rate": submission_rate, "submitted_count": submitted_count,
+            "not_submitted_count": not_submitted_count, "ungraded_count": ungraded_count,
+            "has_ungraded_submissions": has_ungraded, "total_students": total_students,
             "is_group_assignment": is_group_assignment
         }
-    
-    # 计算所有作业的平均提交率
-    if published_count > 0:
-        submission_stats["average_submission_rate"] = round(
-            submission_stats["total_submitted"] / (published_count * total_students) * 100, 2
-        )
-    
-    # 统计待评分作业
-    assignments_with_ungraded = []
-    for assignment in assignments:
-        if assignment.get('submission_analysis', {}).get('has_ungraded_submissions'):
+        
+        if has_ungraded:
             assignments_with_ungraded.append({
-                "assignment_id": assignment.get('id'),
-                "assignment_name": assignment.get('name'),
-                "ungraded_count": assignment.get('submission_analysis', {}).get('ungraded_count', 0)
+                "assignment_id": assignment_id, "assignment_name": assignment_name, "ungraded_count": ungraded_count
             })
+
+    if published_count > 0:
+        submission_stats["average_submission_rate"] = round(submission_stats["total_submitted"] / (published_count * total_students) * 100, 2)
     
     return {
         "total_assignments": len(assignments),
         "published_assignments": published_count,
         "graded_assignments": graded_count,
-        # "total_points": total_points,
         "submission_stats": submission_stats,
         "assignment_categories": assignment_categories,
         "ungraded_analysis": {
@@ -309,93 +231,60 @@ def get_unsubmitted_students(assignment_id, gradeable_students, submissions, is_
     
     return unsubmitted_students
 
-def analyze_quizzes_comprehensive(quizzes,course_id):
-    """综合分析测验情况"""
+def analyze_quizzes_comprehensive(quizzes, course_id):
+    """综合分析测验情况 (并发拉取底层数据)"""
     quiz_stats = {
         "total_quizzes": len(quizzes),
         "published_quizzes": len([q for q in quizzes if q.get('published')]),
-        "quiz_types": {},
-        # "total_points": 0,
-        "quiz_analysis": [],
-        "completion_stats": {
-            "completed_quizzes": 0,
-            "incomplete_quizzes": 0,
-            "expired_quizzes": 0,
-            "not_started_quizzes": 0
-        },
-        "score_analysis": {
-            "average_score_all_quizzes": 0,
-            "highest_score": 0,
-            "lowest_score": 100,
-            "score_distribution": {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
-        }
+        "quiz_types": {}, "quiz_analysis": [],
+        "completion_stats": {"completed_quizzes": 0, "incomplete_quizzes": 0, "expired_quizzes": 0, "not_started_quizzes": 0},
+        "score_analysis": {"average_score_all_quizzes": 0, "highest_score": 0, "lowest_score": 100, "score_distribution": {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}}
     }
-    #所有测验平均分总和
-    total_quiz_score = 0
-    #有提交评分的测验数量
-    quiz_count_with_submissions = 0
     
-    for quiz in quizzes:
-        quiz_id = quiz.get('id')
-        quiz_title = quiz.get('title', '未知测验')
+    # ================= 优化点 3：并发拉取测验提交数据 =================
+    def fetch_single_quiz_data(quiz):
+        return {
+            'quiz': quiz,
+            'submissions': get_quiz_submissions(course_id, quiz.get('id'))
+        }
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        quiz_results = list(executor.map(fetch_single_quiz_data, quizzes))
+
+    total_quiz_score = 0
+    quiz_count_with_submissions = 0
+
+    for result in quiz_results:
+        quiz = result['quiz']
         quiz_type = quiz.get('quiz_type', 'unknown')
-        points_possible = quiz.get('points_possible', 0)
-        
-        # 统计测验类型
         quiz_stats["quiz_types"][quiz_type] = quiz_stats["quiz_types"].get(quiz_type, 0) + 1
-        # quiz_stats["total_points"] += points_possible
         
-        # 获取测验提交情况
-        quiz_submissions = get_quiz_submissions(course_id, quiz_id)
-        
-        # 分析单个测验
-        quiz_analysis = analyze_single_quiz(quiz, quiz_submissions)
+        quiz_analysis = analyze_single_quiz(quiz, result['submissions'])
         quiz_stats["quiz_analysis"].append(quiz_analysis)
         
-        # 更新完成状态统计
-        if quiz_analysis["status"] == "completed":
-            quiz_stats["completion_stats"]["completed_quizzes"] += 1
-        elif quiz_analysis["status"] == "incomplete":
-            quiz_stats["completion_stats"]["incomplete_quizzes"] += 1
-        elif quiz_analysis["status"] == "expired":
-            quiz_stats["completion_stats"]["expired_quizzes"] += 1
-        else:
-            quiz_stats["completion_stats"]["not_started_quizzes"] += 1
+        status = quiz_analysis["status"]
+        if status == "completed": quiz_stats["completion_stats"]["completed_quizzes"] += 1
+        elif status == "incomplete": quiz_stats["completion_stats"]["incomplete_quizzes"] += 1
+        elif status == "expired": quiz_stats["completion_stats"]["expired_quizzes"] += 1
+        else: quiz_stats["completion_stats"]["not_started_quizzes"] += 1
         
-        # 更新分数分析
-        if quiz_analysis["submission_analysis"]["average_score"] > 0:
-            total_quiz_score += quiz_analysis["submission_analysis"]["average_score"]
+        avg_score = quiz_analysis["submission_analysis"]["average_score"]
+        if avg_score > 0:
+            total_quiz_score += avg_score
             quiz_count_with_submissions += 1
             
-            # 更新最高分和最低分
-            quiz_stats["score_analysis"]["highest_score"] = max(
-                quiz_stats["score_analysis"]["highest_score"], 
-                quiz_analysis["submission_analysis"]["max_score"]
-            )
-            quiz_stats["score_analysis"]["lowest_score"] = min(
-                quiz_stats["score_analysis"]["lowest_score"], 
-                quiz_analysis["submission_analysis"]["min_score"]
-            )
+            quiz_stats["score_analysis"]["highest_score"] = max(quiz_stats["score_analysis"]["highest_score"], quiz_analysis["submission_analysis"]["max_score"])
+            quiz_stats["score_analysis"]["lowest_score"] = min(quiz_stats["score_analysis"]["lowest_score"], quiz_analysis["submission_analysis"]["min_score"])
             
-            # 更新分数分布
-            avg_score = quiz_analysis["submission_analysis"]["average_score"]
-            if avg_score >= 90:
-                quiz_stats["score_analysis"]["score_distribution"]["A"] += 1
-            elif avg_score >= 80:
-                quiz_stats["score_analysis"]["score_distribution"]["B"] += 1
-            elif avg_score >= 70:
-                quiz_stats["score_analysis"]["score_distribution"]["C"] += 1
-            elif avg_score >= 60:
-                quiz_stats["score_analysis"]["score_distribution"]["D"] += 1
-            else:
-                quiz_stats["score_analysis"]["score_distribution"]["F"] += 1
-    
-    # 计算所有测验的平均分
+            if avg_score >= 90: quiz_stats["score_analysis"]["score_distribution"]["A"] += 1
+            elif avg_score >= 80: quiz_stats["score_analysis"]["score_distribution"]["B"] += 1
+            elif avg_score >= 70: quiz_stats["score_analysis"]["score_distribution"]["C"] += 1
+            elif avg_score >= 60: quiz_stats["score_analysis"]["score_distribution"]["D"] += 1
+            else: quiz_stats["score_analysis"]["score_distribution"]["F"] += 1
+
     if quiz_count_with_submissions > 0:
-        quiz_stats["score_analysis"]["average_score_all_quizzes"] = round(
-            total_quiz_score / quiz_count_with_submissions, 2
-        )
-    
+        quiz_stats["score_analysis"]["average_score_all_quizzes"] = round(total_quiz_score / quiz_count_with_submissions, 2)
+        
     return quiz_stats
 
 def analyze_single_quiz(quiz, submissions):
@@ -644,33 +533,23 @@ def calculate_score_distribution_class(students):
 # 学生版学情分析接口
 @study_situation_canvas.route('/dashboard/study_situation/student/overview')
 def get_student_overview():
-    """获取学生个人学情综合分析"""
-    # 获取学生基本信息
+    """获取学生个人学情综合分析 (并发优化版)"""
+    # 1. 获取学生基本信息
     sis_user_id = session.get('sis_id')
     if not sis_user_id:
         return jsonify({"error": "未登录或session信息不完整"}), 401
     
-    # 从session获取学生课程信息
+    # 2. 从session获取学生课程信息
     user_courses = session.get('user_courses', [])
-    print("学生课程信息:", user_courses)
-    
     if not user_courses:
         return jsonify({"error": "未找到课程信息"}), 400
     
-    # 筛选符合条件的课程
+    # 3. 筛选符合条件的课程
     filtered_courses = []
     for course in user_courses:
         course_name = course.get('name', '')
         term_id = course.get('enrollment_term_id')
-        
-        # 检查课程名称是否在COURSES_LIST中
-        is_valid_name = any(allowed_name in course_name for allowed_name in COURSES_LIST)
-        
-        # 检查学期ID是否在允许的列表中
-        is_valid_term = term_id in ALLOWED_TERM_IDS
-        
-        if is_valid_name and is_valid_term:
-            # 添加课程ID到筛选后的列表
+        if any(allowed_name in course_name for allowed_name in COURSES_LIST) and term_id in ALLOWED_TERM_IDS:
             filtered_courses.append({
                 'course_id': course.get('course_id'),
                 'name': course.get('name', '未命名课程'),
@@ -679,59 +558,42 @@ def get_student_overview():
                 'workflow_state': course.get('workflow_state', '')
             })
     
-    print("筛选后的学生课程:", filtered_courses)
-    
     if not filtered_courses:
         return jsonify({"error": "未找到符合条件的课程"}), 400
     
-    # 获取课程ID，优先级：URL参数 > session中的当前课程 > 第一个课程
-    course_id = request.args.get('course_id')
-    
-    # 如果URL中没有参数，尝试从session中获取当前课程
-    if not course_id and 'current_course' in session:
-        course_id = session['current_course'].get('course_id')
-    
-    # 如果还没有课程ID，使用第一个筛选后的课程
+    # 4. 获取并验证课程ID
+    course_id = request.args.get('course_id') or session.get('current_course', {}).get('course_id')
     if not course_id and filtered_courses:
         course_id = filtered_courses[0]['course_id']
+        
+    if not course_id: return jsonify({"error": "未指定课程ID"}), 400
     
-    if not course_id:
-        return jsonify({"error": "未指定课程ID"}), 400
+    try: course_id = int(course_id)
+    except ValueError: return jsonify({"error": "课程ID格式错误"}), 400
     
-    try:
-        course_id = int(course_id)
-    except ValueError:
-        return jsonify({"error": "课程ID格式错误"}), 400
-    
-    # 验证课程是否在筛选后的列表中
-    is_valid_course = any(
-        str(course.get('course_id')) == str(course_id) 
-        for course in filtered_courses
-    )
-    
-    if not is_valid_course:
-        # 如果课程不在学生的筛选列表中，使用第一个课程
-        if filtered_courses:
-            course_id = filtered_courses[0]['course_id']
-        else:
-            return jsonify({"error": "未找到有效的课程信息"}), 400
-    
-    # 获取学生在该课程中的信息
+    if not any(str(course.get('course_id')) == str(course_id) for course in filtered_courses):
+        course_id = filtered_courses[0]['course_id']
+
+    # 5. 获取学生在该课程中的信息
     student_info = get_student_by_sis_id_in_course(sis_user_id, course_id)
     if not student_info:
         return jsonify({"error": "学生不存在或未选此课程"}), 404
     
     user_id = student_info.get('user_id')
+
+    # ================= 优化点 1：顶层基础 API 并发请求 =================
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        future_assignments = executor.submit(get_course_assignments, course_id)
+        future_quizzes = executor.submit(get_course_quizzes, course_id)
+        future_modules = executor.submit(get_course_modules, course_id, include_items=True, include_content_details=True)
+        future_enrollments = executor.submit(get_course_enrollments, course_id)
+
+        assignments = future_assignments.result()
+        quizzes = future_quizzes.result()
+        modules = future_modules.result()
+        enrollments = future_enrollments.result()
     
-    # 获取基础数据
-    assignments = get_course_assignments(course_id)
-    print(f"作业：{assignments}")
-    quizzes = get_course_quizzes(course_id)
-    print(f"作业：{quizzes}")
-    modules = get_course_modules(course_id, include_items=True, include_content_details=True)
-    enrollments = get_course_enrollments(course_id)
-    
-    # 学生个人数据分析
+    # ================= 分析数据 (内部已做并发优化) =================
     student_assignments = analyze_student_assignments(sis_user_id, course_id, assignments)
     student_quizzes = analyze_student_quizzes(user_id, course_id, quizzes)
     student_modules = analyze_student_modules(user_id, course_id, modules)
@@ -740,17 +602,13 @@ def get_student_overview():
     # 获取当前课程信息
     current_course = next((course for course in filtered_courses if str(course.get('course_id')) == str(course_id)), None)
     
-    # 标准化课程数据
-    standardized_courses = []
-    for course in filtered_courses:
-        standardized_course = {
-            'course_id': course.get('course_id'),
-            'course_name': course.get('name', '未命名课程'),
-            'sis_course_id': course.get('sis_course_id', ''),
-            'enrollment_term_id': course.get('enrollment_term_id'),
-            'workflow_state': course.get('workflow_state', '')
-        }
-        standardized_courses.append(standardized_course)
+    standardized_courses = [{
+        'course_id': c.get('course_id'),
+        'course_name': c.get('name', '未命名课程'),
+        'sis_course_id': c.get('sis_course_id', ''),
+        'enrollment_term_id': c.get('enrollment_term_id'),
+        'workflow_state': c.get('workflow_state', '')
+    } for c in filtered_courses]
     
     return jsonify({
         "course_info": {
@@ -792,43 +650,35 @@ def get_student_by_sis_id_in_course(sis_user_id, course_id):
     return None
 
 def analyze_student_assignments(sis_user_id, course_id, assignments):
-    """分析学生作业完成情况"""
+    """分析学生作业完成情况 (并发优化版)"""
     student_assignments = {
-        "pending_assignments": [],
-        "completed_assignments": [],
-        "graded_assignments": [],
-        "late_assignments": [],
-        "submission_stats": {
-            "total_assignments": len(assignments),
-            "submitted_count": 0,
-            "graded_count": 0,
-            "pending_count": 0,
-            "submission_rate": 0
-        },
-        "score_analysis": {
-            "average_score": 0,
-            "total_points_earned": 0,
-            "total_points_possible": 0,
-            "completion_rate": 0
-        }
+        "pending_assignments": [], "completed_assignments": [],
+        "graded_assignments": [], "late_assignments": [],
+        "submission_stats": {"total_assignments": len(assignments), "submitted_count": 0, "graded_count": 0, "pending_count": 0, "submission_rate": 0},
+        "score_analysis": {"average_score": 0, "total_points_earned": 0, "total_points_possible": 0, "completion_rate": 0}
     }
     
     total_score = 0
     graded_count = 0
     submitted_count = 0
     
-    for assignment in assignments:
+    published_assignments = [a for a in assignments if a.get('published')]
+    
+    # ================= 优化点 2：并发拉取个人的作业提交数据 =================
+    def fetch_submission(assignment):
+        a_id = assignment.get('id')
+        sub = get_student_assignment_submission(course_id, a_id, sis_user_id)
+        return assignment, sub
+
+    # 使用最多20个线程并发请求
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        results = list(executor.map(fetch_submission, published_assignments))
+        
+    for assignment, submission in results:
         assignment_id = assignment.get('id')
         assignment_name = assignment.get('name')
         points_possible = assignment.get('points_possible', 0)
         due_at = assignment.get('due_at')
-        published = assignment.get('published')
-        
-        if not published:
-            continue
-            
-        # 获取学生该作业的提交情况
-        submission = get_student_assignment_submission(course_id, assignment_id, sis_user_id)
         
         assignment_data = {
             "assignment_id": assignment_id,
@@ -843,141 +693,101 @@ def analyze_student_assignments(sis_user_id, course_id, assignments):
             "missing": submission.get('missing', False)
         }
         
-        # 分类作业
-        if submission.get('workflow_state') in ['submitted', 'graded']:
+        wf_state = submission.get('workflow_state')
+        if wf_state in ['submitted', 'graded']:
             submitted_count += 1
             student_assignments["completed_assignments"].append(assignment_data)
-            
             if submission.get('score') is not None:
                 graded_count += 1
                 total_score += submission.get('score', 0)
                 student_assignments["graded_assignments"].append(assignment_data)
-        
-        elif submission.get('workflow_state') == 'unsubmitted':
-            # 检查是否已过期
+        elif wf_state == 'unsubmitted':
             if due_at and is_assignment_overdue(due_at):
                 assignment_data["status"] = "overdue"
             else:
                 assignment_data["status"] = "pending"
             student_assignments["pending_assignments"].append(assignment_data)
-        
-        # 迟交作业
+            
         if submission.get('late', False):
             student_assignments["late_assignments"].append(assignment_data)
-    
+            
     # 统计信息
     student_assignments["submission_stats"]["submitted_count"] = submitted_count
     student_assignments["submission_stats"]["graded_count"] = graded_count
     student_assignments["submission_stats"]["pending_count"] = len(student_assignments["pending_assignments"])
     
-    if len(assignments) > 0:
-        student_assignments["submission_stats"]["submission_rate"] = round(
-            submitted_count / len(assignments) * 100, 2
-        )
-    
-    # 分数分析
+    if assignments:
+        student_assignments["submission_stats"]["submission_rate"] = round(submitted_count / len(assignments) * 100, 2)
+        
     if graded_count > 0:
         student_assignments["score_analysis"]["average_score"] = round(total_score / graded_count, 2)
-    
-    # 按截止日期排序
+        
     student_assignments["pending_assignments"].sort(key=lambda x: x.get('due_at') or '9999-12-31')
     student_assignments["completed_assignments"].sort(key=lambda x: x.get('submitted_at') or '', reverse=True)
     
     return student_assignments
 
 def analyze_student_quizzes(user_id, course_id, quizzes):
-    """分析学生测验情况"""
+    """分析学生测验情况 (并发优化版)"""
     student_quizzes = {
-        "pending_quizzes": [],
-        "completed_quizzes": [],
-        "quiz_scores": [],
-        "quiz_stats": {
-            "total_quizzes": len(quizzes),
-            "completed_count": 0,
-            "average_score": 0,
-            "highest_score": 0,
-            "lowest_score": 100
-        }
+        "pending_quizzes": [], "completed_quizzes": [], "quiz_scores": [],
+        "quiz_stats": {"total_quizzes": len(quizzes), "completed_count": 0, "average_score": 0, "highest_score": 0, "lowest_score": 100}
     }
     
     total_score = 0
     completed_count = 0
+    published_quizzes = [q for q in quizzes if q.get('published')]
     
-    for quiz in quizzes:
+    # ================= 优化点 3：并发拉取个人的测验提交数据 =================
+    def fetch_quiz_sub(quiz):
+        q_id = quiz.get('id')
+        subs = get_student_quiz_submissions(course_id, q_id, user_id)
+        return quiz, subs
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        results = list(executor.map(fetch_quiz_sub, published_quizzes))
+        
+    for quiz, quiz_submissions in results:
         quiz_id = quiz.get('id')
         quiz_title = quiz.get('title', '未知测验')
         points_possible = quiz.get('points_possible', 0)
         due_at = quiz.get('due_at')
-        published = quiz.get('published')
-        
-        if not published:
-            continue
-            
-        # 获取学生测验提交
-        quiz_submissions = get_student_quiz_submissions(course_id, quiz_id, user_id)
         
         quiz_data = {
-            "quiz_id": quiz_id,
-            "quiz_title": quiz_title,
-            "due_at": due_at,
-            "points_possible": points_possible,
-            "quiz_type": quiz.get('quiz_type'),
+            "quiz_id": quiz_id, "quiz_title": quiz_title, "due_at": due_at,
+            "points_possible": points_possible, "quiz_type": quiz.get('quiz_type'),
             "allowed_attempts": quiz.get('allowed_attempts', 1)
         }
         
         if quiz_submissions:
-            # 取最新提交
             latest_submission = max(quiz_submissions, key=lambda x: x.get('finished_at') or '')
             score = latest_submission.get('score')
             kept_score = latest_submission.get('kept_score')
             final_score = kept_score if kept_score is not None else score
             
             quiz_data.update({
-                "status": "completed",
-                "score": final_score,
-                "attempts": len(quiz_submissions),
-                "finished_at": latest_submission.get('finished_at'),
-                "time_spent": latest_submission.get('time_spent')
+                "status": "completed", "score": final_score, "attempts": len(quiz_submissions),
+                "finished_at": latest_submission.get('finished_at'), "time_spent": latest_submission.get('time_spent')
             })
-            
             student_quizzes["completed_quizzes"].append(quiz_data)
             
-            if points_possible is not None and isinstance(points_possible, (int, float)) and points_possible > 0:
-                percentage = round((final_score / points_possible) * 100, 2)
-            else:
-                percentage = 0
-            
-            student_quizzes["quiz_scores"].append({
-                "quiz_title": quiz_title,
-                "score": final_score,
-                "points_possible": points_possible,
-                "percentage": percentage
-            })
+            percentage = round((final_score / points_possible) * 100, 2) if points_possible and points_possible > 0 else 0
+            student_quizzes["quiz_scores"].append({"quiz_title": quiz_title, "score": final_score, "points_possible": points_possible, "percentage": percentage})
             
             if final_score is not None:
                 completed_count += 1
                 total_score += final_score
-                student_quizzes["quiz_stats"]["highest_score"] = max(
-                    student_quizzes["quiz_stats"]["highest_score"], final_score
-                )
-                student_quizzes["quiz_stats"]["lowest_score"] = min(
-                    student_quizzes["quiz_stats"]["lowest_score"], final_score
-                )
+                student_quizzes["quiz_stats"]["highest_score"] = max(student_quizzes["quiz_stats"]["highest_score"], final_score)
+                student_quizzes["quiz_stats"]["lowest_score"] = min(student_quizzes["quiz_stats"]["lowest_score"], final_score)
         else:
-            # 检查测验状态
             quiz_status = check_quiz_status(due_at, quiz.get('lock_at'), quiz.get('unlock_at'))
-            quiz_data.update({
-                "status": quiz_status,
-                "score": None
-            })
+            quiz_data.update({"status": quiz_status, "score": None})
             student_quizzes["pending_quizzes"].append(quiz_data)
-    
-    # 统计信息
+            
     student_quizzes["quiz_stats"]["completed_count"] = completed_count
     if completed_count > 0:
         student_quizzes["quiz_stats"]["average_score"] = round(total_score / completed_count, 2)
-    
-    # 按截止日期排序
+        
     student_quizzes["pending_quizzes"].sort(key=lambda x: x.get('due_at') or '9999-12-31')
     student_quizzes["completed_quizzes"].sort(key=lambda x: x.get('finished_at') or '', reverse=True)
     
