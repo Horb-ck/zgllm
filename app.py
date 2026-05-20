@@ -227,7 +227,7 @@ agents = [
     },
     { 
         "id": 7,
-        "name": "机器人基础",
+        "name": "机器人数学基础",
         "description": "掌握机器人数学核心理论，实现算法设计与工程落地的全链路应用。",
         "url": rm_agent_class_url,
         "image_url": "/static/img/rm.jpg"
