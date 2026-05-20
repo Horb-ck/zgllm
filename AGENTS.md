@@ -14,6 +14,7 @@
 ## How to run & test
 - Setup: Python 3.x; install from `requirement.txt`; ensure MySQL/Mongo reachable per `config.py` (`MYSQL_URL`, `MONGO_URL`), ports 7777/7778 as configured.
 - Run: `python app.py` (starts Flask at `APP_PORT`, spawns MCP server).
+- Optional env: `FASTGPT_API_URL`, `FASTGPT_API_KEY`, `FASTGPT_ROBOCON_DATASET_ID` control Robocon 官方规则自动同步到指定 FastGPT 知识库。
 - Test: no automated tests provided; sanity-check login/register, `/dashboard/agents`, `/dashboard/agent/<id>`, KG update endpoints.
 - Lint/format: none enforced; keep consistent with existing style.
 

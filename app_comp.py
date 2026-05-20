@@ -1,17 +1,20 @@
 import copy
 import hashlib
 import json
+import mimetypes
 import os
 import re
 import threading
 import time
 from datetime import datetime, timedelta
-from urllib.parse import unquote, urljoin, urlparse
+from urllib.parse import quote, unquote, urljoin, urlparse
 
 import requests
 from flask import Blueprint, flash, redirect, render_template, session, url_for
 from bs4 import BeautifulSoup
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from urllib3.fields import RequestField
+from urllib3.filepost import encode_multipart_formdata
 
 app_comp = Blueprint("app_comp", __name__)
 
@@ -31,6 +34,7 @@ ROBOCON_DOC_DIR = os.path.join(
     "official_monitor"
 )
 ROBOCON_STATE_PATH = os.path.join(ROBOCON_DOC_DIR, "resources_state.json")
+ROBOCON_FASTGPT_SYNC_STATE_PATH = os.path.join(ROBOCON_DOC_DIR, "fastgpt_sync_state.json")
 ROBOCON_REQUIRED_TITLE_KEYWORDS = ("第二十五届", "ROBOCON")
 ROBOCON_RULE_CORE_KEYWORDS = ("竞技赛规则", "规则书", "比赛规则", "规则V", "补充规则", "规则修订")
 ROBOCON_FIGURE_CORE_KEYWORDS = ("图册", "场地图", "尺寸图", "结构图", "附件图")
@@ -52,6 +56,12 @@ ROBOCON_SCHEDULER_STATE = {
     "lock": threading.Lock(),
     "thread": None
 }
+ROBOCON_FASTGPT_API_URL = os.environ.get("FASTGPT_API_URL", "http://180.85.206.30:3000/api").rstrip("/")
+ROBOCON_FASTGPT_DATASET_ID = os.environ.get(
+    "FASTGPT_ROBOCON_DATASET_ID",
+    "69c23d555a95f8059e185c36"
+)
+ROBOCON_FASTGPT_TIMEOUT = 120
 
 ROBOTAC_HOME_URL = "https://www.robotac.cn/"
 ROBOTAC_INTRO_URL = "https://www.robotac.cn/h-col-141.html"
@@ -71,7 +81,7 @@ agents_kd = [
         "id": 2,
         "name": "Robotac",
         "description": "Robotac 智能体，聚焦对抗赛、挑战赛与备赛资料梳理。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=mmvR2bCNNp9pHH3ngkx1ODwo",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=acNeDyTSxa1CkTZFo74aUJ3N",
         "image_url": "/static/img/robotac-logo.png"
     }
 ]
@@ -570,6 +580,755 @@ def load_robocon_resources_state():
         return None
 
 
+def load_robocon_fastgpt_sync_state():
+    if not os.path.exists(ROBOCON_FASTGPT_SYNC_STATE_PATH):
+        return {"dataset_id": ROBOCON_FASTGPT_DATASET_ID, "items": []}
+    try:
+        with open(ROBOCON_FASTGPT_SYNC_STATE_PATH, "r", encoding="utf-8") as file_obj:
+            data = json.load(file_obj)
+            if not isinstance(data, dict):
+                return {"dataset_id": ROBOCON_FASTGPT_DATASET_ID, "items": []}
+            data.setdefault("dataset_id", ROBOCON_FASTGPT_DATASET_ID)
+            data.setdefault("items", [])
+            return data
+    except Exception as exc:
+        print(f"读取 Robocon FastGPT 同步状态失败: {exc}")
+        return {"dataset_id": ROBOCON_FASTGPT_DATASET_ID, "items": []}
+
+
+def save_robocon_fastgpt_sync_state(state):
+    ensure_robocon_storage()
+    with open(ROBOCON_FASTGPT_SYNC_STATE_PATH, "w", encoding="utf-8") as file_obj:
+        json.dump(state, file_obj, ensure_ascii=False, indent=2)
+
+
+def get_robocon_fastgpt_api_key():
+    return os.environ.get("FASTGPT_API_KEY", "").strip()
+
+
+def get_robocon_fastgpt_headers():
+    return {
+        "Authorization": f"Bearer {get_robocon_fastgpt_api_key()}",
+        "Content-Type": "application/json"
+    }
+
+
+def get_robocon_fastgpt_upload_headers():
+    return {
+        "Authorization": f"Bearer {get_robocon_fastgpt_api_key()}"
+    }
+
+
+def normalize_robocon_filename(filename):
+    return normalize_text((filename or "").strip())
+
+
+def parse_robocon_version(value):
+    text = value or ""
+    match = re.search(r'V\.?\s*([0-9]+(?:\.[0-9]+)*)', text, flags=re.IGNORECASE)
+    if not match:
+        return None, ()
+
+    version_text = match.group(0).upper().replace(" ", "")
+    parts = tuple(int(part) for part in match.group(1).split('.'))
+    return version_text, parts
+
+
+def extract_robocon_semantic_tags(filename):
+    base_name = os.path.splitext(filename or "")[0]
+    base_name = re.sub(r'_[0-9a-f]{8,}$', '', base_name, flags=re.IGNORECASE)
+    if "ROBOCON" in base_name:
+        base_name = base_name.split("ROBOCON", 1)[1]
+    base_name = normalize_text(base_name)
+    base_name = base_name.replace("“", "").replace("”", "").replace('"', "")
+
+    tags = []
+    for label in ("武林探秘", "沙排之王", "竞技赛", "技能挑战赛", "规则", "图册", "FAQ", "答疑"):
+        if label in base_name and label not in tags:
+            tags.append(label)
+
+    version_text, version_parts = parse_robocon_version(base_name)
+    if version_text:
+        tags.append(version_text)
+
+    if not tags:
+        tags.append(base_name or "未分类")
+
+    family_tags = [tag for tag in tags if not tag.upper().startswith("V")]
+    family_key = "|".join(family_tags) if family_tags else (base_name or "未分类")
+
+    return {
+        "base_name": base_name,
+        "tags": tags,
+        "family_key": family_key,
+        "version_text": version_text,
+        "version_parts": version_parts
+    }
+
+
+def parse_robocon_date_key(date_text):
+    try:
+        return datetime.strptime(date_text or "", "%Y-%m-%d")
+    except Exception:
+        return datetime.min
+
+
+def detect_robocon_content_type(filename):
+    content_type, _ = mimetypes.guess_type(filename or "")
+    return content_type or "application/octet-stream"
+
+
+def should_upload_robocon_rule_pdf_as_qa(candidate):
+    """规则类 PDF 除了分块训练外，还需要额外按问答对提取方式训练一份。"""
+    filename = (candidate or {}).get("filename", "") or ""
+    if detect_robocon_content_type(filename) != "application/pdf":
+        return False
+
+    title = normalize_text((candidate or {}).get("title", "") or "")
+    doc_type = normalize_text((candidate or {}).get("doc_type", "") or "")
+    category = (candidate or {}).get("category", "")
+
+    # 优先按标题判断；同时兼容 category/doc_type 归类
+    return ("规则" in title) or (category == "rule_core") or ("规则" in doc_type)
+
+
+def build_robocon_qa_collection_name(filename):
+    filename = (filename or "").strip()
+    return f"{filename}（问答对）" if filename else "规则（问答对）"
+
+
+def upload_robocon_file_to_fastgpt_with_config(dataset_id, candidate, *, collection_name, training_type, config_overrides=None):
+    url = f"{ROBOCON_FASTGPT_API_URL}/core/dataset/collection/create/localFile"
+    filename = candidate["filename"]
+    encoded_filename = quote(filename, safe="")
+    content_type = detect_robocon_content_type(filename)
+    is_pdf_file = content_type == "application/pdf"
+
+    metadata = {
+        "source": "robocon_official_monitor",
+        "title": candidate.get("title", ""),
+        "publishDate": candidate.get("date", ""),
+        "sourceUrl": candidate.get("source_url", ""),
+        "docType": candidate.get("doc_type", ""),
+        "category": candidate.get("category", ""),
+        "originalName": filename,
+        "encodedOriginalName": encoded_filename,
+        "trackKey": candidate.get("track_key", ""),
+        "versionText": candidate.get("version_text", ""),
+        "semanticTags": candidate.get("semantic_tags", []),
+        "isLatestVersion": candidate.get("is_latest_version", False),
+        "recallPriority": candidate.get("recall_priority", "")
+    }
+    config_data = {
+        "datasetId": dataset_id,
+        "parentId": None,
+        "filename": collection_name,
+        "name": collection_name,
+        "trainingType": training_type,
+        "customPdfParse": is_pdf_file,
+        "indexPrefixTitle": True,
+        "chunkSize": 500 if is_pdf_file else 800,
+        "chunkSplitter": "",
+        "qaPrompt": "",
+        "tags": candidate.get("effective_tags", []),
+        "metadata": metadata
+    }
+    if config_overrides:
+        config_data.update(config_overrides)
+
+    with open(candidate["absolute_path"], "rb") as file_obj:
+        file_bytes = file_obj.read()
+        data_json = json.dumps(config_data, ensure_ascii=False)
+
+        file_field = RequestField(name="file", data=file_bytes, filename=encoded_filename)
+        file_field.make_multipart(content_type=content_type)
+        file_field.headers["Content-Disposition"] = (
+            f'form-data; name="file"; filename="{encoded_filename}"; '
+            f"filename*=UTF-8''{encoded_filename}"
+        )
+
+        body, form_content_type = encode_multipart_formdata([
+            ("data", data_json),
+            file_field
+        ])
+        response = requests.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {get_robocon_fastgpt_api_key()}",
+                "Content-Type": form_content_type
+            },
+            data=body,
+            timeout=ROBOCON_FASTGPT_TIMEOUT
+        )
+
+    response.raise_for_status()
+    result = response.json()
+    if result.get("code") != 200:
+        raise RuntimeError(result.get("message", f"上传失败: {collection_name}"))
+
+    data = result.get("data", {})
+    collection_id = data.get("collectionId") or data.get("_id")
+    if not collection_id:
+        raise RuntimeError(f"上传成功但未返回 collectionId: {collection_name}")
+
+    update_fastgpt_collection_name(collection_id, collection_name)
+    return collection_id
+
+
+def infer_robocon_edition_label(resources):
+    docs = ((resources or {}).get("national") or {}).get("docs", [])
+    for doc in docs:
+        title = normalize_text(doc.get("title", ""))
+        match = re.search(r"第([一二三四五六七八九十百零两0-9]+)届", title)
+        if match:
+            return f"第{match.group(1)}届"
+    return "届次待确认"
+
+
+def extract_robocon_stage_hint(resources):
+    docs = ((resources or {}).get("national") or {}).get("docs", [])
+    stage_docs = [
+        doc for doc in docs
+        if doc.get("category") in {"important_notice", "general_notice"}
+    ]
+    stage_docs.sort(key=lambda item: item.get("date") or "", reverse=True)
+
+    for doc in stage_docs:
+        title = normalize_text(doc.get("title", ""))
+        date_text = doc.get("date", "")
+        if "中期检查" in title:
+            return {
+                "stage": "中期检查阶段",
+                "date": date_text,
+                "title": title
+            }
+        if "报名" in title:
+            return {
+                "stage": "报名/赛事启动阶段",
+                "date": date_text,
+                "title": title
+            }
+        if "技术交流" in title or "培训" in title:
+            return {
+                "stage": "培训或技术交流阶段",
+                "date": date_text,
+                "title": title
+            }
+
+    return {
+        "stage": "阶段待确认",
+        "date": "",
+        "title": ""
+    }
+
+
+def write_robocon_generated_text_file(filename, content):
+    ensure_robocon_storage()
+    absolute_path = os.path.join(ROBOCON_DOC_DIR, filename)
+    with open(absolute_path, "w", encoding="utf-8") as file_obj:
+        file_obj.write((content or "").strip() + "\n")
+    return absolute_path
+
+
+def build_robocon_fact_card_content(resources):
+    national = (resources or {}).get("national", {})
+    edition_label = infer_robocon_edition_label(resources)
+    stage_info = extract_robocon_stage_hint(resources)
+    updated_at = national.get("updated_at", "")
+    update_note = normalize_text(national.get("update_note", ""))
+
+    latest_rule = ""
+    for doc in national.get("docs", []):
+        if doc.get("category") == "rule_core":
+            latest_rule = normalize_text(doc.get("title", ""))
+            if latest_rule:
+                break
+
+    lines = [
+        "Robocon 赛事事实卡",
+        "",
+        f"- 当前国赛资料对应：{edition_label}全国大学生机器人大赛 ROBOCON。",
+        "- 结论依据：现有规则、图册、通知标题多次明确写明“第二十五届全国大学生机器人大赛ROBOCON”。",
+    ]
+
+    if latest_rule:
+        lines.append(f"- 当前资料中的最新核心规则标题：{latest_rule}。")
+
+    if stage_info.get("title") and stage_info.get("date"):
+        lines.append(
+            f"- 截至 {stage_info['date']}，官网存在《{stage_info['title']}》，"
+            f"可判断当时处于{stage_info['stage']}。"
+        )
+        lines.append(
+            f"- 如果用户问“现在处于什么阶段”，应回答：已知在 {stage_info['date']} 进入{stage_info['stage']}，"
+            "但若没有更晚通知，不能直接断言今天仍处于同一阶段。"
+        )
+    else:
+        lines.append("- 当前资料未提供足够明确的阶段通知，无法判断当前处于哪一个官方阶段。")
+
+    if updated_at:
+        lines.append(f"- 当前本地资料快照更新时间：{updated_at}。")
+    if update_note:
+        lines.append(f"- 资料同步备注：{update_note}")
+
+    lines.extend([
+        "",
+        "推荐回答模板：",
+        f"1. 第几届：根据现有国赛规则、图册和通知标题，可确认当前资料对应的是{edition_label}全国大学生机器人大赛 ROBOCON。",
+        (
+            "2. 当前阶段：优先引用最新通知。"
+            if not stage_info.get("date") else
+            f"2. 当前阶段：截至 {stage_info['date']} 的官方通知显示处于{stage_info['stage']}。"
+        ),
+        "3. 若用户追问“今天还是不是这个阶段”，必须说明需要以更晚的官方通知为准。"
+    ])
+
+    return "\n".join(lines)
+
+
+def build_robocon_notice_digest_content(doc):
+    title = normalize_text(doc.get("title", ""))
+    date_text = doc.get("date", "")
+    source = normalize_text(doc.get("source", ""))
+    source_url = doc.get("url", "")
+    summary = normalize_text(doc.get("summary", ""))
+    category = doc.get("category", "")
+
+    stage_hint = "赛事阶段通知"
+    if "中期检查" in title:
+        stage_hint = "该通知明确表明赛事已进入中期检查阶段。"
+    elif "报名" in title:
+        stage_hint = "该通知通常对应赛事报名或启动阶段。"
+    elif "技术交流" in title or "培训" in title:
+        stage_hint = "该通知通常对应培训或技术交流阶段。"
+
+    lines = [
+        f"Robocon 通知摘要：{title}",
+        "",
+        f"- 标题：{title}",
+        f"- 日期：{date_text or '未标注'}",
+        f"- 分类：{category or '通知'}",
+        f"- 来源：{source or 'ROBOCON 官网'}",
+        f"- 原文链接：{source_url or '未记录'}",
+        f"- 阶段解读：{stage_hint}",
+    ]
+
+    if summary:
+        lines.append(f"- 页面摘要：{summary}")
+
+    lines.extend([
+        "",
+        "回答建议：",
+        "- 回答届次时，可结合标题中的“第二十五届”直接作答。",
+        "- 回答阶段时，应优先引用这条通知的日期和标题，不要泛泛而谈。"
+    ])
+
+    return "\n".join(lines)
+
+
+def build_generated_robocon_text_candidates(resources):
+    national = (resources or {}).get("national", {})
+    edition_label = infer_robocon_edition_label(resources)
+    edition_tag = edition_label if edition_label != "届次待确认" else "当前届次"
+    candidates = []
+
+    fact_card_filename = f"Robocon赛事事实卡_{edition_label}.txt"
+    fact_card_path = write_robocon_generated_text_file(
+        fact_card_filename,
+        build_robocon_fact_card_content(resources)
+    )
+    candidates.append({
+        "filename": fact_card_filename,
+        "absolute_path": fact_card_path,
+        "title": f"Robocon赛事事实卡_{edition_label}",
+        "date": national.get("updated_at", ""),
+        "source_url": national.get("official_url", ""),
+        "doc_type": "赛事事实卡",
+        "category": "fact_card",
+        "source": "系统自动生成",
+        "semantic_tags": ["赛事事实卡", "届次", "比赛阶段", "官方通知", edition_tag],
+        "version_text": None,
+        "version_parts": (),
+        "track_key": "赛事事实卡",
+        "is_latest_version": True,
+        "recall_priority": "latest",
+        "effective_tags": ["赛事事实卡", "届次", "比赛阶段", "官方通知", edition_tag, "最新版本"]
+    })
+
+    for doc in national.get("docs", []):
+        if doc.get("category") not in {"important_notice", "general_notice"}:
+            continue
+
+        title = normalize_text(doc.get("title", ""))
+        if not title:
+            continue
+
+        safe_name = sanitize_filename(title)
+        filename = f"Robocon通知摘要_{safe_name}.txt"
+        absolute_path = write_robocon_generated_text_file(
+            filename,
+            build_robocon_notice_digest_content(doc)
+        )
+
+        tags = ["通知摘要", "官方通知", edition_tag]
+        if "中期检查" in title:
+            tags.extend(["中期检查", "比赛阶段"])
+        elif "报名" in title:
+            tags.extend(["报名", "比赛阶段"])
+        else:
+            tags.append("比赛阶段")
+
+        candidates.append({
+            "filename": filename,
+            "absolute_path": absolute_path,
+            "title": title,
+            "date": doc.get("date", ""),
+            "source_url": doc.get("url", ""),
+            "doc_type": "通知摘要",
+            "category": doc.get("category", ""),
+            "source": "系统自动生成 / 官网通知摘要",
+            "semantic_tags": tags,
+            "version_text": None,
+            "version_parts": (),
+            "track_key": f"通知摘要|{title}",
+            "is_latest_version": True,
+            "recall_priority": "latest",
+            "effective_tags": tags + ["最新版本"]
+        })
+
+    return candidates
+
+
+def existing_robocon_name_matches(filename, existing_names):
+    normalized_name = normalize_robocon_filename(filename)
+    for existing_name in existing_names:
+        if normalized_name == existing_name or normalized_name in existing_name:
+            return True
+    return False
+
+
+def list_fastgpt_collection_names(dataset_id):
+    existing_names = set()
+    page_num = 1
+    page_size = 50
+    url = f"{ROBOCON_FASTGPT_API_URL}/core/dataset/collection/list"
+
+    while True:
+        payload = {
+            "datasetId": dataset_id,
+            "parentId": None,
+            "pageNum": page_num,
+            "pageSize": page_size,
+            "searchText": ""
+        }
+        response = requests.post(
+            url,
+            headers=get_robocon_fastgpt_headers(),
+            json=payload,
+            timeout=ROBOCON_FASTGPT_TIMEOUT
+        )
+        response.raise_for_status()
+        result = response.json()
+        if result.get("code") != 200:
+            raise RuntimeError(result.get("message", "获取 FastGPT collection 列表失败"))
+
+        data = result.get("data", {})
+        if isinstance(data, dict):
+            items = data.get("data", [])
+            total = data.get("total", 0)
+        elif isinstance(data, list):
+            items = data
+            total = len(items)
+        else:
+            items = []
+            total = 0
+
+        for item in items:
+            name = normalize_robocon_filename(item.get("name", ""))
+            if name:
+                existing_names.add(name)
+
+        if not items or len(existing_names) >= total or len(items) < page_size:
+            break
+        page_num += 1
+
+    return existing_names
+
+
+def update_fastgpt_collection_name(collection_id, filename):
+    url = f"{ROBOCON_FASTGPT_API_URL}/core/dataset/collection/update"
+    payload = {"id": collection_id, "name": filename}
+
+    for method in (requests.post, requests.put):
+        response = method(
+            url,
+            headers=get_robocon_fastgpt_headers(),
+            json=payload,
+            timeout=ROBOCON_FASTGPT_TIMEOUT
+        )
+        response.raise_for_status()
+        result = response.json()
+        if result.get("code") == 200:
+            return
+
+    raise RuntimeError(f"更新 Collection 名称失败: {filename}")
+
+
+def build_robocon_fastgpt_upload_candidates(resources):
+    national = (resources or {}).get("national", {})
+    docs = national.get("docs", [])
+    candidates = []
+
+    for doc in docs:
+        if doc.get("download_policy") != "download":
+            continue
+
+        preview_url = doc.get("preview_url", "")
+        downloaded_attachment = doc.get("downloaded_attachment", "")
+        if not preview_url.startswith("/static/") or not downloaded_attachment:
+            continue
+
+        relative_path = preview_url.lstrip("/")
+        absolute_path = os.path.join(ROBOCON_BASE_DIR, relative_path)
+        if not os.path.exists(absolute_path):
+            print(f"Robocon 本地文件不存在，跳过 FastGPT 上传: {absolute_path}")
+            continue
+
+        filename = normalize_robocon_filename(downloaded_attachment)
+        if not filename:
+            continue
+
+        candidates.append({
+            "filename": filename,
+            "absolute_path": absolute_path,
+            "title": doc.get("title", ""),
+            "date": doc.get("date", ""),
+            "source_url": doc.get("url", ""),
+            "doc_type": doc.get("type", ""),
+            "category": doc.get("category", ""),
+            "source": doc.get("source", "")
+        })
+
+    candidates.extend(build_generated_robocon_text_candidates(resources))
+
+    latest_by_track = {}
+    for candidate in candidates:
+        if not candidate.get("semantic_tags"):
+            semantic_info = extract_robocon_semantic_tags(candidate["filename"])
+            candidate["semantic_tags"] = semantic_info["tags"]
+            candidate["version_text"] = semantic_info["version_text"]
+            candidate["version_parts"] = semantic_info["version_parts"]
+            candidate["track_key"] = semantic_info["family_key"]
+        candidate["version_text"] = candidate.get("version_text")
+        candidate["version_parts"] = candidate.get("version_parts", ())
+        candidate["track_key"] = candidate.get("track_key") or candidate["filename"]
+        candidate["date_key"] = parse_robocon_date_key(candidate.get("date", ""))
+
+        track_key = candidate["track_key"]
+        current_best = latest_by_track.get(track_key)
+        candidate_score = (candidate["version_parts"], candidate["date_key"], candidate["filename"])
+        if current_best is None:
+            latest_by_track[track_key] = candidate
+            continue
+
+        best_score = (
+            current_best.get("version_parts", ()),
+            current_best.get("date_key", datetime.min),
+            current_best["filename"]
+        )
+        if candidate_score > best_score:
+            latest_by_track[track_key] = candidate
+
+    for candidate in candidates:
+        if "is_latest_version" not in candidate:
+            candidate["is_latest_version"] = latest_by_track.get(candidate["track_key"]) is candidate
+        if "recall_priority" not in candidate:
+            candidate["recall_priority"] = "latest" if candidate["is_latest_version"] else "history"
+        if not candidate.get("effective_tags"):
+            candidate["effective_tags"] = list(candidate.get("semantic_tags", []))
+            candidate["effective_tags"].append("最新版本" if candidate["is_latest_version"] else "历史版本")
+
+    candidates.sort(key=lambda item: (item.get("date") or "", item["filename"]), reverse=True)
+    return candidates
+
+
+def upload_robocon_file_to_fastgpt(dataset_id, candidate):
+    filename = candidate["filename"]
+    return upload_robocon_file_to_fastgpt_with_config(
+        dataset_id,
+        candidate,
+        collection_name=filename,
+        training_type="chunk"
+    )
+
+
+def upload_robocon_rule_pdf_to_fastgpt_as_qa(dataset_id, candidate):
+    """规则 PDF 额外上传为问答对训练方式。"""
+    filename = candidate["filename"]
+    collection_name = build_robocon_qa_collection_name(filename)
+
+    # 按截图设置：PDF 增强解析 + 问答对提取 + 标题入索引 + 自定义（按段落分块）+ 最大分块大小 8000
+    config_overrides = {
+        "trainingType": "qa",
+        "customPdfParse": True,
+        "indexPrefixTitle": True,
+        "chunkSettingMode": "custom",
+        "chunkSplitMode": "size",
+        "chunkSize": 8000,
+        "chunkSplitter": "\n\n",
+        "qaPrompt": ""
+    }
+    return upload_robocon_file_to_fastgpt_with_config(
+        dataset_id,
+        candidate,
+        collection_name=collection_name,
+        training_type="qa",
+        config_overrides=config_overrides
+    )
+
+
+def sync_robocon_resources_to_fastgpt(resources=None, force_upload=False):
+    api_key = get_robocon_fastgpt_api_key()
+    dataset_id = ROBOCON_FASTGPT_DATASET_ID
+
+    if not api_key:
+        print("未配置 FASTGPT_API_KEY，跳过 Robocon FastGPT 自动同步")
+        return {"success": False, "skipped": True, "reason": "missing_api_key"}
+
+    if not dataset_id:
+        print("未配置 FASTGPT_ROBOCON_DATASET_ID，跳过 Robocon FastGPT 自动同步")
+        return {"success": False, "skipped": True, "reason": "missing_dataset_id"}
+
+    resources = resources or load_robocon_resources_state() or get_robocon_main_resources_snapshot()
+    candidates = build_robocon_fastgpt_upload_candidates(resources)
+    if not candidates:
+        print("Robocon FastGPT 同步：没有可上传的本地规则文件")
+        return {"success": True, "uploaded": 0, "skipped": 0, "total": 0}
+
+    print(f"开始同步 Robocon 规则到 FastGPT，候选文件 {len(candidates)} 个")
+    existing_names = list_fastgpt_collection_names(dataset_id)
+    print(f"FastGPT 知识库中已存在 {len(existing_names)} 个 collection 名称")
+
+    sync_state = load_robocon_fastgpt_sync_state()
+    sync_state["dataset_id"] = dataset_id
+    sync_state["items"] = [
+        item for item in sync_state.get("items", [])
+        if isinstance(item, dict)
+    ]
+
+    uploaded = []
+    skipped = []
+    errors = []
+
+    for candidate in candidates:
+        filename = candidate["filename"]
+        normalized_name = normalize_robocon_filename(filename)
+
+        if not force_upload and (
+            normalized_name in {
+                normalize_robocon_filename(item.get("filename", ""))
+                for item in sync_state["items"]
+            } or existing_robocon_name_matches(filename, existing_names)
+        ):
+            print(f"FastGPT 已存在，跳过上传: {filename}")
+            skipped.append(filename)
+            continue
+
+        try:
+            collection_id = upload_robocon_file_to_fastgpt(dataset_id, candidate)
+            existing_names.add(normalized_name)
+            uploaded.append(filename)
+            sync_state["items"] = [
+                item for item in sync_state["items"]
+                if normalize_robocon_filename(item.get("filename")) != normalized_name
+            ]
+            sync_state["items"].append({
+                "filename": filename,
+                "collection_id": collection_id,
+                "date": candidate.get("date", ""),
+                "title": candidate.get("title", ""),
+                "track_key": candidate.get("track_key", ""),
+                "version_text": candidate.get("version_text", ""),
+                "semantic_tags": candidate.get("semantic_tags", []),
+                "effective_tags": candidate.get("effective_tags", []),
+                "is_latest_version": candidate.get("is_latest_version", False),
+                "source_url": candidate.get("source_url", ""),
+                "uploaded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            save_robocon_fastgpt_sync_state(sync_state)
+            print(f"Robocon FastGPT 上传成功: {filename} -> {collection_id}")
+
+            if should_upload_robocon_rule_pdf_as_qa(candidate):
+                qa_collection_name = build_robocon_qa_collection_name(filename)
+                qa_normalized_name = normalize_robocon_filename(qa_collection_name)
+                already_has_qa = (qa_normalized_name in existing_names) or existing_robocon_name_matches(
+                    qa_collection_name, existing_names
+                )
+                already_has_qa = already_has_qa or (
+                    qa_normalized_name in {
+                        normalize_robocon_filename(item.get("filename", ""))
+                        for item in sync_state["items"]
+                    }
+                )
+
+                if force_upload or not already_has_qa:
+                    qa_collection_id = upload_robocon_rule_pdf_to_fastgpt_as_qa(dataset_id, candidate)
+                    existing_names.add(qa_normalized_name)
+                    uploaded.append(qa_collection_name)
+                    sync_state["items"] = [
+                        item for item in sync_state["items"]
+                        if normalize_robocon_filename(item.get("filename")) != qa_normalized_name
+                    ]
+                    sync_state["items"].append({
+                        "filename": qa_collection_name,
+                        "source_filename": filename,
+                        "collection_id": qa_collection_id,
+                        "date": candidate.get("date", ""),
+                        "title": candidate.get("title", ""),
+                        "track_key": candidate.get("track_key", ""),
+                        "version_text": candidate.get("version_text", ""),
+                        "semantic_tags": candidate.get("semantic_tags", []),
+                        "effective_tags": (candidate.get("effective_tags", []) or []) + ["问答对提取"],
+                        "is_latest_version": candidate.get("is_latest_version", False),
+                        "source_url": candidate.get("source_url", ""),
+                        "training_type": "qa",
+                        "uploaded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    save_robocon_fastgpt_sync_state(sync_state)
+                    print(f"Robocon FastGPT QA 上传成功: {qa_collection_name} -> {qa_collection_id}")
+                else:
+                    print(f"FastGPT 已存在 QA 版本，跳过上传: {qa_collection_name}")
+        except Exception as exc:
+            error_text = f"{filename}: {exc}"
+            print(f"Robocon FastGPT 上传失败: {error_text}")
+            errors.append(error_text)
+
+    return {
+        "success": len(errors) == 0,
+        "uploaded": len(uploaded),
+        "skipped": len(skipped),
+        "total": len(candidates),
+        "uploaded_files": uploaded,
+        "errors": errors
+    }
+
+
+def start_robocon_fastgpt_backfill():
+    def run():
+        try:
+            resources = load_robocon_resources_state() or get_robocon_main_resources_snapshot()
+            sync_robocon_resources_to_fastgpt(resources)
+        except Exception as exc:
+            print(f"Robocon FastGPT 启动回填失败: {exc}")
+
+    thread = threading.Thread(
+        target=run,
+        name="robocon-fastgpt-backfill",
+        daemon=True
+    )
+    thread.start()
+
+
 def sync_robocon_main_resources():
     print(f"开始同步 Robocon 官网规则: {ROBOCON_NEWS_URL}")
     response = requests_get_robocon(ROBOCON_NEWS_URL)
@@ -594,6 +1353,16 @@ def sync_robocon_main_resources():
     synced_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     resources = build_robocon_dynamic_resources(docs, synced_at)
     save_robocon_resources_state(resources)
+    try:
+        sync_result = sync_robocon_resources_to_fastgpt(resources)
+        print(
+            "Robocon FastGPT 同步完成: "
+            f"uploaded={sync_result.get('uploaded', 0)}, "
+            f"skipped={sync_result.get('skipped', 0)}, "
+            f"errors={len(sync_result.get('errors', []))}"
+        )
+    except Exception as exc:
+        print(f"Robocon FastGPT 自动同步失败: {exc}")
     print(f"Robocon 官网同步完成，本次处理条目 {len(docs)} 条")
     return resources
 
@@ -693,6 +1462,7 @@ def start_robocon_scheduler():
 @app_comp.record_once
 def on_app_comp_registered(state):
     start_robocon_scheduler()
+    start_robocon_fastgpt_backfill()
 
 
 def classify_robotac_doc(title):
