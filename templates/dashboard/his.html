@@ -3,79 +3,12 @@
 {% block title %}个人知识库 - 明月科创教育大模型{% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <!-- 侧边导航栏 -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2 class="hh">
-                <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
-                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div>
-            </h2>
-        </div>
-        
-        <div class="user-info">
-            <div class="user-avatar">
-                <span>{{ username[0].upper() }}</span>
-            </div>
-            <div class="user-name">{{ username }}</div>
-            <div class="user-role">
-                {{ '教师' if role == 'teacher' else '学生' }}
-            </div>
-        </div>
-        
-        <nav class="sidebar-nav">
-            <ul>
-                <li class="{% if request.path == url_for('new_chat') %}active{% endif %}">
-                    <a href="{{ url_for('new_chat') }}">
-                        <span class="icon">💬</span>
-                        <span class="label">开启新对话</span>
-                    </a>
-                </li>
-                <li class="{% if request.path == url_for('course_agents') %}active{% endif %}">
-                    <a href="{{ url_for('course_agents') }}">
-                        <span class="icon">🤖</span>
-                        <span class="label">课程广场</span>
-                    </a>
-                </li>
-                <li class="{% if request.path == url_for('app_comp.course_kd') %}active{% endif %}">
-                    <a href="{{ url_for('app_comp.course_kd') }}">
-                        <span class="icon">🔍</span>
-                        <span class="label">智能体广场</span>
-                    </a>
-                </li>
-
-                <li class="{% if request.path == url_for('his') %}active{% endif %}">
-                    <a href="{{ url_for('his') }}">
-                        <span class="icon">📚</span>
-                        <span class="label">个人知识库</span>
-                    </a>
-                </li>
-                <li class="{% if request.path == url_for('chat') %}active{% endif %}">
-                    <a href="{{ url_for('chat') }}">
-                        <span class="icon">🎓</span>
-                        <span class="label">学情分析</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2" 
-               class="logout-btn" 
-               target="_blank">
-                <span class="icon">📝</span>
-                <span class="label">意见反馈</span>
-            </a>
-        </div>
-        <div class="sidebar-footer">
-            <a href="{{ url_for('logout') }}" class="logout-btn">
-                <span class="icon">🚪</span>
-                <span class="label">退出登录</span>
-            </a>
-        </div>
-    </div>
-    
+<div class="spark-dashboard-page">
+    {% include "dashboard/_spark_topbar.html" %}
+    <main class="spark-dashboard-main">
+        <div class="dashboard-container">
     <!-- V3 主内容区域 -->
-    <div class="main-content">
+    <div class="main-content kb-main-content">
         <style>
             /* ==================== V3 个人知识库样式 ==================== */
             .kb-page-header {
@@ -102,12 +35,23 @@
                 padding: 24px;
                 box-sizing: border-box;
             }
+
+            .spark-dashboard-page .kb-main-content {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                min-height: 0;
+                padding: 20px;
+                overflow: visible;
+                box-sizing: border-box;
+            }
             
             .kb-main-layout {
                 display: grid;
                 grid-template-columns: 340px 1fr;
                 gap: 24px;
-                flex: 1;
+                flex: none;
+                height: calc(100vh - 150px);
                 min-height: 0;
                 overflow: hidden;
             }
@@ -1123,6 +1067,8 @@
         <!-- 拖放提示浮层 -->
         <div class="kb-drop-toast" id="dropToast"></div>
     </div>
+</div>
+    </main>
 </div>
 
 <script>
