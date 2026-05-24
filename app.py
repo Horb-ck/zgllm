@@ -163,6 +163,8 @@ ed_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=h26F3
 he_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=llaiuXe8HwjymvXjkfpiLdhr&studentUid="
 rb_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=d15FrTplAcL52KMK3oKFmzRP&studentUid="
 pd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=jwv1RfhutIzIxvM8o6Ubgij3&studentUid="
+pm_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=pgTOHEGASrW4VgImEp9dtX1c&studentUid="
+lmpa_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=hP0Nptl04DfkZQFLTrKhjGjU&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
@@ -308,6 +310,20 @@ agents = [
         "description": "经历完整产品创新流程，培养设计思维与原型制作综合能力。",
         "url": pd_agent_class_url,
         "image_url": "/static/img/pd.png"
+    },
+    {
+        "id": 19,
+        "name": "产品制造",
+        "description": "聚焦齿轮全流程制造，系统学习材料选择、成形工艺等核心技术。",
+        "url": pm_agent_class_url,
+        "image_url": "/static/img/pm.png"
+    },
+    {
+        "id": 20,
+        "name": "大模型原理及应用",
+        "description": "系统掌握大模型构建、微调与智能体开发核心技术。",
+        "url": lmpa_agent_class_url,
+        "image_url": "/static/img/lmpa.png"
     }
 ]
 
@@ -317,10 +333,11 @@ COURSES_LIST = [
     "定量工程设计方法", "自动控制原理", "程序设计实践", 
     "移动机器人应用与开发", "线性代数",
     "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计",
-    # 新增后三行
+    # 新增后四行
     "机器人动力学与控制", "无人机飞控技术", "信号与系统", 
     "工程原理", "工程设计", "工效学", 
-    "机器人基础", "产品设计"
+    "机器人基础", "产品设计",
+    "产品制造", "大模型原理及应用"
 ]
 
 # 允许的学期ID列表
