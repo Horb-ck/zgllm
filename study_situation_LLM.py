@@ -2,6 +2,7 @@ from flask import request, Blueprint,jsonify,session
 import os
 import json
 import re
+import concurrent.futures
 from datetime import datetime
 from database_mongo import db, user_sessions_collection
 from utils.canvas_utils import get_user_by_sis_id,get_courses_by_teacher_id,get_courses_by_student_id,get_course_assignments,get_assignment_submissions,get_assignment_submission_summary,get_gradeable_students,get_course_enrollments,get_course_quizzes,get_course_modules,get_module_items,get_quiz_submissions,get_student_assignment_submission,get_student_quiz_submissions
@@ -101,453 +102,297 @@ def get_user_courses_from_db(studentUid):
    
 @study_situation_LLM.route('/dashboard/study_situation/course/search_teacher')
 def search_course_teacher():
-    """查询课程信息 - 获取当前课程的知识点学习统计"""
-    # 获取查询参数
+    """查询课程信息 - 获取当前课程的知识点学习统计 (性能优化版)"""
     query = request.args.get('query', '').strip()
     studentUid = request.args.get('studentUid', '').strip()
     
-    print(f"search_course 接收参数 - query: {query}, studentUid: {studentUid}")
-    
-    # 1. 验证 studentUid 参数
     if not studentUid:
         return jsonify({"error": "缺少studentUid参数"}), 400
-    # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!search_course:current_course:",current_course)
-    
-    # 3. 如果 MongoDB 中没有，尝试从 session 获取（作为后备方案）
-    if not current_course:
-        current_course = session.get('current_course')
-        print(f"从session获取当前课程: {current_course}")
 
-    # 4. 如果仍然没有当前课程，返回错误
+    # 1-4. 获取课程上下文
+    current_course = get_user_current_course_from_db(studentUid) or session.get('current_course')
     if not current_course:
         return jsonify({"error": "未找到当前课程信息", "message": "请先选择课程"}), 400
     
-    # 5. 获取当前课程的信息
     current_course_id = int(current_course.get('course_id'))
     current_course_name = current_course.get('name', '未命名课程')
     
-    # 6. 如果有 query 参数，验证用户是否有权限访问该课程(只有当与当前课程成功匹配才能查询)
+    # 5-6. 验证 query 权限
     if query:
-        # 判断query是否能与当前课程的course_id或course_name匹配
-        is_match = False
-        if str(current_course_id).strip() == query:
-            is_match = True
-            print(f"query '{query}' 与当前课程ID '{current_course_id}' 匹配")
-        elif query in str(current_course_name).strip():
-            is_match = True
-            print(f"query '{query}' 在当前课程名称 '{current_course_name}' 中找到匹配")
+        is_match = str(current_course_id).strip() == query or query in str(current_course_name).strip()
         if not is_match:
             return jsonify({
                 "error": f"无权限查询课程 '{query}'",
-                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})",
-                "current_course": {
-                    "course_id": current_course_id,
-                    "course_name": current_course_name
-                }
+                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})"
             }), 403
     
-    # 7. 使用当前课程的course_id查询相关课程信息
-    print(f"使用当前课程ID查询: {current_course_id}")
-    course = db.courses.find_one({"courses_list.class_list.id": int(current_course_id)}, {"_id": 0})
-    print("course?", course)
-
-    if not course:
-        # 如果没有在class_list中找到，尝试直接匹配id字段
-        course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    # 7. 获取课程与班级基础信息
+    course = db.courses.find_one({"courses_list.class_list.id": current_course_id}, {"_id": 0}) or \
+             db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    class_info = db.classes.find_one({"id": current_course_id}, {"_id": 0})
     
-    if not course:
-        return jsonify({
-            "error": "未找到课程信息",
-            "message": f"未找到ID为 {current_course_id} 的课程",
-            "current_course": {
-                "course_id": current_course_id,
-                "course_name": current_course_name
-            }
-        })
-    class_info = db.classes.find_one({"id": int(current_course_id)}, {"_id": 0})
-    print("class_info", class_info)
-    
-    if not class_info:
-        return jsonify({
-            "error": "未找到班级信息",
-            "message": f"未找到ID为 {current_course_id} 的班级信息",
-            "current_course": {
-                "course_id": current_course_id,
-                "course_name": current_course_name
-            }
-        })
+    if not course or not class_info:
+        return jsonify({"error": "未找到课程或班级信息"}), 404
+        
     student_list = class_info.get('student_list', [])
     knowledge_stats = {}
-    if 'knowledge_list' in course and course['knowledge_list']:
-        for knowledge in course['knowledge_list']:
-            knowledge_id = knowledge.get('knowledge_id')
-            knowledge_name = knowledge.get('knowledge_name')
-            if knowledge_id:
-                knowledge_stats[str(knowledge_id)] = {
-                    'knowledge_id': knowledge_id,
-                    'knowledge_name': knowledge_name,
-                    'total_students': len(student_list),
-                    'not_learned': 0,
-                    'in_progress': 0,
-                    'learned': 0,
-                    'review_needed': 0,
-                    'completion_rate': 0.0,
-                    'course_id': current_course_id
-                }
-    else:
-        # 如果课程没有knowledge_list，返回空的知识点列表
-        print("警告: 课程没有knowledge_list字段")
-
-    for student in student_list:
-        student_id = student.get('id')
-        sis_user_id = student.get('sis_user_id')
-        
-        if not student_id and not sis_user_id:
-            continue
-        
-        # 查找学生信息
-        student_query = {}
-        if student_id:
-            student_query['id'] = student_id
-        if sis_user_id:
-            student_query['sis_user_id'] = sis_user_id
-        
-        student_info = db.students.find_one(student_query, {"_id": 0})
-        if not student_info:
-            continue
-        
-        # 查找学生选修的当前课程
-        enrolled_courses = student_info.get('enrolled_courses', [])
-        current_enrolled_course = None
-        
-        for enrolled_course in enrolled_courses:
-            if str(enrolled_course.get('id')).strip() == str(current_course_id).strip():
-                current_enrolled_course = enrolled_course
-                break
-        
-        if not current_enrolled_course:
-            for knowledge_id in knowledge_stats.keys():
-                knowledge_stats[knowledge_id]['not_learned'] += 1
-            continue
-        
-        student_knowledge_list = current_enrolled_course.get('knowledge_list', [])
-        for knowledge_id, stats in knowledge_stats.items():
-            knowledge_found = False
-            
-            for student_knowledge in student_knowledge_list:
-                if str(student_knowledge.get('knowledge_id')).strip() == str(knowledge_id).strip():
-                    knowledge_found = True
-                    state = student_knowledge.get('state', 'not_learned')
-                    
-                    if state == 'not_learned':
-                        stats['not_learned'] += 1
-                    elif state == 'in_progress':
-                        stats['in_progress'] += 1
-                    elif state == 'learned':
-                        stats['learned'] += 1
-                    elif state == 'review_needed':
-                        stats['review_needed'] += 1
-                    else:
-                        stats['not_learned'] += 1
-                    
-                    break
-            
-            if not knowledge_found:
-                # 学生没有这个知识点的记录
-                stats['not_learned'] += 1
     
+    if course.get('knowledge_list'):
+        for k in course['knowledge_list']:
+            k_id = k.get('knowledge_id')
+            if k_id:
+                knowledge_stats[str(k_id)] = {
+                    'knowledge_id': k_id,
+                    'knowledge_name': k.get('knowledge_name'),
+                    'total_students': len(student_list),
+                    'not_learned': 0, 'in_progress': 0, 'learned': 0, 'review_needed': 0,
+                    'completion_rate': 0.0, 'course_id': current_course_id
+                }
+
+    # ================= 优化点 1：MongoDB 批量查询 (解决 N+1) =================
+    student_ids = [s.get('id') for s in student_list if s.get('id')]
+    sis_user_ids = [s.get('sis_user_id') for s in student_list if s.get('sis_user_id')]
+    
+    # 一次性查出班级所有学生的详细信息
+    students_db_data = {}
+    if student_ids or sis_user_ids:
+        db_query = {"$or": []}
+        if student_ids: db_query["$or"].append({"id": {"$in": student_ids}})
+        if sis_user_ids: db_query["$or"].append({"sis_user_id": {"$in": sis_user_ids}})
+        
+        all_students = db.students.find(db_query, {"_id": 0, "id": 1, "sis_user_id": 1, "enrolled_courses": 1})
+        
+        # 构建哈希表，实现 O(1) 内存检索
+        for stu in all_students:
+            if stu.get("id"): students_db_data[str(stu["id"])] = stu
+            if stu.get("sis_user_id"): students_db_data[str(stu["sis_user_id"])] = stu
+
+    # ================= 优化点 2：内存映射加速知识点统计 =================
+    for student in student_list:
+        stu_id = str(student.get('id'))
+        sis_id = str(student.get('sis_user_id'))
+        
+        # O(1) 获取学生信息
+        student_info = students_db_data.get(stu_id) or students_db_data.get(sis_id)
+        if not student_info:
+            for k_id in knowledge_stats: knowledge_stats[k_id]['not_learned'] += 1
+            continue
+            
+        current_enrolled_course = next((c for c in student_info.get('enrolled_courses', []) 
+                                      if str(c.get('id')).strip() == str(current_course_id).strip()), None)
+                                      
+        if not current_enrolled_course:
+            for k_id in knowledge_stats: knowledge_stats[k_id]['not_learned'] += 1
+            continue
+
+        # 将该学生的知识点状态转为字典，避免双层嵌套循环 O(N*M)
+        stu_k_map = {str(k.get('knowledge_id')).strip(): k.get('state', 'not_learned') 
+                     for k in current_enrolled_course.get('knowledge_list', [])}
+                     
+        for k_id, stats in knowledge_stats.items():
+            state = stu_k_map.get(k_id, 'not_learned')
+            if state in ['in_progress', 'learned', 'review_needed']:
+                stats[state] += 1
+            else:
+                stats['not_learned'] += 1
+
     # 8. 计算完成率
     total_knowledge_completion = 0
     knowledge_list_with_stats = []
     
-    for knowledge_id, stats in knowledge_stats.items():
-        total_students = stats['total_students']
-        if total_students > 0:
-            # 完成率 = (已完成人数 + 需复习人数) / 总人数
+    for k_id, stats in knowledge_stats.items():
+        if stats['total_students'] > 0:
             completed_and_reviewed = stats['learned'] + stats['review_needed']
-            completion_rate = round(completed_and_reviewed / total_students * 100, 2)
-            stats['completion_rate'] = completion_rate
-        
+            stats['completion_rate'] = round(completed_and_reviewed / stats['total_students'] * 100, 2)
         knowledge_list_with_stats.append(stats)
         total_knowledge_completion += stats['completion_rate']
-    
-    # 计算课程整体完成率
-    overall_completion_rate = 0
-    if knowledge_list_with_stats:
-        overall_completion_rate = round(total_knowledge_completion / len(knowledge_list_with_stats), 2)
-    
-    # 9. 准备返回数据
+        
+    overall_completion_rate = round(total_knowledge_completion / len(knowledge_list_with_stats), 2) if knowledge_list_with_stats else 0
+
     course_data = {
         'course_id': current_course_id,
         'course_name': current_course_name,
-        'actual_course_name': course.get('course_name', current_course_name),
         'class_code': class_info.get('course_code', ''),
         'class_sis_id': class_info.get('sis_course_id', ''),
-        'term_id': class_info.get('enrollment_term_id', ''),
         'total_students': len(student_list),
         'knowledge_count': len(knowledge_list_with_stats),
         'overall_completion_rate': overall_completion_rate,
-        'knowledge_stats': knowledge_list_with_stats,
-        'query_matched': bool(query),  # 标记是否进行了query匹配
-        'original_query': query if query else None
+        'knowledge_stats': knowledge_list_with_stats
     }
+
+
+    # ================= 优化点 3：多线程并发处理 Canvas API (解决串行阻塞) =================
     
-    # 如果有学生名单，添加学生分布信息
-    if student_list:
-        course_data['student_distribution'] = {
-            'total': len(student_list),
-            'by_knowledge_completion': calculate_student_completion_distribution(knowledge_stats, student_list)
-        }
-    # --- 2. 整合 Canvas 平台数据 ---
-    # A. 获取作业及完成情况
-    assignments = get_course_assignments(current_course_id)
-    canvas_assignments = []
-    for am in assignments:
+    # 提取作业处理逻辑为一个独立函数
+    def fetch_assignment_data(am):
         am_id = am.get('id')
         summary = get_assignment_submission_summary(current_course_id, am_id)
-        # 获取未完成学生名单 (需要比对 gradeable_students 和 submissions)
         all_gradable = get_gradeable_students(current_course_id, am_id)
         submissions = get_assignment_submissions(current_course_id, am_id)
-        submitted_user_ids = {s.get('user_id') for s in submissions if s.get('workflow_state') != 'unsubmitted'}
         
+        submitted_user_ids = {s.get('user_id') for s in submissions if s.get('workflow_state') != 'unsubmitted'}
         unsubmitted_students = [
             {"id": stu.get('id'), "display_name": stu.get('display_name')}
             for stu in all_gradable if stu.get('id') not in submitted_user_ids
         ]
-
-        canvas_assignments.append({
+        return {
             "assignment_id": am_id,
             "title": am.get('name'),
             "due_at": am.get('due_at'),
-            "status": summary, # 包含 scored, submitted, graded 等数量
+            "status": summary,
             "unsubmitted_list": unsubmitted_students
-        })
+        }
 
-    # B. 获取测验及得分情况
-    quizzes = get_course_quizzes(current_course_id)
-    canvas_quizzes = []
-    for q in quizzes:
+    # 提取测验处理逻辑为一个独立函数
+    def fetch_quiz_data(q):
         q_id = q.get('id')
         q_submissions = get_quiz_submissions(current_course_id, q_id)
         scores = [s.get('kept_score') for s in q_submissions if s.get('kept_score') is not None]
-        avg_score = round(sum(scores) / len(scores), 2) if scores else 0
-        
-        canvas_quizzes.append({
+        return {
             "quiz_id": q_id,
             "title": q.get('title'),
-            "average_score": avg_score,
+            "average_score": round(sum(scores) / len(scores), 2) if scores else 0,
             "submission_count": len(scores)
-        })
+        }
 
-    # C. 单元学习进度
+    assignments = get_course_assignments(current_course_id)
+    quizzes = get_course_quizzes(current_course_id)
+    
+    # 使用线程池并发请求 Canvas API（最大工作线程数建议设置在 10-20 之间）
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        canvas_assignments = list(executor.map(fetch_assignment_data, assignments))
+        canvas_quizzes = list(executor.map(fetch_quiz_data, quizzes))
+
+    # 单元学习进度 (这个API通常较快，暂保持原样)
     modules = get_course_modules(current_course_id)
-    canvas_modules = []
-    for m in modules:
-        canvas_modules.append({
-            "module_id": m.get('id'),
-            "name": m.get('name'),
-            "items_count": m.get('items_count'),
-            "state": m.get('workflow_state')
-        })
+    canvas_modules = [
+        {"module_id": m.get('id'), "name": m.get('name'), "items_count": m.get('items_count'), "state": m.get('workflow_state')}
+        for m in modules
+    ]
+
     return jsonify({
         "course": course_data,
-        "count": 1,
         "current_course_id": current_course_id,
         "current_course_name": current_course_name,
-        "message": "查询成功",
-        "studentUid": studentUid if studentUid else "未提供",
         "canvas_data": {
             "assignments": canvas_assignments,
             "quizzes": canvas_quizzes,
             "modules": canvas_modules
         },
-    })
+    }), 200
 
 
 @study_situation_LLM.route('/dashboard/study_situation/course/search_student')
 def search_course_student():
-    """查询课程信息 - 获取当前课程的知识点学习统计"""
-    # 获取查询参数
+    """查询课程信息 - 获取当前课程的知识点学习统计 (性能优化版)"""
     query = request.args.get('query', '').strip()
     studentUid = request.args.get('studentUid', '').strip()
     
-    print(f"search_course 接收参数 - query: {query}, studentUid: {studentUid}")
-    
-    # 1. 验证 studentUid 参数
     if not studentUid:
         return jsonify({"error": "缺少studentUid参数"}), 400
-    # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!search_course:current_course:",current_course)
-    
-    # 3. 如果 MongoDB 中没有，尝试从 session 获取（作为后备方案）
-    if not current_course:
-        current_course = session.get('current_course')
-        print(f"从session获取当前课程: {current_course}")
 
-    # 4. 如果仍然没有当前课程，返回错误
+    # 1-4. 获取课程上下文
+    current_course = get_user_current_course_from_db(studentUid) or session.get('current_course')
     if not current_course:
         return jsonify({"error": "未找到当前课程信息", "message": "请先选择课程"}), 400
     
-    # 5. 获取当前课程的信息
     current_course_id = int(current_course.get('course_id'))
     current_course_name = current_course.get('name', '未命名课程')
     
-    # 6. 如果有 query 参数，验证用户是否有权限访问该课程(只有当与当前课程成功匹配才能查询)
+    # 5-6. 验证 query 权限
     if query:
-        # 判断query是否能与当前课程的course_id或course_name匹配
-        is_match = False
-        if str(current_course_id).strip() == query:
-            is_match = True
-            print(f"query '{query}' 与当前课程ID '{current_course_id}' 匹配")
-        elif query in str(current_course_name).strip():
-            is_match = True
-            print(f"query '{query}' 在当前课程名称 '{current_course_name}' 中找到匹配")
+        is_match = str(current_course_id).strip() == query or query in str(current_course_name).strip()
         if not is_match:
             return jsonify({
                 "error": f"无权限查询课程 '{query}'",
-                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})",
-                "current_course": {
-                    "course_id": current_course_id,
-                    "course_name": current_course_name
-                }
+                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})"
             }), 403
     
-    # 7. 使用当前课程的course_id查询相关课程信息
-    print(f"使用当前课程ID查询: {current_course_id}")
-    course = db.courses.find_one({"courses_list.class_list.id": int(current_course_id)}, {"_id": 0})
-    print("course?", course)
-
-    if not course:
-        # 如果没有在class_list中找到，尝试直接匹配id字段
-        course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    # 7. 获取课程与班级基础信息
+    course = db.courses.find_one({"courses_list.class_list.id": current_course_id}, {"_id": 0}) or \
+             db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    class_info = db.classes.find_one({"id": current_course_id}, {"_id": 0})
     
-    if not course:
-        return jsonify({
-            "error": "未找到课程信息",
-            "message": f"未找到ID为 {current_course_id} 的课程",
-            "current_course": {
-                "course_id": current_course_id,
-                "course_name": current_course_name
-            }
-        })
-    class_info = db.classes.find_one({"id": int(current_course_id)}, {"_id": 0})
-    print("class_info", class_info)
-    
-    if not class_info:
-        return jsonify({
-            "error": "未找到班级信息",
-            "message": f"未找到ID为 {current_course_id} 的班级信息",
-            "current_course": {
-                "course_id": current_course_id,
-                "course_name": current_course_name
-            }
-        })
+    if not course or not class_info:
+        return jsonify({"error": "未找到课程或班级信息"}), 404
+        
     student_list = class_info.get('student_list', [])
     knowledge_stats = {}
-    if 'knowledge_list' in course and course['knowledge_list']:
-        for knowledge in course['knowledge_list']:
-            knowledge_id = knowledge.get('knowledge_id')
-            knowledge_name = knowledge.get('knowledge_name')
-            if knowledge_id:
-                knowledge_stats[str(knowledge_id)] = {
-                    'knowledge_id': knowledge_id,
-                    'knowledge_name': knowledge_name,
-                    'total_students': len(student_list),
-                    'not_learned': 0,
-                    'in_progress': 0,
-                    'learned': 0,
-                    'review_needed': 0,
-                    'completion_rate': 0.0,
-                    'course_id': current_course_id
-                }
-    else:
-        # 如果课程没有knowledge_list，返回空的知识点列表
-        print("警告: 课程没有knowledge_list字段")
-
-    for student in student_list:
-        student_id = student.get('id')
-        sis_user_id = student.get('sis_user_id')
-        
-        if not student_id and not sis_user_id:
-            continue
-        
-        # 查找学生信息
-        student_query = {}
-        if student_id:
-            student_query['id'] = student_id
-        if sis_user_id:
-            student_query['sis_user_id'] = sis_user_id
-        
-        student_info = db.students.find_one(student_query, {"_id": 0})
-        if not student_info:
-            continue
-        
-        # 查找学生选修的当前课程
-        enrolled_courses = student_info.get('enrolled_courses', [])
-        current_enrolled_course = None
-        
-        for enrolled_course in enrolled_courses:
-            if str(enrolled_course.get('id')).strip() == str(current_course_id).strip():
-                current_enrolled_course = enrolled_course
-                break
-        
-        if not current_enrolled_course:
-            for knowledge_id in knowledge_stats.keys():
-                knowledge_stats[knowledge_id]['not_learned'] += 1
-            continue
-        
-        student_knowledge_list = current_enrolled_course.get('knowledge_list', [])
-        for knowledge_id, stats in knowledge_stats.items():
-            knowledge_found = False
-            
-            for student_knowledge in student_knowledge_list:
-                if str(student_knowledge.get('knowledge_id')).strip() == str(knowledge_id).strip():
-                    knowledge_found = True
-                    state = student_knowledge.get('state', 'not_learned')
-                    
-                    if state == 'not_learned':
-                        stats['not_learned'] += 1
-                    elif state == 'in_progress':
-                        stats['in_progress'] += 1
-                    elif state == 'learned':
-                        stats['learned'] += 1
-                    elif state == 'review_needed':
-                        stats['review_needed'] += 1
-                    else:
-                        stats['not_learned'] += 1
-                    
-                    break
-            
-            if not knowledge_found:
-                # 学生没有这个知识点的记录
-                stats['not_learned'] += 1
     
-    # 8. 计算完成率
+    # 初始化知识点统计字典
+    if course.get('knowledge_list'):
+        for k in course['knowledge_list']:
+            k_id = k.get('knowledge_id')
+            if k_id:
+                knowledge_stats[str(k_id)] = {
+                    'knowledge_id': k_id,
+                    'knowledge_name': k.get('knowledge_name'),
+                    'total_students': len(student_list),
+                    'not_learned': 0, 'in_progress': 0, 'learned': 0, 'review_needed': 0,
+                    'completion_rate': 0.0, 'course_id': current_course_id
+                }
+
+    # ================= 优化点 1：MongoDB 批量查询 (解决 N+1 问题) =================
+    student_ids = [s.get('id') for s in student_list if s.get('id')]
+    sis_user_ids = [s.get('sis_user_id') for s in student_list if s.get('sis_user_id')]
+    
+    # 一次性查出班级所有学生的详细信息，存储在内存中
+    students_db_data = {}
+    if student_ids or sis_user_ids:
+        db_query = {"$or": []}
+        if student_ids: db_query["$or"].append({"id": {"$in": student_ids}})
+        if sis_user_ids: db_query["$or"].append({"sis_user_id": {"$in": sis_user_ids}})
+        
+        all_students = db.students.find(db_query, {"_id": 0, "id": 1, "sis_user_id": 1, "enrolled_courses": 1})
+        
+        # 构建哈希表，实现 O(1) 内存极速检索
+        for stu in all_students:
+            if stu.get("id"): students_db_data[str(stu["id"])] = stu
+            if stu.get("sis_user_id"): students_db_data[str(stu["sis_user_id"])] = stu
+
+    # ================= 优化点 2：内存映射加速知识点统计 =================
+    for student in student_list:
+        stu_id = str(student.get('id')) if student.get('id') else None
+        sis_id = str(student.get('sis_user_id')) if student.get('sis_user_id') else None
+        
+        # O(1) 获取学生信息，不再查询数据库
+        student_info = students_db_data.get(stu_id) or students_db_data.get(sis_id)
+        if not student_info:
+            for k_id in knowledge_stats: knowledge_stats[k_id]['not_learned'] += 1
+            continue
+            
+        current_enrolled_course = next((c for c in student_info.get('enrolled_courses', []) 
+                                      if str(c.get('id')).strip() == str(current_course_id).strip()), None)
+                                      
+        if not current_enrolled_course:
+            for k_id in knowledge_stats: knowledge_stats[k_id]['not_learned'] += 1
+            continue
+
+        # 将该学生的知识点状态转为字典，避免双层嵌套循环导致 O(N*M) 的时间复杂度
+        stu_k_map = {str(k.get('knowledge_id')).strip(): k.get('state', 'not_learned') 
+                     for k in current_enrolled_course.get('knowledge_list', [])}
+                     
+        for k_id, stats in knowledge_stats.items():
+            state = stu_k_map.get(k_id, 'not_learned')
+            if state == 'not_learned': stats['not_learned'] += 1
+            elif state == 'in_progress': stats['in_progress'] += 1
+            elif state == 'learned': stats['learned'] += 1
+            elif state == 'review_needed': stats['review_needed'] += 1
+            else: stats['not_learned'] += 1
+
+    # 计算知识点完成率
     total_knowledge_completion = 0
     knowledge_list_with_stats = []
     
-    for knowledge_id, stats in knowledge_stats.items():
-        total_students = stats['total_students']
-        if total_students > 0:
-            # 完成率 = (已完成人数 + 需复习人数) / 总人数
+    for k_id, stats in knowledge_stats.items():
+        if stats['total_students'] > 0:
             completed_and_reviewed = stats['learned'] + stats['review_needed']
-            completion_rate = round(completed_and_reviewed / total_students * 100, 2)
-            stats['completion_rate'] = completion_rate
-        
+            stats['completion_rate'] = round(completed_and_reviewed / stats['total_students'] * 100, 2)
         knowledge_list_with_stats.append(stats)
         total_knowledge_completion += stats['completion_rate']
-    
-    # 计算课程整体完成率
-    overall_completion_rate = 0
-    if knowledge_list_with_stats:
-        overall_completion_rate = round(total_knowledge_completion / len(knowledge_list_with_stats), 2)
-    
-    # 9. 准备返回数据
+        
+    overall_completion_rate = round(total_knowledge_completion / len(knowledge_list_with_stats), 2) if knowledge_list_with_stats else 0
+
     course_data = {
         'course_id': current_course_id,
         'course_name': current_course_name,
@@ -559,48 +404,50 @@ def search_course_student():
         'knowledge_count': len(knowledge_list_with_stats),
         'overall_completion_rate': overall_completion_rate,
         'knowledge_stats': knowledge_list_with_stats,
-        'query_matched': bool(query),  # 标记是否进行了query匹配
+        'query_matched': bool(query),
         'original_query': query if query else None
     }
-    
-    # 如果有学生名单，添加学生分布信息
+
     if student_list:
         course_data['student_distribution'] = {
             'total': len(student_list),
             'by_knowledge_completion': calculate_student_completion_distribution(knowledge_stats, student_list)
         }
-        
-        
-    ######
-    # --- 4. 获取 Canvas 个人数据 ---
-    # A. 个人作业情况
+
+    # ================= 优化点 3：多线程并发处理 Canvas API (解决串行阻塞) =================
+    
     assignments = get_course_assignments(current_course_id)
-    personal_assignments = []
-    for am in assignments:
+    quizzes = get_course_quizzes(current_course_id)
+
+    # 定义提取作业的子线程任务
+    def fetch_personal_assignment(am):
         am_id = am.get('id')
-        submission = get_student_assignment_submission(current_course_id, am_id, studentUid)
-        
-        personal_assignments.append({
+        submission = get_student_assignment_submission(current_course_id, am_id, studentUid) or {}
+        wf_state = submission.get('workflow_state')
+        return {
             "title": am.get('name'),
             "due_at": am.get('due_at'),
-            "submitted": submission.get('workflow_state') != 'unsubmitted',
+            "submitted": wf_state not in ['unsubmitted', 'deleted', None],
             "grade": submission.get('grade'),
             "late": submission.get('late', False)
-        })
+        }
 
-    # B. 个人测验情况
-    quizzes = get_course_quizzes(current_course_id)
-    personal_quizzes = []
-    for q in quizzes:
+    # 定义提取测验的子线程任务
+    def fetch_personal_quiz(q):
         q_id = q.get('id')
         q_sub = get_student_quiz_submissions(current_course_id, q_id, studentUid)
-        score = q_sub[0].get('score') if q_sub else None
-        
-        personal_quizzes.append({
+        score = q_sub[0].get('score') if q_sub and isinstance(q_sub, list) else None
+        return {
             "title": q.get('title'),
             "score": score,
             "status": "已完成" if q_sub else "未尝试"
-        })
+        }
+
+    # 使用线程池并发发出所有 Canvas 网络请求（最大并发数为 15）
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        personal_assignments = list(executor.map(fetch_personal_assignment, assignments))
+        personal_quizzes = list(executor.map(fetch_personal_quiz, quizzes))
+
     return jsonify({
         "course": course_data,
         "count": 1,
@@ -613,7 +460,7 @@ def search_course_student():
             "finished_assignments": [a for a in personal_assignments if a['submitted']],
             "quiz_scores": personal_quizzes
         },
-    })
+    }), 200
 
 ##############################################################################################################################################################
 
@@ -720,329 +567,173 @@ def get_course_student_status():
     - 多个 knowledge_not_learned（ID 或名称，模糊匹配）
     - 返回每个学生的 已完成/未完成 知识点详情（含名称）
     """
+    """查询某门课程所有学生的学习情况 (性能优化版)"""
     studentUid = request.args.get('studentUid', '').strip()
-    
-    # 1. 验证 studentUid 参数
-    if not studentUid:
-        return jsonify({
-            "error": "缺少studentUid参数",
-            "message": "请提供用户账号(studentUid)以识别用户身份"
-        }), 400
-    # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!get_course_student_status:current_course:",current_course)
-    
-    # 未从MongoDB中找到当前课程，尝试从session获取
-    if not current_course:
-        current_course = session.get('current_course')
-        print(f"从session获取当前课程: {current_course}")
-    
-    # 如果仍然没有当前课程，返回错误
-    if not current_course:
-        return jsonify({
-            "error": "未找到当前课程信息",
-            "message": "请先在学情分析页面选择一门课程"
-        }), 400
-    
-    # 获取当前课程的信息
-    current_course_id = int(current_course.get('course_id'))
-    current_course_name = current_course.get('name', '未命名课程')
-    current_sis_course_id = current_course.get('sis_course_id', '')
-    
-    if not current_course_id:
-        return jsonify({
-            "error": "当前课程信息不完整",
-            "message": "当前课程缺少course_id字段",
-            "current_course": current_course
-        }), 400
-    
-    # Step 3: 获取course_query参数并进行匹配
     course_query = request.args.get('course_query', '').strip()
     
-    # 如果提供了course_query，进行模糊匹配
+    if not studentUid:
+        return jsonify({"error": "缺少studentUid参数", "message": "请提供用户账号"}), 400
+
+    # 1-4. 获取并验证课程上下文
+    current_course = get_user_current_course_from_db(studentUid) or session.get('current_course')
+    if not current_course:
+        return jsonify({"error": "未找到当前课程信息", "message": "请先在学情分析页面选择一门课程"}), 400
+    
+    current_course_id = int(current_course.get('course_id'))
+    current_course_name = current_course.get('name', current_course.get('course_name', '未命名课程'))
+    current_sis_course_id = current_course.get('sis_course_id', '')
+    current_term_id = current_course.get('enrollment_term_id', '')
+    # 5. 验证 course_query
     if course_query:
-        is_matched = False
-        if str(current_course_id) == str(course_query):
-            is_matched = True
-            print(f"通过课程ID匹配: {course_query}")
-        elif current_course_name and course_query.lower() in current_course_name.lower():
-            is_matched = True
-            print(f"通过课程名称模糊匹配: {course_query} 匹配 {current_course_name}")
-        elif current_sis_course_id and course_query in current_sis_course_id:
-            is_matched = True
-            print(f"通过sis_course_id匹配: {course_query} 匹配 {current_sis_course_id}")
+        is_matched = str(current_course_id) == course_query or \
+                     (current_course_name and course_query.lower() in current_course_name.lower()) or \
+                     (current_sis_course_id and course_query in current_sis_course_id)
         if not is_matched:
-            print(f"未匹配到课程: {course_query}")
             return jsonify({
                 "error": f"无权限查询课程 '{course_query}'",
-                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})",
-                "current_course": {
-                    "course_id": current_course_id,
-                    "course_name": current_course_name
-                }
+                "message": f"您当前可查询的课程是: {current_course_name}"
             }), 403
-           
-    # Step 4: 使用current_course的course_id查询课程信息
-    try:
-        current_course_id = int(current_course_id)
-    except ValueError:
-        return jsonify({"error": "课程ID格式错误"}), 400
+
+    # 6. 获取课程与班级信息
+    course = db.courses.find_one({"courses_list.class_list.id": current_course_id}, {"_id": 0}) or \
+             db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    class_info = db.classes.find_one({"id": current_course_id}, {"_id": 0})
     
-    print(f"开始查询课程信息 - course_id: {current_course_id}")
-    
-    # 获取当前课程信息
-    course = db.courses.find_one(
-        {"courses_list.class_list.id": current_course_id},
-        {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_count": 1, "knowledge_list": 1}
-    )
-    
-    if not course:
-        # 如果没有在courses_list.class_list中找到，尝试直接匹配id字段
-        course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
-    
-    if not course:
-        return jsonify({
-            "error": f"未找到ID为 {current_course_id} 的课程信息",
-            "current_course_id": current_course_id
-        }), 404
-    
-    # 提取当前课程的具体信息
-    course_name = course.get("course_name", f"课程 {current_course_id}")
-    course_code = None
-    sis_course_id = None
-    term_id = None
-    
-    # 从courses_list中提取具体的课程代码和班级信息
-    for course_item in course.get('courses_list', []):
-        for class_item in course_item.get('class_list', []):
-            if class_item.get('id') == current_course_id:
-                course_code = course_item.get('course_code')
-                sis_course_id = class_item.get('sis_course_id')
-                term_id = class_item.get('enrollment_term_id')
-                break
-        if course_code:
-            break
-    
-    # Step 5: 获取班级信息
-    class_info = db.classes.find_one(
-        {"id": current_course_id},
-        {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1}
-    )
-    
-    if not class_info:
-        return jsonify({
-            "error": f"未找到ID为 {current_course_id} 的班级信息",
-            "course_id": current_course_id,
-            "course_name": course_name,
-            "course_code": course_code
-        }), 404
-    
-    # 使用classes表中的课程名称（如果存在）
-    actual_course_name = class_info.get("course_name", course_name)
+    if not course or not class_info:
+        return jsonify({"error": "未找到课程或班级信息"}), 404
+        
+    course_code = class_info.get("course_code", "")
+    actual_course_name = class_info.get("course_name", current_course_name)
     student_list = class_info.get("student_list", [])
-    
-    # 确保course_code正确
-    if not course_code:
-        course_code = class_info.get("course_code", "")
     
     if not student_list:
         return jsonify({
-            "course_id": current_course_id,
-            "course_name": actual_course_name,
-            "course_code": course_code,
-            "total_knowledge_count": 0,
-            "students": [],
-            "query_key": course_query if course_query else "当前课程",
-            "query_matched": True,
-            "studentUid": studentUid,
-            "message": "班级中没有学生"
+            "course_id": current_course_id, "course_name": actual_course_name, "course_code": course_code,
+            "total_knowledge_count": 0, "students": [], "query_matched": True,
+            "studentUid": studentUid, "message": "班级中没有学生"
         }), 200
 
-    # Step 6: 获取该课程的所有知识点
-    knowledges = list(db.knowledges.find(
-        {"course_code": course_code},
-        {"_id": 0, "knowledge_id": 1, "knowledge_name": 1}
-    ))
+    # ================= 优化点 1：预构建知识点 Hash Map =================
+    # 获取全局知识点库
+    knowledges = list(db.knowledges.find({"course_code": course_code}, {"_id": 0, "knowledge_id": 1, "knowledge_name": 1}))
+    knowledge_map = {str(k["knowledge_id"]): {"knowledge_name": k.get("knowledge_name", str(k["knowledge_id"])), "knowledge_id": k["knowledge_id"]} for k in knowledges}
     
-    knowledge_map = {
-        k["knowledge_id"]: {
-            "knowledge_name": k.get("knowledge_name", str(k["knowledge_id"])),
-            "knowledge_id": k["knowledge_id"]
-        }
-        for k in knowledges
-    }
-    
-    # 合并课程表中的knowledge_list
-    course_knowledge_list = course.get('knowledge_list', [])
-    if course_knowledge_list:
-        for knowledge in course_knowledge_list:
-            knowledge_id = knowledge.get('knowledge_id')
-            knowledge_name = knowledge.get('knowledge_name')
-            if knowledge_id and knowledge_id not in knowledge_map:
-                knowledge_map[knowledge_id] = {
-                    'knowledge_name': knowledge_name or str(knowledge_id),
-                    'knowledge_id': knowledge_id
-                }
-    
+    # 合并课程专有知识点
+    for k in course.get('knowledge_list', []):
+        k_id = str(k.get('knowledge_id'))
+        if k_id and k_id not in knowledge_map:
+            knowledge_map[k_id] = {'knowledge_name': k.get('knowledge_name') or k_id, 'knowledge_id': k.get('knowledge_id')}
+            
     total_knowledge = len(knowledge_map)
     if total_knowledge == 0:
         return jsonify({
-            "course_id": current_course_id,
-            "course_name": actual_course_name,
-            "course_code": course_code,
-            "total_knowledge_count": 0,
-            "students": [],
-            "query_key": course_query if course_query else "当前课程",
-            "query_matched": True,
-            "studentUid": studentUid,
-            "message": "课程中没有知识点"
+            "course_id": current_course_id, "course_name": actual_course_name, "course_code": course_code,
+            "total_knowledge_count": 0, "students": [], "studentUid": studentUid, "message": "课程中没有知识点"
         }), 200
 
-    # Step 7: 处理筛选参数
-    completion_lt = request.args.get('completion_lt', type=float)  # completion < value
-    completion_gt = request.args.get('completion_gt', type=float)  # completion > value
-    
-    not_learned_params = request.args.getlist('knowledge_not_learned')
-    not_learned_params = [param.strip() for param in not_learned_params if param.strip()]
+    # 7. 处理筛选参数 (未变，保持正则搜索逻辑)
+    completion_lt = request.args.get('completion_lt', type=float)
+    completion_gt = request.args.get('completion_gt', type=float)
+    not_learned_params = [p.strip() for p in request.args.getlist('knowledge_not_learned') if p.strip()]
     
     target_knowledge_ids = set()
     if not_learned_params:
         knowledge_queries = []
         for param in not_learned_params:
             if param.isdigit():
-                try:
-                    kid = int(param)
-                    knowledge_queries.append({"knowledge_id": kid})
-                except:
-                    pass
+                knowledge_queries.append({"knowledge_id": int(param)})
             else:
-                # 模糊匹配知识点ID或名称
-                regex_pattern_param = f".*{re.escape(param)}.*"
-                knowledge_queries.append({"knowledge_id": {"$regex": regex_pattern_param, "$options": "i"}})
-                knowledge_queries.append({"knowledge_name": {"$regex": regex_pattern_param, "$options": "i"}})
+                regex_pattern = f".*{re.escape(param)}.*"
+                knowledge_queries.append({"knowledge_id": {"$regex": regex_pattern, "$options": "i"}})
+                knowledge_queries.append({"knowledge_name": {"$regex": regex_pattern, "$options": "i"}})
         
         if knowledge_queries:
-            matched_knowledges = db.knowledges.find(
-                {"$or": knowledge_queries, "course_code": course_code},
-                {"_id": 0, "knowledge_id": 1}
-            )
+            matched_knowledges = db.knowledges.find({"$or": knowledge_queries, "course_code": course_code}, {"_id": 0, "knowledge_id": 1})
             target_knowledge_ids = {k["knowledge_id"] for k in matched_knowledges}
-        
-        # 如果没有找到匹配的知识点，返回提示信息但不返回错误
+            
         if not target_knowledge_ids:
             return jsonify({
-                "warning": "未找到匹配的知识点",
-                "queries": not_learned_params,
-                "course_code": course_code,
-                "course_id": current_course_id,
-                "course_name": actual_course_name,
-                "query_key": course_query if course_query else "当前课程",
-                "query_matched": True,
-                "studentUid": studentUid,
+                "warning": "未找到匹配的知识点", "queries": not_learned_params, "course_code": course_code,
+                "course_id": current_course_id, "course_name": actual_course_name, "studentUid": studentUid,
                 "available_knowledges": list(knowledge_map.values())
             }), 200
 
-    # Step 8: 统计每个学生的学习情况
+    # ================= 优化点 2：批量查询数据库 (消灭 N+1 问题) =================
+    student_ids = [s.get("id") for s in student_list if s.get("id")]
+    sis_user_ids = [s.get("sis_user_id") for s in student_list if s.get("sis_user_id")]
+    
+    db_query = {"$or": []}
+    if student_ids: db_query["$or"].append({"id": {"$in": student_ids}})
+    if sis_user_ids: db_query["$or"].append({"sis_user_id": {"$in": sis_user_ids}})
+
+    # 一次性提取全班所有学生的详细数据
+    all_students_db = db.students.find(db_query, {"_id": 0}) if db_query["$or"] else []
+    
+    # 构建内存索引 (Hash Map)，查询时间复杂度降至 O(1)
+    student_db_map = {}
+    for stu in all_students_db:
+        if stu.get("id"): student_db_map[str(stu["id"])] = stu
+        if stu.get("sis_user_id"): student_db_map[str(stu["sis_user_id"])] = stu
+
+    # ================= 优化点 3：内存数据处理 =================
     students_data = []
     
     for student_info in student_list:
-        student_id = student_info.get("id")
-        sis_user_id = student_info.get("sis_user_id")
+        stu_id = str(student_info.get("id")) if student_info.get("id") else None
+        sis_id = str(student_info.get("sis_user_id")) if student_info.get("sis_user_id") else None
         
-        if not student_id and not sis_user_id:
-            continue
+        if not stu_id and not sis_id: continue
         
-        # 查找学生信息
-        student_query = {}
-        if student_id:
-            student_query["id"] = student_id
-        if sis_user_id:
-            student_query["sis_user_id"] = sis_user_id
+        # 极速 O(1) 内存检索，不再向数据库发请求
+        student = student_db_map.get(stu_id) or student_db_map.get(sis_id)
+        if not student: continue
         
-        student = db.students.find_one(student_query, {"_id": 0})
-        if not student:
-            # 学生不存在或数据不完整
-            continue
+        current_enrolled_course = next((c for c in student.get("enrolled_courses", []) 
+                                      if str(c.get("id")).strip() == str(current_course_id).strip()), None)
+        if not current_enrolled_course: continue
         
-        # 查找学生选修的当前课程
-        enrolled_courses = student.get("enrolled_courses", [])
-        current_enrolled_course = None
+        # 预构建该学生的知识点状态字典 O(K)
+        stu_k_state_map = {str(k.get("knowledge_id")): k.get("state", "not_learned") 
+                           for k in current_enrolled_course.get("knowledge_list", [])}
         
-        for enrolled_course in enrolled_courses:
-            # 匹配课程ID
-            if enrolled_course.get("id") == current_course_id:
-                current_enrolled_course = enrolled_course
-                break
-        
-        if not current_enrolled_course:
-            # 学生没有选修这门课或课程信息不完整
-            continue
-        
-        # 获取学生的知识点列表
-        knowledge_list = current_enrolled_course.get("knowledge_list", [])
-        
-        # 统计完成和未完成的知识点
         completed_knowledges = []
         incomplete_knowledges = []
-        student_knowledge_map = {k.get("knowledge_id"): k for k in knowledge_list}
         
-        for knowledge_id, knowledge_info in knowledge_map.items():
-            student_knowledge = student_knowledge_map.get(knowledge_id, {})
-            state = student_knowledge.get("state", "not_learned")
-            
-            k_detail = {
-                "knowledge_id": knowledge_id,
-                "knowledge_name": knowledge_info["knowledge_name"],
-                "state": state
-            }
+        # 遍历全量知识点字典，直接映射状态
+        for k_id, k_info in knowledge_map.items():
+            state = stu_k_state_map.get(k_id, "not_learned")
+            k_detail = {"knowledge_id": k_info["knowledge_id"], "knowledge_name": k_info["knowledge_name"], "state": state}
             
             if state in ["learned", "review_needed"]:
                 completed_knowledges.append(k_detail)
             else:
                 incomplete_knowledges.append(k_detail)
+                
+        completion_rate = round((len(completed_knowledges) / total_knowledge) * 100, 2) if total_knowledge else 0
         
-        # 计算完成率
-        completion_rate = round((len(completed_knowledges) / total_knowledge) * 100, 2)
-        
-        # 应用筛选条件
-        match = True
-        
-        # 完成率筛选
-        if completion_lt is not None and completion_rate >= completion_lt:
-            match = False
-        if completion_gt is not None and completion_rate <= completion_gt:
-            match = False
-        
-        # 未学习知识点筛选
-        if target_knowledge_ids:
-            has_unlearned_target = any(
-                item["knowledge_id"] in target_knowledge_ids
-                for item in incomplete_knowledges
-            )
-            if not has_unlearned_target:
-                match = False
-        
-        if match:
-            students_data.append({
-                "student_id": student_id,
-                "sis_user_id": sis_user_id,
-                "student_name": student_info.get("name") or student.get("student_name", "未知学生"),
-                "completed_knowledge_count": len(completed_knowledges),
-                "total_knowledge_count": total_knowledge,
-                "completion_rate": completion_rate,
-                "completed_knowledges": completed_knowledges,
-                "incomplete_knowledges": incomplete_knowledges,
-                "enrollment_status": current_enrolled_course.get("enrollment_status", "active")
-            })
-    
-    # Step 9: 返回结果
+        # 筛选逻辑
+        if completion_lt is not None and completion_rate >= completion_lt: continue
+        if completion_gt is not None and completion_rate <= completion_gt: continue
+        if target_knowledge_ids and not any(item["knowledge_id"] in target_knowledge_ids for item in incomplete_knowledges):
+            continue
+            
+        students_data.append({
+            "student_id": student_info.get("id"),
+            "sis_user_id": student_info.get("sis_user_id"),
+            "student_name": student_info.get("name") or student.get("student_name", "未知学生"),
+            "completed_knowledge_count": len(completed_knowledges),
+            "completion_rate": completion_rate,
+            "enrollment_status": current_enrolled_course.get("enrollment_status", "active")
+        })
+            # "completed_knowledges": completed_knowledges,
+            # "incomplete_knowledges": incomplete_knowledges,
+    # 8. 返回结果
     return jsonify({
         "course_id": current_course_id,
         "course_name": actual_course_name,
         "course_code": course_code,
         "class_sis_id": class_info.get("sis_course_id", ""),
-        "term_id": term_id,
+        "term_id": current_term_id,
         "total_students": len(student_list),
         "matched_students": len(students_data),
         "total_knowledge_count": total_knowledge,
@@ -1056,10 +747,7 @@ def get_course_student_status():
             "knowledge_not_learned_queries": not_learned_params,
             "matched_knowledge_ids": list(target_knowledge_ids) if target_knowledge_ids else None
         },
-        "knowledge_overview": {
-            "total_count": total_knowledge,
-            "knowledge_list": list(knowledge_map.values())
-        },
+        "knowledge_overview": {"total_count": total_knowledge, "knowledge_list": list(knowledge_map.values())},
         "students": students_data
     }), 200
 
@@ -1086,34 +774,28 @@ def get_course_knowledge_status():
     current_course = None
     current_course = get_user_current_course_from_db(studentUid)
     print("!!!!get_course_knowledge_status:current_course:",current_course)
-    
     # 未从MongoDB中找到当前课程，尝试从session获取
     if not current_course:
         current_course = session.get('current_course')
         print(f"从session获取当前课程: {current_course}")
-    
     # 如果仍然没有当前课程，返回错误
     if not current_course:
         return jsonify({
             "error": "未找到当前课程信息",
             "message": "请先在学情分析页面选择一门课程"
         }), 400
-    
     # 获取当前课程的信息
     current_course_id = current_course.get('course_id')
     current_course_name = current_course.get('name', '未命名课程')
     current_sis_course_id = current_course.get('sis_course_id', '')
-    
     if not current_course_id:
         return jsonify({
             "error": "当前课程信息不完整",
             "message": "当前课程缺少course_id字段",
             "current_course": current_course
         }), 400
-    
     # Step 3: 获取course_query参数并进行匹配
     course_query = request.args.get('course_query', '').strip()
-    
     # 如果提供了course_query，进行模糊匹配
     if course_query:
         is_matched = False
@@ -1136,37 +818,31 @@ def get_course_knowledge_status():
                     "course_name": current_course_name
                 }
             }), 403
-    
+
     # Step 4: 使用current_course的course_id查询课程信息
     try:
         current_course_id = int(current_course_id)
     except ValueError:
         return jsonify({"error": "课程ID格式错误"}), 400
-    
     print(f"开始查询课程知识点状态 - course_id: {current_course_id} (类型: {type(current_course_id)})")
-    
     # 获取当前课程信息
     course = db.courses.find_one(
         {"courses_list.class_list.id": current_course_id},
         {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_count": 1, "knowledge_list": 1}
     )
-    
     if not course:
         # 如果没有在courses_list.class_list中找到，尝试直接匹配id字段
         course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
-    
     if not course:
         return jsonify({
             "error": f"未找到ID为 {current_course_id} 的课程信息",
             "current_course_id": current_course_id
         }), 404
-    
     # 提取当前课程的具体信息
     course_name = course.get("course_name", f"课程 {current_course_id}")
     course_code = None
     sis_course_id = None
     term_id = None
-    
     # 从courses_list中提取具体的课程代码和班级信息
     for course_item in course.get('courses_list', []):
         for class_item in course_item.get('class_list', []):
@@ -1177,13 +853,13 @@ def get_course_knowledge_status():
                 break
         if course_code:
             break
-    
+
     # Step 5: 获取班级信息
     class_info = db.classes.find_one(
         {"id": current_course_id},
         {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1}
     )
-    
+
     if not class_info:
         return jsonify({
             "error": f"未找到ID为 {current_course_id} 的班级信息",
@@ -1191,18 +867,14 @@ def get_course_knowledge_status():
             "course_name": course_name,
             "course_code": course_code
         }), 404
-    
     # 使用classes表中的课程名称（如果存在）
     actual_course_name = class_info.get("course_name", course_name)
     student_list = class_info.get("student_list", [])
-    
     # 确保course_code正确
     if not course_code:
         course_code = class_info.get("course_code", "")
-    
     total_students = len(student_list)
     print(f"班级学生总数: {total_students}")
-    
     if total_students == 0:
         return jsonify({
             "course_id": current_course_id,
@@ -1219,9 +891,7 @@ def get_course_knowledge_status():
     try:
         completion_rate_gte = request.args.get('completion_rate_gte')
         completion_rate_lte = request.args.get('completion_rate_lte')
-        
         print(f"原始筛选参数: gte={completion_rate_gte} (类型: {type(completion_rate_gte)}), lte={completion_rate_lte} (类型: {type(completion_rate_lte)})")
-        
         # 转换为浮点数
         if completion_rate_gte is not None:
             try:
@@ -1231,7 +901,6 @@ def get_course_knowledge_status():
                 print(f"转换后gte: {completion_rate_gte} (类型: {type(completion_rate_gte)})")
             except (ValueError, TypeError):
                 return jsonify({"error": "completion_rate_gte 必须是 0~100 之间的数字"}), 400
-        
         if completion_rate_lte is not None:
             try:
                 completion_rate_lte = float(completion_rate_lte)
@@ -1240,15 +909,12 @@ def get_course_knowledge_status():
                 print(f"转换后lte: {completion_rate_lte} (类型: {type(completion_rate_lte)})")
             except (ValueError, TypeError):
                 return jsonify({"error": "completion_rate_lte 必须是 0~100 之间的数字"}), 400
-
     except Exception as e:
         print(f"参数解析错误: {e}")
         return jsonify({"error": "筛选参数格式错误"}), 400
-
     # Step 7: 获取课程的知识点列表（直接从course表中获取）
     knowledge_list = course.get('knowledge_list', [])
     print(f"课程知识点数量: {len(knowledge_list)}")
-    
     if not knowledge_list:
         return jsonify({
             "course_id": current_course_id,
@@ -1261,163 +927,92 @@ def get_course_knowledge_status():
             "message": "课程中没有知识点",
             "knowledge_count_from_course": course.get('knowledge_count', 0)
         }), 200
-
-    # Step 8: 统计每个知识点的学习情况
-    result_knowledges = []
-    
-    print(f"开始统计知识点学习情况...")
+    # Step 8: 统计每个知识点的学习情况 (极致优化版)
+    print("开始统计知识点学习情况...")
     print(f"筛选条件: gte={completion_rate_gte}, lte={completion_rate_lte}")
+    # 1. 提取全班所有有效的 sis_user_id
+    sis_user_ids = [str(s.get("sis_user_id")) for s in student_list if s.get("sis_user_id")]
+    # 2. 批量查询：一次性从数据库获取所有这些学生的信息，避免在循环中查库
+    students_db_data = list(db.students.find(
+        {"sis_user_id": {"$in": sis_user_ids}},
+        {"_id": 0, "sis_user_id": 1, "student_name": 1, "enrolled_courses": 1}
+    ))
+    # 3. 构建内存哈希表，实现 O(1) 查找速度
+    # 格式: {'sis_user_id': student_doc}
+    student_map = {str(s.get("sis_user_id")): s for s in students_db_data if s.get("sis_user_id")}
 
-    for idx, knowledge in enumerate(knowledge_list):
-        knowledge_id = knowledge.get('knowledge_id')
-        knowledge_name = knowledge.get('knowledge_name', f"知识点{knowledge_id}")
-        
-        print(f"\n处理知识点 [{idx+1}/{len(knowledge_list)}]: ID={knowledge_id}, 名称={knowledge_name}")
-        
-        # 如果知识点缺少必要字段，跳过
-        if knowledge_id is None:
-            print(f"知识点ID为None，跳过")
+    # 4. 初始化知识点统计骨架
+    knowledge_stats = {}
+    for k in knowledge_list:
+        k_id_str = str(k.get('knowledge_id'))
+        if k_id_str == 'None':
             continue
+        knowledge_stats[k_id_str] = {
+            "knowledge_id": k.get('knowledge_id'),
+            "knowledge_name": k.get('knowledge_name', f"知识点{k_id_str}"),
+            "completed": [],
+            "incomplete": []
+        }
 
-        # 统一将knowledge_id转为字符串以便比较
-        knowledge_id_str = str(knowledge_id)
-        
-        completed_students = []
-        incomplete_students = []
-
-        # 查询每个学生是否掌握该知识点
-        for student_idx, student_info in enumerate(student_list):
-            student_id = student_info.get("id")
-            sis_user_id = student_info.get("sis_user_id")
-            student_name = student_info.get("name", "未知")
-            
-            if not student_id and not sis_user_id:
-                continue
-            
-            # 查找学生信息
-            student_query = {}
-            if student_id is not None:
-                student_query["id"] = student_id
-            if sis_user_id:
-                student_query["sis_user_id"] = sis_user_id
-            
-            student = db.students.find_one(student_query, {"_id": 0})
-            
-            if student:
-                # 查找学生选修的当前课程
-                enrolled_courses = student.get("enrolled_courses", [])
-                current_enrolled_course = None
-                
-                for enrolled_course in enrolled_courses:
-                    enrolled_id = enrolled_course.get("id")
-                    # 统一转为字符串比较
-                    if enrolled_id is not None and str(enrolled_id) == str(current_course_id):
-                        current_enrolled_course = enrolled_course
-                        break
-                
-                if current_enrolled_course:
-                    # 检查学生是否掌握了该知识点
-                    student_knowledge_list = current_enrolled_course.get("knowledge_list", [])
-                    is_completed = False
-                    
-                    for k_item in student_knowledge_list:
-                        k_id = k_item.get("knowledge_id")
-                        if k_id is not None:
-                            # 统一转为字符串进行比较
-                            if str(k_id) == knowledge_id_str:
-                                state = k_item.get("state", "not_learned")
-                                if state in ["learned", "review_needed"]:
-                                    is_completed = True
-                                break
-                    
-                    if is_completed:
-                        completed_students.append({
-                            "student_id": student_id,
-                            "sis_user_id": sis_user_id,
-                            "student_name": student.get("student_name") or student_name
-                        })
-                    else:
-                        incomplete_students.append({
-                            "student_id": student_id,
-                            "sis_user_id": sis_user_id,
-                            "student_name": student.get("student_name") or student_name
-                        })
-                else:
-                    # 学生没有选修这门课
-                    incomplete_students.append({
-                        "student_id": student_id,
-                        "sis_user_id": sis_user_id,
-                        "student_name": student_name
-                    })
+    # 5. 核心逻辑：只遍历一次学生列表，将状态分发到对应的知识点中
+    for student_info in student_list:
+        sis_id = str(student_info.get("sis_user_id"))
+        base_name = student_info.get("name", "未知")
+        # 构造一个基础的学生信息对象用于追加
+        stu_record = {"sis_user_id": sis_id, "student_name": base_name}
+        # 如果数据库里没有这个学生，全都算作未掌握
+        if not sis_id or sis_id not in student_map:
+            for k_id_str in knowledge_stats:
+                knowledge_stats[k_id_str]["incomplete"].append(stu_record)
+            continue
+        # 获取该学生的数据库记录和姓名
+        student_doc = student_map[sis_id]
+        stu_record["student_name"] = student_doc.get("student_name") or base_name
+        # 寻找该学生当前课程的学习记录
+        enrolled_courses = student_doc.get("enrolled_courses", [])
+        current_course_data = next((c for c in enrolled_courses if str(c.get("id")) == str(current_course_id)), None)
+        if not current_course_data:
+            # 如果没选这门课，全部知识点算作未完成
+            for k_id_str in knowledge_stats:
+                knowledge_stats[k_id_str]["incomplete"].append(stu_record)
+            continue
+        # 将该学生在该课的知识点状态转为字典，方便 O(1) 查询
+        stu_k_states = {str(k.get("knowledge_id")): k.get("state", "not_learned")
+                        for k in current_course_data.get("knowledge_list", [])}
+        # 将该学生的状态分发给所有的知识点
+        for k_id_str, stats_dict in knowledge_stats.items():
+            state = stu_k_states.get(k_id_str, "not_learned")
+            if state in ["learned", "review_needed"]:
+                stats_dict["completed"].append(stu_record)
             else:
-                # 学生不存在
-                incomplete_students.append({
-                    "student_id": student_id,
-                    "sis_user_id": sis_user_id,
-                    "student_name": student_name
-                })
-
-        # 计算完成率（确保是数字）
+                stats_dict["incomplete"].append(stu_record)
+    # 6. 计算完成率并应用过滤条件
+    result_knowledges = []
+    for k_id_str, stats_dict in knowledge_stats.items():
+        comp_count = len(stats_dict["completed"])
+        incomp_count = len(stats_dict["incomplete"])
         completion_rate = 0.0
         if total_students > 0:
-            try:
-                completion_rate = round((len(completed_students) / total_students) * 100, 2)
-                completion_rate = float(completion_rate)  # 确保是浮点数
-            except (ZeroDivisionError, TypeError, ValueError) as e:
-                print(f"计算完成率时出错: {e}")
-                completion_rate = 0.0
-        
-        print(f"  完成情况: 已掌握{len(completed_students)}人, 未掌握{len(incomplete_students)}人, 总人数{total_students}, 完成率={completion_rate}% (类型: {type(completion_rate)})")
+            completion_rate = round((comp_count / total_students) * 100, 2)
 
-        # 应用筛选条件
+        # 处理筛选逻辑 (如果被跳过则不加入最终结果)
         skip = False
-        
-        # 处理gte筛选
-        if completion_rate_gte is not None:
-            print(f"  检查gte筛选: 要求>={completion_rate_gte}%, 当前={completion_rate}%")
-            try:
-                gte_value = float(completion_rate_gte)
-                current_rate = float(completion_rate)
-                
-                if current_rate < gte_value:
-                    skip = True
-                    print(f"    → 跳过: {current_rate}% < {gte_value}%")
-                else:
-                    print(f"    → 通过: {current_rate}% >= {gte_value}%")
-            except (ValueError, TypeError) as e:
-                print(f"    → gte筛选错误: {e}")
-        
-        # 处理lte筛选（只有在没有跳过且lte有值时）
-        if not skip and completion_rate_lte is not None:
-            print(f"  检查lte筛选: 要求<={completion_rate_lte}%, 当前={completion_rate}%")
-            try:
-                lte_value = float(completion_rate_lte)
-                current_rate = float(completion_rate)
-                
-                if current_rate > lte_value:
-                    skip = True
-                    print(f"    → 跳过: {current_rate}% > {lte_value}%")
-                else:
-                    print(f"    → 通过: {current_rate}% <= {lte_value}%")
-            except (ValueError, TypeError) as e:
-                print(f"    → lte筛选错误: {e}")
-        
-        if skip:
-            print(f"  知识点被筛选条件跳过")
-            continue
-
-        result_knowledges.append({
-            "knowledge_id": knowledge_id,
-            "knowledge_name": knowledge_name,
-            "completed_students_count": len(completed_students),
-            "incomplete_students_count": len(incomplete_students),
-            "completion_rate": completion_rate,
-            "total_students": total_students,
-            "completed_students": completed_students[:10],  # 限制返回数量
-            "incomplete_students": incomplete_students[:10],  # 限制返回数量
-        })
-
-    print(f"\n统计完成，共处理{len(result_knowledges)}个知识点（原始{len(knowledge_list)}个）")
+        if completion_rate_gte is not None and completion_rate < float(completion_rate_gte):
+            skip = True
+        if not skip and completion_rate_lte is not None and completion_rate > float(completion_rate_lte):
+            skip = True
+        if not skip:
+            result_knowledges.append({
+                "knowledge_id": stats_dict["knowledge_id"],
+                "knowledge_name": stats_dict["knowledge_name"],
+                "completed_students_count": comp_count,
+                "incomplete_students_count": incomp_count,
+                "completion_rate": completion_rate,
+                "total_students": total_students,
+                "completed_students": stats_dict["completed"][:10], # 截断处理，防止MCP返回包过大
+                "incomplete_students": stats_dict["incomplete"][:10]
+            })
+    print(f"统计完成，共处理{len(result_knowledges)}个符合条件的知识点")
 
     # Step 9: 返回结果
     return jsonify({
@@ -1433,10 +1028,6 @@ def get_course_knowledge_status():
         "query_key": course_query if course_query else "当前课程",
         "query_matched": True,
         "note": f"查询用户 {studentUid} 的课程 '{actual_course_name}' 的知识点状态",
-        "data_source": {
-            "knowledge_source": "course.knowledge_list",
-            "student_source": "course.student_list"
-        },
         "filters": {
             "completion_rate_gte": completion_rate_gte,
             "completion_rate_lte": completion_rate_lte
@@ -1459,556 +1050,267 @@ def get_student_progress(student_query=None):
     - 班级表(classes): id, course_code, student_list[{id, sis_user_id, name}]
     - 学生表(students): sis_user_id, enrolled_courses[{id, knowledge_list[{knowledge_id, state}]}]
     """
-    # Step 1: 获取studentUid参数
+    """
+    查询某学生在某课程中的学习进度 (并发与内存映射优化版)
+    """
+    # Step 1: 获取基础参数
     studentUid = request.args.get('studentUid', '').strip()
-    print(f"获取学生进度请求 - studentUid: {studentUid}, student_query: {student_query}")
-    # 1. 验证 studentUid 参数
     if not studentUid:
-        return jsonify({
-            "error": "缺少studentUid参数",
-            "message": "请提供用户账号(studentUid)以识别用户身份"
-        }), 400
-    # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!get_student_progress:current_course:",current_course)
+        return jsonify({"error": "缺少studentUid参数", "message": "请提供用户账号"}), 400
 
+    # Step 2: 获取当前课程上下文
+    current_course = get_user_current_course_from_db(studentUid) or session.get('current_course')
     if not current_course:
-        return jsonify({
-            "error": "未找到当前课程信息",
-            "message": f"你尚未在学情分析页面选择课程",
-            "studentUid": studentUid,
-            "suggestion": "请先在学情分析页面选择课程"
-        }), 404
+        return jsonify({"error": "未找到当前课程信息", "message": "请先选择课程"}), 404
     
     current_course_id = current_course.get('course_id')
-    current_course_name = current_course.get('course_name', '')
+    current_course_name = current_course.get('course_name', current_course.get('name', ''))
     current_sis_course_id = current_course.get('sis_course_id', '')
     
-    if not current_course_id:
-        return jsonify({
-            "error": "当前课程信息不完整",
-            "message": "当前课程缺少course_id字段",
-            "current_course": current_course
-        }), 400
-    
-    # Step 3: 获取query参数并进行匹配
+    # Step 3: 验证 course_query
     course_query = request.args.get('course_query', '').strip()
-    print("course_query????", course_query)
-    
-    # 如果提供了query，进行模糊匹配
     if course_query:
-        is_matched = False
-        if str(current_course_id) == str(course_query):
-            is_matched = True
-            print(f"通过课程ID匹配: {course_query}")
-        elif current_course_name and course_query.lower() in current_course_name.lower():
-            is_matched = True
-            print(f"通过课程名称模糊匹配: {course_query} 匹配 {current_course_name}")
-        elif current_sis_course_id and course_query in current_sis_course_id:
-            is_matched = True
-            print(f"通过sis_course_id匹配: {course_query} 匹配 {current_sis_course_id}")
+        is_matched = str(current_course_id) == str(course_query) or \
+                     (current_course_name and course_query.lower() in current_course_name.lower()) or \
+                     (current_sis_course_id and course_query in current_sis_course_id)
         if not is_matched:
-            print(f"未匹配到课程: {course_query}")
             return jsonify({
                 "error": f"无权限查询课程 '{course_query}'",
-                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})",
-                "current_course": {
-                    "course_id": current_course_id,
-                    "course_name": current_course_name
-                }
+                "message": f"您当前可查询的课程是: {current_course_name}",
+                "current_course": {"course_id": current_course_id, "course_name": current_course_name}
             }), 403
-    
-    # Step 4: 使用current_course的course_id查询课程信息
+
     try:
         current_course_id = int(current_course_id)
-    except ValueError:
+    except (ValueError, TypeError):
         return jsonify({"error": "课程ID格式错误"}), 400
-    
-    print(f"开始查询学生进度 - course_id: {current_course_id}, student_query: {student_query}")
-    
-    # 获取当前课程信息
-    course = db.courses.find_one(
-        {"courses_list.class_list.id": current_course_id},
-        {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_count": 1, "knowledge_list": 1}
-    )
-    
-    if not course:
-        # 如果没有在courses_list.class_list中找到，尝试直接匹配id字段
-        course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
-    
-    if not course:
-        return jsonify({
-            "error": f"未找到ID为 {current_course_id} 的课程信息",
-            "current_course_id": current_course_id
-        }), 404
-    
-    # 提取当前课程的具体信息
-    course_name = course.get("course_name", f"课程 {current_course_id}")
-    course_code = None
-    sis_course_id = None
-    term_id = None
-    
-    # 从courses_list中提取具体的课程代码和班级信息
-    for course_item in course.get('courses_list', []):
-        for class_item in course_item.get('class_list', []):
-            if class_item.get('id') == current_course_id:
-                course_code = course_item.get('course_code')
-                sis_course_id = class_item.get('sis_course_id')
-                term_id = class_item.get('enrollment_term_id')
-                break
-        if course_code:
-            break
-    
-    # Step 5: 获取班级信息以验证学生是否在班级中
-    class_info = db.classes.find_one(
-        {"id": current_course_id},
-        {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1}
-    )
-    
-    if not class_info:
-        return jsonify({
-            "error": f"未找到ID为 {current_course_id} 的班级信息",
-            "course_id": current_course_id,
-            "course_name": course_name,
-            "course_code": course_code
-        }), 404
-    
-    # 使用classes表中的课程名称（如果存在）
-    actual_course_name = class_info.get("course_name", course_name)
+
+    # Step 4-5: 获取课程与班级信息
+    course = db.courses.find_one({"courses_list.class_list.id": current_course_id}, {"_id": 0}) or \
+             db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    class_info = db.classes.find_one({"id": current_course_id}, {"_id": 0})
+
+    if not course or not class_info:
+        return jsonify({"error": f"未找到ID为 {current_course_id} 的课程或班级信息"}), 404
+
+    actual_course_name = class_info.get("course_name", course.get("course_name", f"课程 {current_course_id}"))
+    course_code = class_info.get("course_code", "")
     student_list = class_info.get("student_list", [])
-    
-    # 确保course_code正确
-    if not course_code:
-        course_code = class_info.get("course_code", "")
-    
-    # ========== Step 6: 优化后的学生匹配逻辑 ==========
-    print(f"\n{'='*60}")
-    print(f"学生查询调试信息")
-    print(f"{'='*60}")
-    print(f"输入的student_query: {student_query} (类型: {type(student_query)})")
-    print(f"班级中学生数量: {len(student_list)}")
-    print(f"课程信息: {actual_course_name} (ID: {current_course_id})")
-    
-    student = None
+
+    # Step 6: 优化后的学生匹配逻辑 (寻找目标学生)
     matched_student_in_class = None
-    match_reason = ""
-    match_debug_info = []
+    student_query_lower = student_query.lower() if student_query else ""
     
-    # 首先尝试在班级学生列表中查找
-    for idx, student_info in enumerate(student_list):
-        student_id = student_info.get("id")
-        sis_user_id = student_info.get("sis_user_id")
-        student_name = student_info.get("student_name", "")
+    for s in student_list:
+        s_id = str(s.get("id", "")).strip()
+        s_sis = str(s.get("sis_user_id", "")).strip()
+        s_name = s.get("student_name", "").lower()
         
-        # 调试信息
-        debug_line = f"检查学生[{idx}]: name={student_name}, id={student_id}({type(student_id)}), sis={sis_user_id}({type(sis_user_id)})"
-        match_debug_info.append(debug_line)
-        
-        # 1. 按姓名匹配（模糊）
-        if student_name and student_query.lower() in student_name.lower():
-            matched_student_in_class = student_info
-            match_reason = f"姓名模糊匹配: '{student_query}' in '{student_name}'"
-            print(f"✓ {match_reason}")
+        if (s_name and student_query_lower in s_name) or \
+           (s_id and (student_query == s_id or student_query in s_id)) or \
+           (s_sis and (student_query == s_sis or student_query in s_sis)):
+            matched_student_in_class = s
             break
-        
-        # 2. 按id匹配（多种方式）
-        if student_id is not None:
-            query_str = str(student_query).strip()
-            id_str = str(student_id).strip()
-            
-            # 完全匹配（字符串）
-            if query_str == id_str:
-                matched_student_in_class = student_info
-                match_reason = f"id精确匹配: {query_str} == {id_str}"
-                print(f"✓ {match_reason}")
-                break
-            
-            # 数字比较（如果都是数字）
-            if query_str.isdigit() and id_str.isdigit():
-                if int(query_str) == int(id_str):
-                    matched_student_in_class = student_info
-                    match_reason = f"id数字匹配: {int(query_str)} == {int(id_str)}"
-                    print(f"✓ {match_reason}")
-                    break
-            
-            # 部分匹配（id包含查询字符串）
-            if query_str in id_str:
-                matched_student_in_class = student_info
-                match_reason = f"id包含匹配: '{query_str}' in '{id_str}'"
-                print(f"✓ {match_reason}")
-                break
-        
-        # 3. 按sis_user_id匹配（多种方式）
-        if sis_user_id:
-            query_str = str(student_query).strip()
-            sis_str = str(sis_user_id).strip()
-            
-            # 完全匹配（字符串）
-            if query_str == sis_str:
-                matched_student_in_class = student_info
-                match_reason = f"sis_user_id精确匹配: {query_str} == {sis_str}"
-                print(f"✓ {match_reason}")
-                break
-            
-            # 部分匹配
-            if query_str in sis_str:
-                matched_student_in_class = student_info
-                match_reason = f"sis_user_id包含匹配: '{query_str}' in '{sis_str}'"
-                print(f"✓ {match_reason}")
-                break
-    
-    print(f"班级列表匹配结果: {match_reason if matched_student_in_class else '未匹配'}")
-    
-    # 如果班级列表中找到，查询学生详细信息
+
+    student = None
     if matched_student_in_class:
-        print(f"在班级列表中找到学生: {matched_student_in_class}")
-        student_id = matched_student_in_class.get("id")
-        sis_user_id = matched_student_in_class.get("sis_user_id")
-        
-        # 构建查询条件（优先使用id，其次使用sis_user_id）
-        query_conditions = {}
-        if student_id is not None:
-            # 尝试多种id格式查询
-            query_conditions["$or"] = [
-                {"id": student_id},  # 原始格式
-                {"id": str(student_id)},  # 字符串格式
-            ]
-            # 如果是数字，也尝试数字格式
-            if isinstance(student_id, (int, float)) or (isinstance(student_id, str) and student_id.isdigit()):
-                query_conditions["$or"].append({"id": int(student_id) if str(student_id).isdigit() else student_id})
-        elif sis_user_id:
-            query_conditions["sis_user_id"] = sis_user_id
-        
-        print(f"数据库查询条件: {query_conditions}")
-        
-        if query_conditions:
-            student = db.students.find_one(query_conditions, {"_id": 0})
-            if student:
-                print(f"✓ 通过班级列表匹配找到学生: {student.get('student_name')} (ID: {student.get('id')})")
-            else:
-                print(f"✗ 班级列表匹配但数据库中未找到对应学生")
-    
-    # 方式4: 如果未在班级列表中找到，尝试在学生表中直接查找
-    if not student:
-        print(f"尝试在学生表中直接查找: {student_query}")
-        
-        # 尝试多种查询条件
-        query_conditions = {
-            "$or": [
-                # 按姓名模糊匹配
-                {"student_name": {"$regex": f".*{re.escape(student_query)}.*", "$options": "i"}},
-                
-                # 按sis_user_id模糊匹配
-                {"sis_user_id": {"$regex": f".*{re.escape(student_query)}.*", "$options": "i"}},
-            ]
-        }
-        
-        # 如果是数字，也尝试按id精确和模糊匹配
-        if str(student_query).strip().isdigit():
-            query_num = int(str(student_query).strip())
-            query_conditions["$or"].extend([
-                {"id": query_num},  # 精确匹配数字
-                {"id": str(query_num)},  # 精确匹配字符串
-                {"id": {"$regex": f".*{str(query_num)}.*"}}  # 模糊匹配
-            ])
-        
-        print(f"直接数据库查询条件: {query_conditions}")
-        
-        student = db.students.find_one(query_conditions, {"_id": 0})
-        
-        if student:
-            print(f"✓ 通过直接数据库查询找到学生: {student.get('student_name')}")
-            # 检查找到的学生是否在班级中
-            student_id = student.get("id")
-            sis_user_id = student.get("sis_user_id")
+        s_id = matched_student_in_class.get("id")
+        s_sis = matched_student_in_class.get("sis_user_id")
+        query_cond = {"$or": []}
+        if s_id is not None: query_cond["$or"].extend([{"id": s_id}, {"id": str(s_id)}])
+        if s_sis: query_cond["$or"].append({"sis_user_id": s_sis})
+        if query_cond["$or"]:
+            student = db.students.find_one(query_cond, {"_id": 0})
             
-            is_in_class = False
-            for s in student_list:
-                s_id = s.get("id")
-                s_sis = s.get("sis_user_id")
-                if (student_id is not None and s_id is not None and str(student_id) == str(s_id)) or \
-                   (sis_user_id and s_sis and sis_user_id == s_sis):
-                    is_in_class = True
-                    matched_student_in_class = s
-                    break
-            
-            if not is_in_class:
-                print(f"⚠ 警告: 数据库中找到了学生，但不在班级列表中")
-        else:
-            print(f"✗ 数据库中未找到匹配的学生")
-    
-    # 打印详细调试信息
-    if len(match_debug_info) > 0:
-        print(f"\n班级学生列表前{min(5, len(match_debug_info))}条记录:")
-        for info in match_debug_info[:5]:
-            print(f"  {info}")
-    
     if not student:
-        return jsonify({
-            "error": f"未找到与 '{student_query}' 匹配的学生",
-            "course_name": actual_course_name,
-            "course_id": current_course_id,
-            "studentUid": studentUid,
-            "debug_info": {
-                "student_query": student_query,
-                "query_type": type(student_query).__name__,
-                "class_student_count": len(student_list),
-                "match_attempted": True,
-                "match_reason": match_reason or "无",
-                "suggestion": "请检查输入的学生ID或姓名是否正确，确保该学生在该班级中"
-            }
-        }), 404
-    
-    # 获取学生信息
-    student_id = student.get("id")
+        # 降级：直接去库里全局搜
+        fallback_query = {"$or": [
+            {"student_name": {"$regex": f".*{re.escape(student_query)}.*", "$options": "i"}},
+            {"sis_user_id": {"$regex": f".*{re.escape(student_query)}.*", "$options": "i"}}
+        ]}
+        if student_query.isdigit():
+            fallback_query["$or"].extend([{"id": int(student_query)}, {"id": str(student_query)}])
+        student = db.students.find_one(fallback_query, {"_id": 0})
+
+    if not student:
+        return jsonify({"error": f"未找到与 '{student_query}' 匹配的学生"}), 404
+
+    # 提取最终的学生标识
+    db_student_id = student.get("id")
     sis_user_id = student.get("sis_user_id")
-    student_name = student.get("student_name") or student.get("student_name", "未知学生")
-    
+    student_name = student.get("student_name", "未知学生")
+
     # Step 7: 检查学生是否选修了当前课程
-    enrolled_courses = student.get("enrolled_courses", [])
-    matched_enrolled_course = None
-    
-    for enrolled_course in enrolled_courses:
-        if enrolled_course.get("id") == current_course_id:
-            matched_enrolled_course = enrolled_course
-            break
+    matched_enrolled_course = next((c for c in student.get("enrolled_courses", []) 
+                                  if str(c.get("id")) == str(current_course_id)), None)
     
     if not matched_enrolled_course:
-        # 检查学生是否在班级学生列表中
-        is_in_class = any(
-            (student_id is not None and s.get("id") is not None and str(student_id) == str(s.get("id"))) or 
-            (sis_user_id and s.get("sis_user_id") and sis_user_id == s.get("sis_user_id"))
-            for s in student_list
-        )
-        
-        if is_in_class:
-            # 学生在班级中但未选修课程
-            return jsonify({
-                "warning": f"学生 {student_name} 在班级 '{actual_course_name}' 中，但未选修该课程",
-                "student": {
-                    "student_id": student_id,
-                    "sis_user_id": sis_user_id,
-                    "student_name": student_name
-                },
-                "course": {
-                    "course_id": current_course_id,
-                    "course_name": actual_course_name,
-                    "course_code": course_code
-                },
-                "studentUid": studentUid,
-                "query_key": course_query if course_query else "当前课程",
-                "is_in_class": True,
-                "has_enrolled": False,
-                "suggestion": "该学生在班级名单中，但尚未在系统中选修此课程"
-            }), 200
-        else:
-            # 学生既不在班级中，也未选修课程
-            return jsonify({
-                "error": f"学生 {student_name} 未选修课程 '{actual_course_name}' (ID: {current_course_id})",
-                "student": {
-                    "student_id": student_id,
-                    "sis_user_id": sis_user_id,
-                    "student_name": student_name
-                },
-                "course": {
-                    "course_id": current_course_id,
-                    "course_name": actual_course_name
-                },
-                "studentUid": studentUid,
-                "query_key": course_query if course_query else "当前课程",
-                "is_in_class": False,
-                "has_enrolled": False,
-                "suggestion": "请确认学生是否在正确的班级中，并已选修该课程"
-            }), 404
+        return jsonify({
+            "error": f"学生 {student_name} 未选修此课程或数据不完整",
+            "student": {"student_id": db_student_id, "sis_user_id": sis_user_id, "student_name": student_name}
+        }), 404
+
+    # ================= 优化点 1：知识点映射处理 (O(1) 字典查找) =================
+    # 获取课程的全局标准知识点字典
+    course_k_list = course.get('knowledge_list', [])
+    knowledge_name_map = {str(k.get('knowledge_id')): k.get('knowledge_name', f"知识点{k.get('knowledge_id')}") 
+                          for k in course_k_list}
+
+    # 预分配数组，单次遍历归类
+    completed, review, in_progress, uncompleted = [], [], [], []
+    student_k_list = matched_enrolled_course.get("knowledge_list", [])
     
-    # Step 8: 获取学生的知识点学习情况
-    knowledge_list = matched_enrolled_course.get("knowledge_list", [])
-    
-    # 如果课程有knowledge_list，获取知识点的名称
-    course_knowledge_list = course.get('knowledge_list', [])
-    knowledge_name_map = {
-        str(k.get('knowledge_id')): k.get('knowledge_name', f"知识点{k.get('knowledge_id')}")
-        for k in course_knowledge_list
-    }
-    
-    # 统计学习进度
-    completed_knowledges = []
-    uncompleted_knowledges = []
-    in_progress_knowledges = []
-    review_needed_knowledges = []
-    
-    for k_item in knowledge_list:
-        knowledge_id = k_item.get("knowledge_id")
-        state = k_item.get("state", "not_learned")
-        knowledge_name = knowledge_name_map.get(str(knowledge_id), f"知识点{knowledge_id}")
-        
-        knowledge_detail = {
-            "knowledge_id": knowledge_id,
-            "knowledge_name": knowledge_name,
+    for k in student_k_list:
+        k_id = str(k.get("knowledge_id"))
+        state = k.get("state", "not_learned")
+        detail = {
+            "knowledge_id": k_id,
+            "knowledge_name": knowledge_name_map.get(k_id, f"知识点{k_id}"),
             "state": state
         }
-        
-        if state == "learned":
-            completed_knowledges.append(knowledge_detail)
-        elif state == "review_needed":
-            review_needed_knowledges.append(knowledge_detail)
-        elif state == "in_progress":
-            in_progress_knowledges.append(knowledge_detail)
-        else:  # not_learned or other
-            uncompleted_knowledges.append(knowledge_detail)
-    
-    total_knowledge = len(course_knowledge_list) if course_knowledge_list else len(knowledge_list)
-    completed_count = len(completed_knowledges) + len(review_needed_knowledges)  # 将需复习的也计入完成
+        if state == "learned": completed.append(detail)
+        elif state == "review_needed": review.append(detail)
+        elif state == "in_progress": in_progress.append(detail)
+        else: uncompleted.append(detail)
+
+    total_knowledge = len(course_k_list) if course_k_list else len(student_k_list)
+    completed_count = len(completed) + len(review)
     progress_percentage = round((completed_count / total_knowledge * 100), 2) if total_knowledge > 0 else 0
-    
-    
-    
-    # ========== Step 10: 整合 Canvas 平台数据 ==========
+
+    # ================= 优化点 2：多线程并发请求 Canvas API =================
     canvas_data = {
-        "assignments": {
-            "todo": [],       # 待完成/逾期未交
-            "submitted": [],  # 已提交/已评分
-            "summary": {"total": 0, "completed": 0, "late": 0}
-        },
-        "quizzes": {
-            "todo": [],       # 尚未参加
-            "finished": [],   # 已参加
-            "summary": {"total": 0, "completed": 0}
-        }
+        "assignments": {"todo": [], "submitted": [], "summary": {"total": 0, "completed": 0, "late": 0}},
+        "quizzes": {"todo": [], "finished": [], "summary": {"total": 0, "completed": 0}}
     }
 
-    if sis_user_id and sis_course_id:
+    if sis_user_id:
         try:
-            now = datetime.now() # 用于计算剩余时间
-            
-            # 1. 处理作业数据
+            now = datetime.now()
             all_assignments = get_course_assignments(current_course_id)
-            for assign in all_assignments:
-                assign_id = assign.get("id")
-                # 使用修正后的 target_canvas_id
-                submission = get_student_assignment_submission(current_course_id, assign_id, student_id)
+            all_quizzes = get_course_quizzes(current_course_id)
+            
+            # 子线程函数：处理单个作业
+            def fetch_assignment(assign):
+                am_id = assign.get("id")
+                # 彻底修复Bug：统一使用 sis_user_id (前提是底层函数无 sis_user_id: 前缀且通过内部ID请求，或底层带有该前缀支持学号)
+                # 按照前文沟通，这里统一使用 sis_user_id
+                submission = get_student_assignment_submission(current_course_id, am_id, sis_user_id) or {}
                 
-                workflow_state = submission.get("workflow_state", "unsubmitted")
-                is_submitted = workflow_state not in ["unsubmitted", "deleted"]
+                wf_state = submission.get("workflow_state", "unsubmitted")
+                is_submitted = wf_state in ["submitted", "graded"]
                 
-                # 截止时间与剩余时间计算
                 due_at_str = assign.get("due_at")
-                remaining_time = "无截止日期"
-                is_late = False
+                remaining_time, is_late = "无截止日期", False
                 
                 if due_at_str:
-                    # Canvas 时间通常是 '2026-04-20T15:59:59Z' 格式
-                    due_date = datetime.strptime(due_at_str, "%Y-%m-%dT%H:%M:%SZ")
-                    diff = due_date - now
-                    if diff.total_seconds() > 0:
-                        remaining_time = f"剩余 {diff.days} 天 {diff.seconds // 3600} 小时"
-                    else:
-                        remaining_time = "已逾期"
-                        is_late = True
+                    try:
+                        due_date = datetime.fromisoformat(due_at_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                        diff = due_date - now
+                        if diff.total_seconds() > 0:
+                            remaining_time = f"剩余 {diff.days} 天 {diff.seconds // 3600} 小时"
+                        else:
+                            remaining_time = "已逾期"
+                            is_late = True
+                    except Exception:
+                        remaining_time = "格式错误"
 
-                assign_item = {
-                    "id": assign_id,
+                return {
+                    "id": am_id,
                     "title": assign.get("name"),
                     "due_at": due_at_str,
                     "remaining_time": remaining_time,
                     "points_possible": assign.get("points_possible"),
                     "score": submission.get("score"),
-                    "status": "已提交" if is_submitted else ("已逾期" if is_late else "待完成")
+                    "status": "已提交" if is_submitted else ("已逾期" if is_late else "待完成"),
+                    "is_submitted": is_submitted,
+                    "is_late": is_late
                 }
 
-                canvas_data["assignments"]["summary"]["total"] += 1
-                if is_submitted:
-                    canvas_data["assignments"]["submitted"].append(assign_item)
-                    canvas_data["assignments"]["summary"]["completed"] += 1
-                else:
-                    if is_late: canvas_data["assignments"]["summary"]["late"] += 1
-                    canvas_data["assignments"]["todo"].append(assign_item)
-
-            # 2. 处理测验数据
-            all_quizzes = get_course_quizzes(current_course_id)
-            for quiz in all_quizzes:
-                quiz_id = quiz.get("id")
-                q_subs = get_student_quiz_submissions(current_course_id, quiz_id, target_canvas_id)
-                
-                latest_sub = q_subs[0] if q_subs else None
+            # 子线程函数：处理单个测验
+            def fetch_quiz(quiz):
+                q_id = quiz.get("id")
+                # 修复Bug：使用 sis_user_id 替换未定义的 target_canvas_id
+                q_subs = get_student_quiz_submissions(current_course_id, q_id, sis_user_id)
+                latest_sub = q_subs[0] if q_subs and isinstance(q_subs, list) else None
                 is_done = bool(latest_sub)
                 
-                # 测验截止时间处理
-                q_due_at = quiz.get("due_at")
-                q_rem = "无截止日期"
-                if q_due_at:
-                    q_due_date = datetime.strptime(q_due_at, "%Y-%m-%dT%H:%M:%SZ")
-                    q_diff = q_due_date - now
-                    q_rem = f"剩余 {q_diff.days} 天" if q_diff.total_seconds() > 0 else "已截止"
+                due_at_str = quiz.get("due_at")
+                remaining_time = "无截止日期"
+                if due_at_str:
+                    try:
+                        due_date = datetime.fromisoformat(due_at_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                        remaining_time = f"剩余 {(due_date - now).days} 天" if (due_date - now).total_seconds() > 0 else "已截止"
+                    except Exception:
+                        remaining_time = "格式错误"
 
-                quiz_item = {
-                    "id": quiz_id,
+                return {
+                    "id": q_id,
                     "title": quiz.get("title"),
-                    "due_at": q_due_at,
-                    "remaining_time": q_rem,
+                    "due_at": due_at_str,
+                    "remaining_time": remaining_time,
                     "score": latest_sub.get("kept_score") if is_done else None,
                     "points_possible": quiz.get("points_possible"),
-                    "status": "已参加" if is_done else "未参加"
+                    "status": "已参加" if is_done else "未参加",
+                    "is_done": is_done
                 }
 
+            # 启动线程池并发拉取 (极大缩短网络等待时间)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+                processed_assignments = list(executor.map(fetch_assignment, all_assignments))
+                processed_quizzes = list(executor.map(fetch_quiz, all_quizzes))
+
+            # 将并发处理的结果分类存入 canvas_data
+            for am_data in processed_assignments:
+                canvas_data["assignments"]["summary"]["total"] += 1
+                if am_data.pop("is_submitted"):  # 移除控制标记
+                    canvas_data["assignments"]["submitted"].append(am_data)
+                    canvas_data["assignments"]["summary"]["completed"] += 1
+                else:
+                    if am_data.pop("is_late"): canvas_data["assignments"]["summary"]["late"] += 1
+                    canvas_data["assignments"]["todo"].append(am_data)
+
+            for q_data in processed_quizzes:
                 canvas_data["quizzes"]["summary"]["total"] += 1
-                if is_done:
-                    canvas_data["quizzes"]["finished"].append(quiz_item)
+                if q_data.pop("is_done"):
+                    canvas_data["quizzes"]["finished"].append(q_data)
                     canvas_data["quizzes"]["summary"]["completed"] += 1
                 else:
-                    canvas_data["quizzes"]["todo"].append(quiz_item)
+                    canvas_data["quizzes"]["todo"].append(q_data)
 
         except Exception as e:
             import traceback
-            print(f"Canvas 详细错误堆栈: {traceback.format_exc()}")
-            canvas_data["error"] = f"同步失败: {str(e)}"
-    
-    
+            print(f"Canvas API 并发整合异常:\n{traceback.format_exc()}")
+            canvas_data["error"] = "教学平台数据同步失败"
+
     # Step 9: 返回结果
     return jsonify({
         "student": {
-            "student_id": student_id,
+            "student_id": db_student_id,
             "sis_user_id": sis_user_id,
             "student_name": student_name,
-            "is_in_class": True,  # 如果走到这里，说明学生在班级中且选修了课程
-            "enrollment_status": matched_enrolled_course.get("enrollment_status", "active"),
-            "match_method": match_reason
+            "is_in_class": True,
+            "enrollment_status": matched_enrolled_course.get("enrollment_status", "active")
         },
         "course": {
             "course_id": current_course_id,
             "course_name": actual_course_name,
-            "course_code": course_code,
-            "class_sis_id": sis_course_id,
-            "term_id": term_id,
-            "query_key": course_query if course_query else "当前课程",
-            "query_matched": True,
-            "note": f"查询用户 {studentUid} 的课程 '{actual_course_name}' 中的学生进度"
+            "course_code": course_code
         },
-        "studentUid": studentUid,
         "progress": {
             "total_knowledges": total_knowledge,
-            "completed_knowledges_count": len(completed_knowledges),
-            "review_needed_knowledges_count": len(review_needed_knowledges),
-            "in_progress_knowledges_count": len(in_progress_knowledges),
-            "uncompleted_knowledges_count": len(uncompleted_knowledges),
-            "progress_percentage": progress_percentage,
-            "completion_percentage": round(len(completed_knowledges) / total_knowledge * 100, 2) if total_knowledge > 0 else 0,
-            "review_needed_percentage": round(len(review_needed_knowledges) / total_knowledge * 100, 2) if total_knowledge > 0 else 0,
+            "completed_knowledges_count": len(completed),
+            "review_needed_knowledges_count": len(review),
+            "in_progress_knowledges_count": len(in_progress),
+            "uncompleted_knowledges_count": len(uncompleted),
+            "progress_percentage": progress_percentage
         },
         "knowledge_details": {
-            "completed_knowledges": completed_knowledges,
-            "review_needed_knowledges": review_needed_knowledges,
-            "in_progress_knowledges": in_progress_knowledges,
-            "uncompleted_knowledges": uncompleted_knowledges
+            "completed_knowledges": completed,
+            "review_needed_knowledges": review,
+            "in_progress_knowledges": in_progress,
+            "uncompleted_knowledges": uncompleted
         },
         "canvas_learning": canvas_data,
-        "debug_info": {
-            "student_query": student_query,
-            "match_reason": match_reason,
-            "search_method": "班级列表匹配" if matched_student_in_class else "数据库直接查询",
-            "class_matched": bool(matched_student_in_class)
-        },
         "last_updated": datetime.now().isoformat()
     }), 200
     
@@ -2028,98 +1330,55 @@ def get_knowledge_status(knowledge_query=None):
     - 班级表(classes): id, course_code, student_list[{id, sis_user_id, name}]
     - 学生表(students): sis_user_id, enrolled_courses[{id, knowledge_list[{knowledge_id, state}]}]
     """
+    """
+    查询某个知识点在指定课程中的学习情况 (极速优化版)
+    """
     studentUid = request.args.get('studentUid', '').strip()
-    print(f"获取知识点状态请求 - studentUid: {studentUid}, knowledge_query: {knowledge_query}")
-    # 1. 验证 studentUid 参数
-    if not studentUid:
-        return jsonify({
-            "error": "缺少studentUid参数",
-            "message": "请提供用户账号(studentUid)以识别用户身份"
-        }), 400
-    # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!get_knowledge_status:current_course:",current_course)
     
-    # 3. 如果 MongoDB 中没有，尝试从 session 获取（作为后备方案）
-    if not current_course:
-        current_course = session.get('current_course')
-        print(f"从session获取当前课程: {current_course}")
+    if not studentUid:
+        return jsonify({"error": "缺少studentUid参数", "message": "请提供用户账号"}), 400
 
-    # 4. 如果仍然没有当前课程，返回错误
+    # 1-4. 获取并验证课程上下文
+    current_course = get_user_current_course_from_db(studentUid) or session.get('current_course')
     if not current_course:
-        return jsonify({
-            "error": "未找到当前课程信息",
-            "message": "请先在学情分析页面选择一门课程"
-        }), 400
+        return jsonify({"error": "未找到当前课程信息", "message": "请先在学情分析页面选择一门课程"}), 400
     
     current_course_id = current_course.get('course_id')
     current_course_name = current_course.get('course_name', '')
     current_sis_course_id = current_course.get('sis_course_id', '')
     
     if not current_course_id:
-        return jsonify({
-            "error": "当前课程信息不完整",
-            "message": "当前课程缺少course_id字段",
-            "current_course": current_course
-        }), 400
+        return jsonify({"error": "当前课程信息不完整"}), 400
     
-    # Step 3: 获取query参数并进行匹配
+    # Step 3: 验证 course_query
     query = request.args.get('course_query', '').strip()
-    
-    # 如果提供了query，进行模糊匹配
     if query:
-        is_matched = False
-        if str(current_course_id) == str(query):
-            is_matched = True
-            print(f"通过课程ID匹配: {query}")
-        elif current_course_name and query.lower() in current_course_name.lower():
-            is_matched = True
-            print(f"通过课程名称模糊匹配: {query} 匹配 {current_course_name}")
-        elif current_sis_course_id and query in current_sis_course_id:
-            is_matched = True
-            print(f"通过sis_course_id匹配: {query} 匹配 {current_sis_course_id}")
+        is_matched = str(current_course_id) == str(query) or \
+                     (current_course_name and query.lower() in current_course_name.lower()) or \
+                     (current_sis_course_id and query in current_sis_course_id)
         if not is_matched:
-            print(f"未匹配到课程: {query}")
             return jsonify({
                 "error": f"无权限查询课程 '{query}'",
-                "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})",
-                "current_course": {
-                    "course_id": current_course_id,
-                    "course_name": current_course_name
-                }
+                "message": f"您当前可查询的课程是: {current_course_name}"
             }), 403
             
-    # Step 4: 使用current_course的course_id查询课程信息
+    # Step 4: 查询课程信息
     try:
         current_course_id = int(current_course_id)
     except ValueError:
         return jsonify({"error": "课程ID格式错误"}), 400
     
-    print(f"开始查询知识点状态 - course_id: {current_course_id}, knowledge_query: {knowledge_query}")
-    
-    # 获取当前课程信息
-    course = db.courses.find_one(
-        {"courses_list.class_list.id": current_course_id},
-        {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_count": 1, "knowledge_list": 1}
-    )
-    if not course:
-        # 如果没有在courses_list.class_list中找到，尝试直接匹配id字段
-        course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
+    course = db.courses.find_one({"courses_list.class_list.id": current_course_id}, {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_list": 1}) or \
+             db.courses.find_one({"id": current_course_id}, {"_id": 0})
     
     if not course:
-        return jsonify({
-            "error": f"未找到ID为 {current_course_id} 的课程信息",
-            "current_course_id": current_course_id
-        }), 404
+        return jsonify({"error": f"未找到ID为 {current_course_id} 的课程信息"}), 404
     
-    # 提取当前课程的具体信息
-    course_name = course.get("course_name", f"课程 {current_course_id}")
+    actual_course_name = course.get("course_name", f"课程 {current_course_id}")
     course_code = None
     sis_course_id = None
     term_id = None
     
-    # 从courses_list中提取具体的课程代码和班级信息
     for course_item in course.get('courses_list', []):
         for class_item in course_item.get('class_list', []):
             if class_item.get('id') == current_course_id:
@@ -2127,196 +1386,135 @@ def get_knowledge_status(knowledge_query=None):
                 sis_course_id = class_item.get('sis_course_id')
                 term_id = class_item.get('enrollment_term_id')
                 break
-        if course_code:
-            break
+        if course_code: break
     
     # Step 5: 获取班级信息
-    class_info = db.classes.find_one(
-        {"id": current_course_id},
-        {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1}
-    )
-    
+    class_info = db.classes.find_one({"id": current_course_id}, {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1})
     if not class_info:
-        return jsonify({
-            "error": f"未找到ID为 {current_course_id} 的班级信息",
-            "course_id": current_course_id,
-            "course_name": course_name,
-            "course_code": course_code
-        }), 404
+        return jsonify({"error": f"未找到ID为 {current_course_id} 的班级信息"}), 404
     
-    # 使用classes表中的课程名称（如果存在）
-    actual_course_name = class_info.get("course_name", course_name)
+    actual_course_name = class_info.get("course_name", actual_course_name)
     student_list = class_info.get("student_list", [])
-    
-    # 确保course_code正确
-    if not course_code:
-        course_code = class_info.get("course_code", "")
+    course_code = course_code or class_info.get("course_code", "")
     
     total_students = len(student_list)
     if total_students == 0:
         return jsonify({
-            "knowledge_query": knowledge_query,
-            "course_id": current_course_id,
-            "course_name": actual_course_name,
-            "course_code": course_code,
-            "total_students": 0,
-            "query_key": query if query else "当前课程",
-            "query_matched": True,
-            "studentUid": studentUid,
-            "message": "班级中没有学生"
+            "knowledge_query": knowledge_query, "course_id": current_course_id, "course_name": actual_course_name,
+            "total_students": 0, "query_matched": True, "studentUid": studentUid, "message": "班级中没有学生"
         }), 200
 
     # Step 6: 查找知识点信息
     knowledge = None
     knowledge_id = None
     knowledge_name = None
-    
-    # 首先在课程的知识点列表中查找
     course_knowledge_list = course.get('knowledge_list', [])
     
-    # 尝试按knowledge_id精确匹配
     for k in course_knowledge_list:
         k_id = k.get('knowledge_id')
         if str(k_id) == knowledge_query:
             knowledge = k
-            knowledge_id = k_id
-            knowledge_name = k.get('knowledge_name', f"知识点{k_id}")
             break
-    
-    # 如果未找到，尝试按knowledge_name模糊匹配
+            
     if not knowledge:
         knowledge_regex = re.compile(f".*{re.escape(knowledge_query)}.*", re.IGNORECASE)
         for k in course_knowledge_list:
-            k_name = k.get('knowledge_name', '')
-            if knowledge_regex.search(str(k.get('knowledge_id'))) or knowledge_regex.search(k_name):
+            if knowledge_regex.search(str(k.get('knowledge_id'))) or knowledge_regex.search(k.get('knowledge_name', '')):
                 knowledge = k
-                knowledge_id = k.get('knowledge_id')
-                knowledge_name = k.get('knowledge_name', f"知识点{knowledge_id}")
                 break
-    
-    # 如果课程知识点列表中未找到，尝试在knowledges表中查找
+                
     if not knowledge:
-        try:
-            if knowledge_query.isdigit():
-                knowledge = db.knowledges.find_one({
-                    "knowledge_id": int(knowledge_query),
-                    "course_code": course_code
-                }, {"_id": 0})
-        
-        except ValueError:
-            pass
-        
+        k_query = {"course_code": course_code}
+        if knowledge_query.isdigit():
+            k_query["knowledge_id"] = int(knowledge_query)
+            knowledge = db.knowledges.find_one(k_query, {"_id": 0})
         if not knowledge:
             k_id_regex = re.compile(f".*{re.escape(knowledge_query)}.*", re.IGNORECASE)
             knowledge = db.knowledges.find_one({
-                "$or": [
-                    {"knowledge_id": {"$regex": k_id_regex.pattern, "$options": "i"}},
-                    {"knowledge_name": {"$regex": k_id_regex.pattern, "$options": "i"}}
-                ],
+                "$or": [{"knowledge_id": {"$regex": k_id_regex.pattern, "$options": "i"}},
+                        {"knowledge_name": {"$regex": k_id_regex.pattern, "$options": "i"}}],
                 "course_code": course_code
             }, {"_id": 0})
     
     if not knowledge:
-        return jsonify({
-            "error": f"在课程 '{actual_course_name}' 中未找到与 '{knowledge_query}' 匹配的知识点",
-            "course_id": current_course_id,
-            "course_name": actual_course_name,
-            "knowledge_query": knowledge_query,
-            "studentUid": studentUid,
-            "query_key": query if query else "当前课程",
-            "available_knowledges": [
-                {"knowledge_id": k.get('knowledge_id'), "knowledge_name": k.get('knowledge_name', '')}
-                for k in course_knowledge_list[:10]  # 只返回前10个知识点作为参考
-            ]
-        }), 404
+        return jsonify({"error": f"在课程中未找到与 '{knowledge_query}' 匹配的知识点"}), 404
+        
+    knowledge_id = knowledge.get('knowledge_id')
+    knowledge_name = knowledge.get('knowledge_name', f"知识点{knowledge_id}")
+
+    # ================= 优化点 1：预构建 O(1) 的班级集合 =================
+    # 用于加速访问记录检查，避免 O(N*M) 的双重嵌套循环
+    class_sis_ids_set = {str(s.get("sis_user_id")) for s in student_list if s.get("sis_user_id")}
+
+    # ================= 优化点 2：MongoDB 批量查询 + $elemMatch =================
+    # 消除 N+1 查询炸弹，同时过滤掉不相关的课程以节省大量内存
+    student_ids = [s.get("id") for s in student_list if s.get("id")]
+    sis_user_ids = list(class_sis_ids_set)
     
-    # 获取知识点信息
-    if 'knowledge_id' not in knowledge:
-        knowledge_id = knowledge.get('knowledge_id')
-    if 'knowledge_name' not in knowledge:
-        knowledge_name = knowledge.get('knowledge_name', f"知识点{knowledge_id}")
-    
-    # Step 7: 统计学生掌握情况
+    db_query = {"$or": []}
+    if student_ids: db_query["$or"].append({"id": {"$in": student_ids}})
+    if sis_user_ids: db_query["$or"].append({"sis_user_id": {"$in": sis_user_ids}})
+
+    # 使用 $elemMatch 仅拉取当前课程的数据
+    students_db_data = list(db.students.find(
+        db_query, 
+        {"_id": 0, "id": 1, "sis_user_id": 1, "student_name": 1, 
+         "enrolled_courses": {"$elemMatch": {"id": current_course_id}}}
+    )) if db_query["$or"] else []
+
+    # ================= 优化点 3：内存哈希映射 =================
+    student_map = {}
+    for stu in students_db_data:
+        if stu.get("id"): student_map[str(stu["id"])] = stu
+        if stu.get("sis_user_id"): student_map[str(stu["sis_user_id"])] = stu
+
+    # Step 7: 统计学生掌握情况 (极速版 O(N))
     completed_students = []
     incomplete_students = []
     
     for student_info in student_list:
-        student_id = student_info.get("id")
-        sis_user_id = student_info.get("sis_user_id")
-        student_name = student_info.get("student_name", "未知")
+        stu_id = str(student_info.get("id")) if student_info.get("id") else None
+        sis_id = str(student_info.get("sis_user_id")) if student_info.get("sis_user_id") else None
         
-        if not student_id and not sis_user_id:
-            continue
+        if not stu_id and not sis_id: continue
         
-        # 查找学生信息
-        student_query_conditions = {}
-        if student_id:
-            student_query_conditions["id"] = student_id
-        if sis_user_id:
-            student_query_conditions["sis_user_id"] = sis_user_id
+        # O(1) 内存直接读取
+        student_doc = student_map.get(stu_id) or student_map.get(sis_id)
         
-        student = db.students.find_one(student_query_conditions, {"_id": 0})
-        
-        if student:
-            # 查找学生选修的当前课程
-            enrolled_courses = student.get("enrolled_courses", [])
-            current_enrolled_course = None
+        display_name = student_info.get("student_name") or "未知"
+        if student_doc and student_doc.get("student_name"):
+            display_name = student_doc.get("student_name")
             
-            for enrolled_course in enrolled_courses:
-                if enrolled_course.get("id") == current_course_id:
-                    current_enrolled_course = enrolled_course
+        record = {
+            "student_id": student_info.get("id"),
+            "sis_user_id": student_info.get("sis_user_id"),
+            "student_name": display_name
+        }
+        
+        is_completed = False
+        if student_doc and student_doc.get("enrolled_courses"):
+            # 由于使用了 $elemMatch，这里只会有1门课，或者为空
+            course_data = student_doc["enrolled_courses"][0]
+            
+            for k_item in course_data.get("knowledge_list", []):
+                if str(k_item.get("knowledge_id")) == str(knowledge_id):
+                    if k_item.get("state") in ["learned", "review_needed"]:
+                        is_completed = True
                     break
-            
-            if current_enrolled_course:
-                # 检查学生是否掌握了该知识点
-                knowledge_list = current_enrolled_course.get("knowledge_list", [])
-                is_completed = False
-                
-                for k_item in knowledge_list:
-                    if str(k_item.get("knowledge_id")) == str(knowledge_id):
-                        state = k_item.get("state", "not_learned")
-                        if state in ["learned", "review_needed"]:
-                            is_completed = True
-                        break
-                
-                if is_completed:
-                    completed_students.append({
-                        "student_id": student_id,
-                        "sis_user_id": sis_user_id,
-                        "student_name": student.get("student_name") or student.get("student_name") or student_name
-                    })
-                else:
-                    incomplete_students.append({
-                        "student_id": student_id,
-                        "sis_user_id": sis_user_id,
-                        "student_name": student.get("student_name") or student.get("student_name") or student_name
-                    })
-            else:
-                # 学生没有选修这门课
-                incomplete_students.append({
-                    "student_id": student_id,
-                    "sis_user_id": sis_user_id,
-                    "student_name": student_name
-                })
+                    
+        if is_completed:
+            completed_students.append(record)
         else:
-            # 学生不存在
-            incomplete_students.append({
-                "student_id": student_id,
-                "sis_user_id": sis_user_id,
-                "student_name": student_name
-            })
-    
+            incomplete_students.append(record)
+            
     # Step 8: 获取访问记录统计
     now = datetime.now(timezone.utc)
     one_day_ago = now - timedelta(days=1)
     one_week_ago = now - timedelta(weeks=1)
     one_month_ago = now - timedelta(days=30)
 
-    daily_visits = set()
-    weekly_visits = set()
-    monthly_visits = set()
+    daily_visits, weekly_visits, monthly_visits = set(), set(), set()
     
-    # 从knowledges表获取访问记录
     knowledge_doc = db.knowledges.find_one(
         {"knowledge_id": knowledge_id, "course_code": course_code},
         {"_id": 0, "access_records": 1}
@@ -2325,85 +1523,53 @@ def get_knowledge_status(knowledge_query=None):
     if knowledge_doc and "access_records" in knowledge_doc:
         for record in knowledge_doc["access_records"]:
             try:
-                # 获取学生ID
-                record_sis_user_id = record.get("sis_user_id")
-                if not record_sis_user_id:
+                record_sis_user_id = str(record.get("sis_user_id", ""))
+                if not record_sis_user_id: continue
+                
+                # ================= 优化点 4：O(1) 极速校验 =================
+                if record_sis_user_id not in class_sis_ids_set:
                     continue
                 
-                # 检查访问学生是否在班级中
-                is_student_in_class = any(
-                    s.get("sis_user_id") == record_sis_user_id for s in student_list
-                )
-                
-                if not is_student_in_class:
-                    continue
-                
-                # 解析访问时间
                 access_time = None
                 access_time_data = record.get("access_time", {})
                 
+                date_str = None
                 if isinstance(access_time_data, dict) and "$date" in access_time_data:
                     date_str = access_time_data["$date"]
-                    if isinstance(date_str, str):
-                        try:
-                            t = parser.isoparse(date_str.replace("Z", "+00:00"))
-                            access_time = t.replace(tzinfo=timezone.utc) if t.tzinfo is None else t
-                        except:
-                            pass
                 elif isinstance(access_time_data, str):
-                    try:
-                        t = parser.isoparse(access_time_data.replace("Z", "+00:00"))
-                        access_time = t.replace(tzinfo=timezone.utc) if t.tzinfo is None else t
-                    except:
-                        pass
+                    date_str = access_time_data
+                    
+                if date_str:
+                    t = parser.isoparse(date_str.replace("Z", "+00:00"))
+                    access_time = t.replace(tzinfo=timezone.utc) if t.tzinfo is None else t
                 
                 if access_time:
-                    if access_time > one_day_ago:
-                        daily_visits.add(record_sis_user_id)
-                    if access_time > one_week_ago:
-                        weekly_visits.add(record_sis_user_id)
-                    if access_time > one_month_ago:
-                        monthly_visits.add(record_sis_user_id)
+                    if access_time > one_day_ago: daily_visits.add(record_sis_user_id)
+                    if access_time > one_week_ago: weekly_visits.add(record_sis_user_id)
+                    if access_time > one_month_ago: monthly_visits.add(record_sis_user_id)
                         
             except Exception as e:
-                print(f"处理访问记录时出错: {e}")
                 continue
 
     # Step 9: 返回结果
     return jsonify({
         "knowledge": {
-            "knowledge_id": knowledge_id,
-            "knowledge_name": knowledge_name,
-            "course_id": current_course_id,
-            "course_name": actual_course_name,
-            "course_code": course_code,
-            "source": "course_knowledge_list" if any(k.get('knowledge_id') == knowledge_id for k in course_knowledge_list) else "knowledges_table"
+            "knowledge_id": knowledge_id, "knowledge_name": knowledge_name,
+            "course_id": current_course_id, "course_name": actual_course_name, "course_code": course_code
         },
         "total_students": total_students,
         "completed_students_count": len(completed_students),
-        "completed_students": completed_students[:100],  # 限制返回数量
+        "completed_students": completed_students[:100], 
         "uncompleted_students_count": len(incomplete_students),
-        "uncompleted_students": incomplete_students[:100],  # 限制返回数量
+        "uncompleted_students": incomplete_students[:100], 
         "completion_rate": round(len(completed_students) / total_students * 100, 2) if total_students > 0 else 0,
         "recent_visits": {
-            "last_day": len(daily_visits),
-            "last_week": len(weekly_visits),
-            "last_month": len(monthly_visits),
+            "last_day": len(daily_visits), "last_week": len(weekly_visits), "last_month": len(monthly_visits),
             "daily_visits_rate": round(len(daily_visits) / total_students * 100, 2) if total_students > 0 else 0,
             "weekly_visits_rate": round(len(weekly_visits) / total_students * 100, 2) if total_students > 0 else 0,
             "monthly_visits_rate": round(len(monthly_visits) / total_students * 100, 2) if total_students > 0 else 0
         },
-        "query_info": {
-            "knowledge_query": knowledge_query,
-            "course_query": query if query else "当前课程",
-            "query_matched": True,
-            "note": f"查询用户 {studentUid} 的课程 '{actual_course_name}' 中的知识点状态"
-        },
         "studentUid": studentUid,
-        "course_info": {
-            "class_sis_id": sis_course_id,
-            "term_id": term_id
-        },
         "last_updated": datetime.now().isoformat()
     }), 200
 
@@ -2424,9 +1590,13 @@ def get_student_myprogress():
     2. 如果提供了student_query，验证其与当前用户信息匹配
     3. 只有匹配成功才能查看学习情况
     """
+    """
+    查询学生在某课程中的学习进度（学生自查询接口 - 并发优化版）
+    """
     # Step 1: 获取studentUid参数（当前用户的ID）
     studentUid = request.args.get('studentUid', '').strip()
     student_query = request.args.get('student_query', '').strip()
+    
     if not studentUid:
         return jsonify({
             "error": "缺少studentUid参数",
@@ -2435,22 +1605,9 @@ def get_student_myprogress():
     
     print(f"获取学生进度请求 - 当前用户ID: {studentUid}, 目标学生查询: {student_query}")
     
-    # 1. 验证 studentUid 参数
-    if not studentUid:
-        return jsonify({
-            "error": "缺少studentUid参数",
-            "message": "请提供用户账号(studentUid)以识别用户身份"
-        }), 400
     # 2. 从 MongoDB 中获取用户会话信息
-    current_course = None
-    current_course = get_user_current_course_from_db(studentUid)
-    print("!!!!search_course:current_course:",current_course)
+    current_course = get_user_current_course_from_db(studentUid) or session.get('current_course')
     
-    # 3. 如果 MongoDB 中没有，尝试从 session 获取（作为后备方案）
-    if not current_course:
-        current_course = session.get('current_course')
-        print(f"从session获取当前课程: {current_course}")
-
     # 4. 如果仍然没有当前课程，返回错误
     if not current_course:
         return jsonify({
@@ -2471,30 +1628,14 @@ def get_student_myprogress():
     
     # Step 3: 获取course_query参数并进行匹配（如果存在）
     course_query_param = request.args.get('course_query', '').strip()
-    print(f"课程查询参数: {course_query_param}")
-    
-    # 如果提供了course_query，进行模糊匹配
     if course_query_param:
         is_matched = False
-        
-        # 检查课程ID是否匹配
-        if str(current_course_id) == str(course_query_param):
+        if str(current_course_id) == str(course_query_param) or \
+           (current_course_name and course_query_param.lower() in current_course_name.lower()) or \
+           (current_sis_course_id and course_query_param in current_sis_course_id):
             is_matched = True
-            print(f"通过课程ID匹配: {course_query_param}")
-        
-        # 检查课程名称是否匹配（模糊匹配）
-        elif current_course_name and course_query_param.lower() in current_course_name.lower():
-            is_matched = True
-            print(f"通过课程名称模糊匹配: {course_query_param} 匹配 {current_course_name}")
-        
-        # 检查sis_course_id是否匹配
-        elif current_sis_course_id and course_query_param in current_sis_course_id:
-            is_matched = True
-            print(f"通过sis_course_id匹配: {course_query_param} 匹配 {current_sis_course_id}")
-        
-        # 如果都没有匹配，返回权限错误
+            
         if not is_matched:
-            print(f"未匹配到课程: {course_query_param}")
             return jsonify({
                 "error": f"无权限查询课程 '{course_query_param}'",
                 "message": f"您当前可查询的课程是: {current_course_name} (ID: {current_course_id})",
@@ -2510,31 +1651,17 @@ def get_student_myprogress():
     except ValueError:
         return jsonify({"error": "课程ID格式错误"}), 400
     
-    print(f"开始查询学生进度 - 课程ID: {current_course_id}")
-    
-    # 获取当前课程信息
-    course = db.courses.find_one(
-        {"courses_list.class_list.id": current_course_id},
-        {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_count": 1, "knowledge_list": 1}
-    )
+    course = db.courses.find_one({"courses_list.class_list.id": current_course_id}, {"_id": 0, "course_name": 1, "courses_list": 1, "knowledge_count": 1, "knowledge_list": 1}) or \
+             db.courses.find_one({"id": current_course_id}, {"_id": 0})
     
     if not course:
-        # 如果没有在courses_list.class_list中找到，尝试直接匹配id字段
-        course = db.courses.find_one({"id": current_course_id}, {"_id": 0})
+        return jsonify({"error": f"未找到ID为 {current_course_id} 的课程信息", "current_course_id": current_course_id}), 404
     
-    if not course:
-        return jsonify({
-            "error": f"未找到ID为 {current_course_id} 的课程信息",
-            "current_course_id": current_course_id
-        }), 404
-    
-    # 提取当前课程的具体信息
     course_name = course.get("course_name", f"课程 {current_course_id}")
     course_code = None
     sis_course_id = None
     term_id = None
     
-    # 从courses_list中提取具体的课程代码和班级信息
     for course_item in course.get('courses_list', []):
         for class_item in course_item.get('class_list', []):
             if class_item.get('id') == current_course_id:
@@ -2542,14 +1669,10 @@ def get_student_myprogress():
                 sis_course_id = class_item.get('sis_course_id')
                 term_id = class_item.get('enrollment_term_id')
                 break
-        if course_code:
-            break
+        if course_code: break
     
     # Step 5: 获取班级信息以验证学生是否在班级中
-    class_info = db.classes.find_one(
-        {"id": current_course_id},
-        {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1}
-    )
+    class_info = db.classes.find_one({"id": current_course_id}, {"_id": 0, "course_code": 1, "course_name": 1, "sis_course_id": 1, "student_list": 1})
     
     if not class_info:
         return jsonify({
@@ -2559,41 +1682,18 @@ def get_student_myprogress():
             "course_code": course_code
         }), 404
     
-    # 使用classes表中的课程名称（如果存在）
     actual_course_name = class_info.get("course_name", course_name)
     student_list = class_info.get("student_list", [])
-    
-    # 确保course_code正确
-    if not course_code:
-        course_code = class_info.get("course_code", "")
-    
-    print(f"班级信息: {actual_course_name}, 学生数量: {len(student_list)}")
+    course_code = course_code or class_info.get("course_code", "")
     
     # ========== Step 6: 验证当前用户在当前课程中 ==========
-    print(f"\n{'='*60}")
-    print(f"验证当前用户权限")
-    print(f"{'='*60}")
-    
-    # 查找当前用户(studentUid)在班级列表中的信息
     current_user_info = None
     for student_info in student_list:
-        student_id = student_info.get("id")
-        sis_user_id = student_info.get("sis_user_id")
-        
-        # 主要匹配sis_user_id（根据你的要求）
-        if sis_user_id and str(sis_user_id) == str(studentUid):
+        if str(student_info.get("sis_user_id")) == str(studentUid) or str(student_info.get("id")) == str(studentUid):
             current_user_info = student_info
-            print(f"✓ 找到当前用户: {sis_user_id} (通过sis_user_id匹配)")
-            break
-        
-        # 也可以匹配id
-        if student_id and str(student_id) == str(studentUid):
-            current_user_info = student_info
-            print(f"✓ 找到当前用户: {student_id} (通过id匹配)")
             break
     
     if not current_user_info:
-        print(f"✗ 当前用户 {studentUid} 不在当前课程的学生列表中")
         return jsonify({
             "error": f"用户 {studentUid} 不在课程 '{actual_course_name}' 的学生列表中",
             "message": "您没有权限查询此课程中的学生信息",
@@ -2601,29 +1701,21 @@ def get_student_myprogress():
             "course_id": current_course_id,
             "studentUid": studentUid
         }), 403
-    print(f"用户信息: {current_user_info}")
-    # 获取当前用户的详细信息
+
     current_user_id = current_user_info.get("id")
     current_user_sis_id = current_user_info.get("sis_user_id")
     current_user_name = current_user_info.get("student_name", "")
     
-    print(f"当前用户信息: 姓名={current_user_name}, ID={current_user_id}, SIS={current_user_sis_id}")
-    
     # ========== Step 7: 查询当前用户的详细信息 ==========
-    # 在数据库中查找当前用户的完整信息
     user_query_conditions = {}
     if current_user_id:
-        user_query_conditions["$or"] = [
-            {"id": current_user_id},
-            {"id": str(current_user_id)}
-        ]
+        user_query_conditions["$or"] = [{"id": current_user_id}, {"id": str(current_user_id)}]
     elif current_user_sis_id:
         user_query_conditions["sis_user_id"] = current_user_sis_id
     
     current_user = db.students.find_one(user_query_conditions, {"_id": 0})
     
     if not current_user:
-        print(f"✗ 数据库中未找到当前用户的详细信息")
         return jsonify({
             "error": "用户信息不完整",
             "message": f"未找到用户 {studentUid} 的详细信息",
@@ -2631,61 +1723,23 @@ def get_student_myprogress():
         }), 404
     
     # ========== Step 8: 验证student_query参数（如果存在） ==========
-    print(f"\n{'='*60}")
-    print(f"验证目标学生查询")
-    print(f"{'='*60}")
-    
-    # 如果提供了student_query，验证其与当前用户信息匹配
+    match_reason = "默认查询当前用户"
     if student_query and student_query.strip():
-        print(f"验证student_query: {student_query}")
-        
-        # 获取当前用户的各种标识信息
         current_user_db_id = current_user.get("id")
         current_user_db_sis = current_user.get("sis_user_id")
         current_user_db_name = current_user.get("student_name", "")
         
-        print(f"当前用户数据库信息: ID={current_user_db_id}, SIS={current_user_db_sis}, 姓名={current_user_db_name}")
-        
         is_matched = False
-        match_reason = ""
+        query_str = str(student_query).strip()
         
-        # 1. 检查姓名匹配（模糊）
-        if current_user_db_name and student_query.lower() in current_user_db_name.lower():
-            is_matched = True
-            match_reason = f"姓名模糊匹配: '{student_query}' in '{current_user_db_name}'"
-            print(f"✓ {match_reason}")
+        if current_user_db_name and query_str.lower() in current_user_db_name.lower():
+            is_matched, match_reason = True, "姓名模糊匹配"
+        elif current_user_db_id is not None and (query_str == str(current_user_db_id).strip() or (query_str.isdigit() and str(current_user_db_id).isdigit() and int(query_str) == int(current_user_db_id))):
+            is_matched, match_reason = True, "ID精确匹配"
+        elif current_user_db_sis and query_str == str(current_user_db_sis).strip():
+            is_matched, match_reason = True, "SIS精确匹配"
         
-        # 2. 检查ID匹配
-        elif current_user_db_id is not None:
-            query_str = str(student_query).strip()
-            id_str = str(current_user_db_id).strip()
-            
-            # 完全匹配（字符串）
-            if query_str == id_str:
-                is_matched = True
-                match_reason = f"ID精确匹配: {query_str} == {id_str}"
-                print(f"✓ {match_reason}")
-            
-            # 数字比较（如果都是数字）
-            elif query_str.isdigit() and id_str.isdigit():
-                if int(query_str) == int(id_str):
-                    is_matched = True
-                    match_reason = f"ID数字匹配: {int(query_str)} == {int(id_id_str)}"
-                    print(f"✓ {match_reason}")
-        
-        # 3. 检查SIS匹配
-        elif current_user_db_sis:
-            query_str = str(student_query).strip()
-            sis_str = str(current_user_db_sis).strip()
-            
-            if query_str == sis_str:
-                is_matched = True
-                match_reason = f"SIS精确匹配: {query_str} == {sis_str}"
-                print(f"✓ {match_reason}")
-        
-        # 如果没有匹配，返回权限错误
         if not is_matched:
-            print(f"✗ student_query不匹配当前用户")
             return jsonify({
                 "error": "无权查看该学生信息",
                 "message": f"您只能查看自己的学习进度，无法查看 '{student_query}' 的信息",
@@ -2697,29 +1751,11 @@ def get_student_myprogress():
                 "student_query": student_query,
                 "suggestion": "如果您想查看其他同学的信息，请联系教师"
             }), 403
-    else:
-        # 如果没有提供student_query，默认是查询自己
-        print(f"未提供student_query，默认查询当前用户自己")
-        match_reason = "默认查询当前用户"
     
     # ========== Step 9: 检查当前用户是否选修了当前课程 ==========
-    print(f"\n{'='*60}")
-    print(f"检查课程选修情况")
-    print(f"{'='*60}")
-    
-    enrolled_courses = current_user.get("enrolled_courses", [])
-    matched_enrolled_course = None
-    
-    for enrolled_course in enrolled_courses:
-        enrolled_id = enrolled_course.get("id")
-        if enrolled_id is not None and str(enrolled_id) == str(current_course_id):
-            matched_enrolled_course = enrolled_course
-            print(f"✓ 用户已选修当前课程")
-            break
+    matched_enrolled_course = next((c for c in current_user.get("enrolled_courses", []) if str(c.get("id")) == str(current_course_id)), None)
     
     if not matched_enrolled_course:
-        print(f"✗ 用户未选修当前课程")
-        # 用户在班级中但未选修课程
         return jsonify({
             "warning": f"学生 {current_user_name} 在班级 '{actual_course_name}' 中，但未选修该课程",
             "student": {
@@ -2739,158 +1775,136 @@ def get_student_myprogress():
             "suggestion": "您在班级名单中，但尚未在系统中选修此课程"
         }), 200
     
-    # ========== Step 10: 获取用户的知识点学习情况 ==========
-    print(f"\n{'='*60}")
-    print(f"获取学习进度")
-    print(f"{'='*60}")
-    
+    # ========== Step 10: 获取用户的知识点学习情况 (字典映射加速) ==========
     knowledge_list = matched_enrolled_course.get("knowledge_list", [])
+    knowledge_name_map = {str(k.get('knowledge_id')): k.get('knowledge_name', f"知识点{k.get('knowledge_id')}") 
+                          for k in course.get('knowledge_list', [])}
     
-    # 如果课程有knowledge_list，获取知识点的名称
-    course_knowledge_list = course.get('knowledge_list', [])
-    knowledge_name_map = {
-        str(k.get('knowledge_id')): k.get('knowledge_name', f"知识点{k.get('knowledge_id')}")
-        for k in course_knowledge_list
-    }
-    
-    # 统计学习进度
-    completed_knowledges = []
-    uncompleted_knowledges = []
-    in_progress_knowledges = []
-    review_needed_knowledges = []
+    completed_knowledges, uncompleted_knowledges, in_progress_knowledges, review_needed_knowledges = [], [], [], []
     
     for k_item in knowledge_list:
-        knowledge_id = k_item.get("knowledge_id")
+        k_id = k_item.get("knowledge_id")
         state = k_item.get("state", "not_learned")
-        knowledge_name = knowledge_name_map.get(str(knowledge_id), f"知识点{knowledge_id}")
-        
-        knowledge_detail = {
-            "knowledge_id": knowledge_id,
-            "knowledge_name": knowledge_name,
+        detail = {
+            "knowledge_id": k_id,
+            "knowledge_name": knowledge_name_map.get(str(k_id), f"知识点{k_id}"),
             "state": state
         }
-        
-        if state == "learned":
-            completed_knowledges.append(knowledge_detail)
-        elif state == "review_needed":
-            review_needed_knowledges.append(knowledge_detail)
-        elif state == "in_progress":
-            in_progress_knowledges.append(knowledge_detail)
-        else:  # not_learned or other
-            uncompleted_knowledges.append(knowledge_detail)
+        if state == "learned": completed_knowledges.append(detail)
+        elif state == "review_needed": review_needed_knowledges.append(detail)
+        elif state == "in_progress": in_progress_knowledges.append(detail)
+        else: uncompleted_knowledges.append(detail)
     
-    total_knowledge = len(course_knowledge_list) if course_knowledge_list else len(knowledge_list)
-    completed_count = len(completed_knowledges) + len(review_needed_knowledges)  # 将需复习的也计入完成
+    total_knowledge = len(course.get('knowledge_list', [])) if course.get('knowledge_list') else len(knowledge_list)
+    completed_count = len(completed_knowledges) + len(review_needed_knowledges)
     progress_percentage = round((completed_count / total_knowledge * 100), 2) if total_knowledge > 0 else 0
     
-    
-    # ========== Step 11: 整合 Canvas 个人实时数据 ==========
+    # ========== Step 11: 整合 Canvas 个人实时数据 (多线程并发优化) ==========
     canvas_personal_data = {
-        "assignments": {
-            "todo": [],       # 待完成/逾期未交
-            "submitted": [],  # 已提交/已评分
-            "summary": {"total": 0, "completed": 0, "late": 0}
-        },
-        "quizzes": {
-            "todo": [],       # 尚未参加
-            "finished": [],   # 已参加
-            "summary": {"total": 0, "completed": 0}
-        }
+        "assignments": {"todo": [], "submitted": [], "summary": {"total": 0, "completed": 0, "late": 0, "late_unsubmitted": 0}},
+        "quizzes": {"todo": [], "finished": [], "summary": {"total": 0, "completed": 0}}
     }
     
-    if sis_user_id and current_course_id:
+    if studentUid and current_course_id:
         try:
-            now = datetime.now() # 获取当前时间用于比对
-            print(f"Debug: current_user_id 的值是 {current_user_id}, 类型是 {type(current_user_id)}")
-            if studentUid:
-                # --- A. 处理作业数据 ---
-                all_assignments = get_course_assignments(current_course_id)
-                print(f"all_assignments,{all_assignments}")
-                for assign in all_assignments:
-                    assign_id = assign.get("id")
-                    submission = get_student_assignment_submission(current_course_id, assign_id, studentUid)
-                    
-                    # 状态判断
-                    workflow_state = submission.get("workflow_state", "unsubmitted")
-                    is_submitted = workflow_state not in ["unsubmitted", "deleted"]
-                    
-                    # 时间计算
-                    due_at_str = assign.get("due_at")
-                    remaining_time = "无截止日期"
-                    is_late = False
-                    
-                    if due_at_str:
-                        # 转换时间戳 (Canvas返回通常为 ISO 8601 格式 Z)
+            now = datetime.now()
+            all_assignments = get_course_assignments(current_course_id)
+            all_quizzes = get_course_quizzes(current_course_id)
+
+            # --- 定义并行处理作业的函数 ---
+            def process_assignment(assign):
+                am_id = assign.get("id")
+                # 严格使用 studentUid (sis_user_id) 进行请求
+                submission = get_student_assignment_submission(current_course_id, am_id, studentUid) or {}
+                
+                wf_state = submission.get("workflow_state", "unsubmitted")
+                is_submitted = wf_state not in ["unsubmitted", "deleted"]
+                
+                due_at_str = assign.get("due_at")
+                remaining_time, is_late = "无截止日期", False
+                
+                if due_at_str:
+                    try:
                         due_date = datetime.fromisoformat(due_at_str.replace('Z', '+00:00')).replace(tzinfo=None)
                         diff = due_date - now
-                        
                         if diff.total_seconds() > 0:
-                            days = diff.days
-                            hours = diff.seconds // 3600
-                            remaining_time = f"剩余 {days} 天 {hours} 小时"
+                            remaining_time = f"剩余 {diff.days} 天 {diff.seconds // 3600} 小时"
                         else:
                             remaining_time = "已逾期"
                             is_late = True
+                    except Exception:
+                        pass
 
-                    item = {
-                        "id": assign_id,
-                        "title": assign.get("name"),
-                        "due_at": due_at_str,
-                        "remaining_time": remaining_time,
-                        "is_late": is_late,
-                        "points_possible": assign.get("points_possible"),
-                        "score": submission.get("score"),
-                        "grade": submission.get("grade"),
-                        "status": "已提交" if is_submitted else ("逾期未交" if is_late else "待完成")
-                    }
+                return {
+                    "id": am_id,
+                    "title": assign.get("name"),
+                    "due_at": due_at_str,
+                    "remaining_time": remaining_time,
+                    "points_possible": assign.get("points_possible"),
+                    "score": submission.get("score"),
+                    "status": "已提交" if is_submitted else ("已逾期" if is_late else "待完成"),
+                    "is_submitted": is_submitted,
+                    "is_late": is_late
+                }
 
-                    canvas_personal_data["assignments"]["summary"]["total"] += 1
-                    if is_submitted:
-                        canvas_personal_data["assignments"]["finished"].append(item)
-                        canvas_personal_data["assignments"]["summary"]["completed"] += 1
-                    else:
-                        if is_late: canvas_personal_data["assignments"]["summary"]["late_unsubmitted"] += 1
-                        canvas_personal_data["assignments"]["todo"].append(item)
-
-                # --- B. 处理测验数据 ---
-                all_quizzes = get_course_quizzes(current_course_id)
-                print("all_quizzes",all_quizzes)
-                for quiz in all_quizzes:
-                    quiz_id = quiz.get("id")
-                    q_subs = get_student_quiz_submissions(current_course_id, quiz_id, current_user_id)
-                    
-                    latest_sub = q_subs[0] if q_subs else None
-                    is_done = bool(latest_sub)
-                    
-                    # 测验截止时间
-                    q_due_at = quiz.get("due_at")
-                    q_remaining = "无截止日期"
-                    if q_due_at:
+            # --- 定义并行处理测验的函数 ---
+            def process_quiz(quiz):
+                q_id = quiz.get("id")
+                # 严格使用 studentUid (sis_user_id) 替换错误的 target_canvas_id
+                q_subs = get_student_quiz_submissions(current_course_id, q_id, studentUid)
+                latest_sub = q_subs[0] if q_subs and isinstance(q_subs, list) else None
+                is_done = bool(latest_sub)
+                
+                q_due_at = quiz.get("due_at")
+                q_remaining = "无截止日期"
+                if q_due_at:
+                    try:
                         q_due_date = datetime.fromisoformat(q_due_at.replace('Z', '+00:00')).replace(tzinfo=None)
                         q_diff = q_due_date - now
                         q_remaining = f"剩余 {q_diff.days} 天 {q_diff.seconds // 3600} 小时" if q_diff.total_seconds() > 0 else "已截止"
+                    except Exception:
+                        pass
 
-                    quiz_item = {
-                        "id": quiz_id,
-                        "title": quiz.get("title"),
-                        "due_at": q_due_at,
-                        "remaining_time": q_remaining,
-                        "points_possible": quiz.get("points_possible"),
-                        "score": latest_sub.get("kept_score") if is_done else None,
-                        "status": "已参加" if is_done else "未参加"
-                    }
+                return {
+                    "id": q_id,
+                    "title": quiz.get("title"),
+                    "due_at": q_due_at,
+                    "remaining_time": q_remaining,
+                    "score": latest_sub.get("kept_score") if is_done else None,
+                    "points_possible": quiz.get("points_possible"),
+                    "status": "已参加" if is_done else "未参加",
+                    "is_done": is_done
+                }
 
-                    canvas_personal_data["quizzes"]["summary"]["total"] += 1
-                    if is_done:
-                        canvas_personal_data["quizzes"]["finished"].append(quiz_item)
-                        canvas_personal_data["quizzes"]["summary"]["completed"] += 1
-                    else:
-                        canvas_personal_data["quizzes"]["todo"].append(quiz_item)
+            # --- 启动线程池并发请求 ---
+            with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+                processed_assignments = list(executor.map(process_assignment, all_assignments))
+                processed_quizzes = list(executor.map(process_quiz, all_quizzes))
+
+            # --- 汇总结果 ---
+            for am in processed_assignments:
+                canvas_personal_data["assignments"]["summary"]["total"] += 1
+                if am.pop("is_submitted"):
+                    canvas_personal_data["assignments"]["submitted"].append(am)
+                    canvas_personal_data["assignments"]["summary"]["completed"] += 1
+                else:
+                    if am.pop("is_late"): canvas_personal_data["assignments"]["summary"]["late_unsubmitted"] += 1
+                    canvas_personal_data["assignments"]["todo"].append(am)
+
+            for q in processed_quizzes:
+                canvas_personal_data["quizzes"]["summary"]["total"] += 1
+                if q.pop("is_done"):
+                    canvas_personal_data["quizzes"]["finished"].append(q)
+                    canvas_personal_data["quizzes"]["summary"]["completed"] += 1
+                else:
+                    canvas_personal_data["quizzes"]["todo"].append(q)
 
         except Exception as e:
-            print(f"Canvas 数据解析失败: {str(e)}")
+            import traceback
+            print(f"Canvas 并发处理解析失败:\n{traceback.format_exc()}")
             canvas_personal_data["error"] = "Canvas数据部分同步失败"
-    # Step 11: 返回结果
+
+    # Step 12: 返回结果
     return jsonify({
         "student": {
             "student_id": current_user_id,
@@ -2898,7 +1912,7 @@ def get_student_myprogress():
             "student_name": current_user_name,
             "is_in_class": True,
             "enrollment_status": matched_enrolled_course.get("enrollment_status", "active"),
-            "match_method": match_reason if 'match_reason' in locals() else "默认查询"
+            "match_method": match_reason
         },
         "course": {
             "course_id": current_course_id,

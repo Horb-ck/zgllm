@@ -156,6 +156,13 @@ ptams_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=vq
 hohc_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=ed78T6IEQ5hanDkXVovkQtjZ&studentUid="
 hotd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=xVJOQmaXZC2hxKkO2B75VrRs&studentUid="
 rdac_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=iecsnqtrFQeuOY4353ZZ1ilM&studentUid="
+ufct_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=r1DhxDlJNqqxg0YwGNly7Aam&studentUid="
+sas_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=amW0TPXufsrOwYD3oVNFxgs5&studentUid="
+ep_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=nMlH4UV6sPg6BhGiN8NWolWO&studentUid="
+ed_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=h26F3cIJqYSLw4H9w3NHLkJF&studentUid="
+he_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=llaiuXe8HwjymvXjkfpiLdhr&studentUid="
+rb_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=d15FrTplAcL52KMK3oKFmzRP&studentUid="
+pd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=jwv1RfhutIzIxvM8o6Ubgij3&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
@@ -220,7 +227,7 @@ agents = [
     },
     { 
         "id": 7,
-        "name": "机器人基础",
+        "name": "机器人数学基础",
         "description": "掌握机器人数学核心理论，实现算法设计与工程落地的全链路应用。",
         "url": rm_agent_class_url,
         "image_url": "/static/img/rm.jpg"
@@ -252,6 +259,55 @@ agents = [
         "description": "学习运动学、轨迹规划、动力学与运动控制，掌握建模与控制核心技能。",
         "url": rdac_agent_class_url,
         "image_url": "/static/img/rdac.png"
+    },
+    {
+        "id": 12,
+        "name": "无人机飞控技术",
+        "description": "深入学习无人机状态估计与飞行控制，掌握自主导航系统全栈开发能力。",
+        "url": ufct_agent_class_url,
+        "image_url": "/static/img/ufct.png"
+    },
+    {
+        "id": 13,
+        "name": "信号与系统",
+        "description": "从电路设计到嵌入式开发，融合感知与路径规划，打造智能机器人系统。",
+        "url": sas_agent_class_url,
+        "image_url": "/static/img/sas.png"
+    },
+    {
+        "id": 14,
+        "name": "工程原理",
+        "description": "以电子琴项目为载体，培养电路系统设计思维与工程实践能力。",
+        "url": ep_agent_class_url,
+        "image_url": "/static/img/ep.png"
+    },
+    {
+        "id": 15,
+        "name": "工程设计",
+        "description": "以斯特林发动机为牵引，完成从理论计算到样机制造的全流程。",
+        "url": ed_agent_class_url,
+        "image_url": "/static/img/ed.png"
+    },
+    {
+        "id": 16,
+        "name": "工效学",
+        "description": "理解人的感知、认知与反应规律，掌握以用户为中心的设计评估方法。",
+        "url": he_agent_class_url,
+        "image_url": "/static/img/he.png"
+    },
+    {
+        "id": 17,
+        "name": "机器人基础",
+        "description": "学习机器人机构与感知技术，掌握机器人设计与系统集成的核心能力。",
+        "url": rb_agent_class_url,
+        "image_url": "/static/img/rb.png"
+    },
+    {
+        "id": 18,
+        "name": "产品设计",
+        "description": "经历完整产品创新流程，培养设计思维与原型制作综合能力。",
+        "url": pd_agent_class_url,
+        "image_url": "/static/img/pd.png"
     }
 ]
 
@@ -260,7 +316,11 @@ agents = [
 COURSES_LIST = [
     "定量工程设计方法", "自动控制原理", "程序设计实践", 
     "移动机器人应用与开发", "线性代数",
-    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计","机器人动力学与控制"
+    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计",
+    # 新增后三行
+    "机器人动力学与控制", "无人机飞控技术", "信号与系统", 
+    "工程原理", "工程设计", "工效学", 
+    "机器人基础", "产品设计"
 ]
 
 # 允许的学期ID列表
@@ -504,6 +564,8 @@ def process_user_courses(username, role, sis_id):
     返回处理后的用户课程数据和当前课程信息
     """
     # 1. 根据身份获取原始课程列表
+    print(f"身份 {role}")
+    print(f"教务号 {sis_id}")
     user_courses = []
     if role == 'teacher':
         try:
@@ -649,11 +711,57 @@ def login():
                 flash('用户名或密码错误，请重试！', 'danger')
     return render_template('auth/login.html')
 
+STUDENT_EMAIL_SUFFIX = '@stu.cqu.edu.cn'
+TEACHER_EMAIL_SUFFIX = '@cqu.edu.cn'
+NON_WHITELIST_STUDENT_EMAIL_ERROR = f'该学号未在注册白名单中，请使用 {STUDENT_EMAIL_SUFFIX} 邮箱注册'
+
+def _clean_value(value):
+    return str(value or '').strip()
+
+def _is_blank(value):
+    return value is None or str(value).strip() == ''
+
+def _is_valid_email(email):
+    return bool(re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', _clean_value(email)))
+
+def _is_student_email(email):
+    return _clean_value(email).lower().endswith(STUDENT_EMAIL_SUFFIX)
+
+def _is_teacher_email(email):
+    return _clean_value(email).lower().endswith(TEACHER_EMAIL_SUFFIX)
+
+def _is_claimable_student_row(row):
+    if not row:
+        return False
+    # 兼容历史空行/半注册行；是否允许外部邮箱由白名单表单独决定。
+    return _is_blank(row[1]) or _is_blank(row[2])
+
+def _get_student_row_by_sid(cursor, sid, for_update=False):
+    sql = "SELECT sid, email, password, role, sis_id FROM student WHERE sid = %s"
+    if for_update:
+        sql += " FOR UPDATE"
+    cursor.execute(sql, (sid,))
+    return cursor.fetchone()
+
+def _get_other_account_by_email(cursor, email, sid):
+    cursor.execute(
+        "SELECT sid FROM student WHERE email = %s AND sid <> %s LIMIT 1",
+        (email, sid)
+    )
+    return cursor.fetchone()
+
+def _is_student_in_registration_whitelist(cursor, sid):
+    cursor.execute(
+        "SELECT 1 FROM student_registration_whitelist WHERE student_id = %s LIMIT 1",
+        (sid,)
+    )
+    return cursor.fetchone() is not None
+
 @app.route('/auth/send_code', methods=['POST'])
 def send_verification_code():
     data = request.form if request.form else request.json or {}
-    email = data.get('email')
-    account = data.get('username') or data.get('sid') or ''
+    email = _clean_value(data.get('email')).lower()
+    account = _clean_value(data.get('username') or data.get('sid') or '')
     scene = data.get('scene') or 'register'
     ip_addr = request.remote_addr or 'unknown'
 
@@ -664,8 +772,31 @@ def send_verification_code():
     if not _can_send(ip_addr, account):
         return jsonify({'error': '今日发送次数已达上限'}), 429
 
-    email_lower = str(email).lower()
-    role = 'teacher' if email_lower.endswith('@cqu.edu.cn') else 'student' if email_lower.endswith('@stu.cqu.edu.cn') else 'student'
+    email_lower = email
+    role = data.get('role') or ('teacher' if _is_teacher_email(email_lower) else 'student')
+    if scene == 'register':
+        role = _clean_value(role) or 'student'
+        if role not in ('student', 'teacher'):
+            return jsonify({'error': '身份信息错误'}), 400
+        if not _is_valid_email(email_lower):
+            return jsonify({'error': '邮箱格式不正确'}), 400
+
+        with closing(get_conn()) as conn, conn.cursor() as cursor:
+            account_row = _get_student_row_by_sid(cursor, account)
+            is_whitelisted_student = _is_student_in_registration_whitelist(cursor, account)
+            if _get_other_account_by_email(cursor, email_lower, account):
+                return jsonify({'error': '邮箱已被注册'}), 400
+
+            if role == 'teacher':
+                if not _is_teacher_email(email_lower):
+                    return jsonify({'error': '教师邮箱需使用 cqu.edu.cn 域名'}), 400
+                if account_row:
+                    return jsonify({'error': '账号已被注册'}), 400
+            elif account_row and not _is_claimable_student_row(account_row):
+                return jsonify({'error': '该学号已完成注册，请直接登录'}), 400
+
+            if role == 'student' and not is_whitelisted_student and not _is_student_email(email_lower):
+                return jsonify({'error': NON_WHITELIST_STUDENT_EMAIL_ERROR}), 400
 
     code = f"{random.randint(0, 999999):06d}"
     subject = "明月科创教育大模型｜验证码"
@@ -693,21 +824,30 @@ def send_verification_code():
     _bump_counters(ip_addr, account)
     return jsonify({'success': True, 'message': '验证码已发送'})
 
-# 新的注册逻辑，学号不在数据库中依然能够注册
+# 注册逻辑：白名单学号可使用任意邮箱，非白名单学生需使用校内学生邮箱
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     global user_global_store
     form_data = request.form if request.method == 'POST' else None
     if request.method == 'POST':
-        username = request.form.get('username')  # 学号 sid
-        email = request.form.get('email')
+        username = _clean_value(request.form.get('username'))  # 学号 sid
+        email = _clean_value(request.form.get('email')).lower()
         password = request.form.get('password')
-        role = request.form.get('role')
-        verification_code = request.form.get('verification_code')
-        
-    
+        confirm_password = request.form.get('confirm_password')
+        role = _clean_value(request.form.get('role'))
+        verification_code = _clean_value(request.form.get('verification_code'))
+
+        if not username or not email or not password:
+            flash('请完整填写注册信息')
+            return render_template('auth/register.html', form_data=form_data)
         if role not in ('student', 'teacher'):
             flash('身份信息错误')
+            return render_template('auth/register.html', form_data=form_data)
+        if not _is_valid_email(email):
+            flash('邮箱格式不正确')
+            return render_template('auth/register.html', form_data=form_data)
+        if password != confirm_password:
+            flash('两次输入的密码不一致，请重新输入')
             return render_template('auth/register.html', form_data=form_data)
         if not verification_code:
             flash('请填写邮箱验证码')
@@ -725,31 +865,51 @@ def register():
         except Exception as e:
             print(f"⚠️ 查询 MongoDB persons 失败: {e}")
         with closing(get_conn()) as conn, conn.cursor() as cursor:
-            cursor.execute(
-                "SELECT sid, email FROM student WHERE sid = %s OR email = %s",
-                (username, email)
-            )
-            rows = cursor.fetchall()
-            dup_username = any(str(row[0]) == str(username) for row in rows if row[0] is not None)
-            dup_email = any(str(row[1]) == str(email) for row in rows if row[1] is not None)
+            account_row = _get_student_row_by_sid(cursor, username, for_update=True)
+            is_whitelisted_student = _is_student_in_registration_whitelist(cursor, username)
+            if _get_other_account_by_email(cursor, email, username):
+                flash('邮箱已被注册')
+                return render_template('auth/register.html', form_data=form_data)
 
-            if dup_username or dup_email:
-                if dup_username and dup_email:
-                    flash('账号和邮箱已被注册')
-                elif dup_username:
+            should_update_preloaded = False
+            if role == 'teacher':
+                if not _is_teacher_email(email):
+                    flash('教师邮箱需使用 cqu.edu.cn 域名')
+                    return render_template('auth/register.html', form_data=form_data)
+                if account_row:
                     flash('账号已被注册')
-                else:
-                    flash('邮箱已被注册')
+                    return render_template('auth/register.html', form_data=form_data)
+            elif account_row and not _is_claimable_student_row(account_row):
+                flash('该学号已完成注册，请直接登录')
+                return render_template('auth/register.html', form_data=form_data)
+            elif account_row:
+                should_update_preloaded = True
+
+            if role == 'student' and not is_whitelisted_student and not _is_student_email(email):
+                flash(NON_WHITELIST_STUDENT_EMAIL_ERROR)
                 return render_template('auth/register.html', form_data=form_data)
 
             if not _verify_code("register", username, email, verification_code):
                 flash('验证码错误或已过期')
                 return render_template('auth/register.html', form_data=form_data)
 
-            cursor.execute(
-                "INSERT INTO student (sid, email, password, role, sis_id) VALUES (%s, %s, %s, %s)",
-                (username, email, password, role, sis_id_from_mongo)
-            )
+            if should_update_preloaded:
+                cursor.execute(
+                    """
+                    UPDATE student
+                    SET email = %s, password = %s, role = %s, sis_id = %s
+                    WHERE sid = %s
+                    """,
+                    (email, password, role, sis_id_from_mongo, username)
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO student (sid, email, password, role, sis_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (username, email, password, role, sis_id_from_mongo)
+                )
             conn.commit()
             flash('注册成功，正在登录', 'success')
             session['username'] = username
@@ -885,7 +1045,6 @@ def _build_new_home_context():
             kg_mode = 'student'
         kg_embed_url = url_for('kg_page', course_id=showcase_agent['id'], mode=kg_mode)
 
-    # ===== BEGIN: homepage metric summary for spark-strip =====
     total_registered_users = 0
     try:
         with closing(get_conn()) as conn, conn.cursor() as cursor:
@@ -902,7 +1061,6 @@ def _build_new_home_context():
         'total_course_resources': len(agents),
         'total_competitions': len(agents_kd),
     }
-    # ===== END: homepage metric summary for spark-strip =====
 
     return {
         'username': username,
@@ -1159,7 +1317,7 @@ def kg_page(course_id):
     优先按 override_mode (teacher/student/visitor)，否则按课程归属判定，无法匹配则访客。
     """
     role = session.get('role', 'student')
-    user_id = session.get('username', 'guest')
+    user_id = session.get('sis_id', 'guest')
     override_mode = request.args.get('mode')
 
     # TODO:似乎复杂度o(n)了，但是目前还能跑
@@ -1181,7 +1339,7 @@ def kg_page(course_id):
         selected = 'visitor'
 
     if selected == 'teacher':
-        target_url = url_for('app_kg.teacher_view', course_name=course_name, student_id=user_id)
+        target_url = url_for('app_kg.teacher_view', course_name=course_name, student_id=user_id) # 页面注入从学号改为统一身份认证号
     elif selected == 'student':
         target_url = url_for('app_kg.student_view', course_name=course_name, student_id=user_id)
     else:
@@ -1541,11 +1699,29 @@ except Exception as e:
 # ╚════════════════════════════════════════════════════════════════════════╝
 
 # ---- 1. KB 环境变量 ----
-os.environ.setdefault('FASTGPT_API_URL',        'http://180.85.206.30:3000/api')
-os.environ.setdefault('FASTGPT_API_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
-os.environ.setdefault('FASTGPT_APP_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
-os.environ.setdefault('FASTGPT_SHARE_ID',        'zDrmPPnh9rdi3WmnyWCFwDcb')
-os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  'http://180.85.206.30:3000')
+# os.environ.setdefault('FASTGPT_API_URL',        'http://180.85.206.30:3000/api')
+# os.environ.setdefault('FASTGPT_API_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
+# os.environ.setdefault('FASTGPT_APP_KEY',         'fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV')
+# os.environ.setdefault('FASTGPT_SHARE_ID',        'zDrmPPnh9rdi3WmnyWCFwDcb')
+# os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  'http://180.85.206.30:3000')
+
+# ---- 1. KB 环境变量（从统一配置读取） 测试版fastgpt----
+from config_fastgpt import (
+    FASTGPT_API_URL   as _KB_API_URL,
+    FASTGPT_API_KEY   as _KB_API_KEY,
+    FASTGPT_APP_KEY   as _KB_APP_KEY,
+    FASTGPT_SHARE_ID  as _KB_SHARE_ID,
+    FASTGPT_SHARE_BASE_URL as _KB_SHARE_BASE,
+    WHISPER_API_URL    as _KB_WHISPER_URL,
+    VLM_MODELS, LLM_MODELS,
+)
+
+os.environ.setdefault('FASTGPT_API_URL',        _KB_API_URL)
+os.environ.setdefault('FASTGPT_API_KEY',         _KB_API_KEY)
+os.environ.setdefault('FASTGPT_APP_KEY',         _KB_APP_KEY)
+os.environ.setdefault('FASTGPT_SHARE_ID',        _KB_SHARE_ID)
+os.environ.setdefault('FASTGPT_SHARE_BASE_URL',  _KB_SHARE_BASE)
+
 
 # ---- 1.5 多媒体解析 —— 多模型自动回退配置 ----
 # 📌 VLM 模型（视觉理解，用于图片/视频帧/PPT 页面分析）
@@ -1595,8 +1771,14 @@ LLM_MODELS = [
 ]
 
 # 📌 Whisper 语音转录（可选，视频中提取音频时使用）
+# WHISPER_CONFIG = {
+#     'api_url': 'http://180.85.206.30:3000/api/v1',
+#     'model':   'whisper-1',
+#     'api_key': os.environ.get('FASTGPT_API_KEY', ''),
+# }
+
 WHISPER_CONFIG = {
-    'api_url': 'http://180.85.206.30:3000/api/v1',
+    'api_url': _KB_WHISPER_URL,
     'model':   'whisper-1',
     'api_key': os.environ.get('FASTGPT_API_KEY', ''),
 }

@@ -2,6 +2,7 @@
 # IDE
 .cursor/
 .idea/
+.vscode/
 
 # 无视启动命令
 kill.sh
@@ -14,6 +15,7 @@ logs/
 # KG模块等待重构
 KG/
 
+kb_raw_sources/
 # 配置信息，需要在不同的机器上灵活配置
 config.py
 

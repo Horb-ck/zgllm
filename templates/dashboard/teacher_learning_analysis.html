@@ -1773,29 +1773,42 @@
             
             if (data.error || !data.course_info) {
                 console.error('加载课程数据失败:', data.error);
-                showNoCoursesWarning();
+                toggleNoCourseWarning(true); // <--- 必须加上 true
                 return;
             }
             
             const courses = data.course_info.user_course || [];
             if (courses.length === 0) {
-                showNoCoursesWarning();
+                toggleNoCourseWarning(true); // <--- 必须加上 true
                 return;
             }
             
             // 存储并更新UI
             currentCourseData = data;
-            toggleNoCourseWarning(false);
+            toggleNoCourseWarning(false); // 正常显示面板时用 false，这个是对的
             updateCourseSelector(data.course_info);
             updateDashboardData(data);
             showLoading(false);
             
         } catch (error) {
             console.error('加载课程数据过程出错:', error);
-            showNoCoursesWarning();
+            toggleNoCourseWarning(true); // <--- 必须加上 true
         }
     }
+
+// 显示/隐藏无课程提示
+function toggleNoCourseWarning(show) {
+    const noCourseWarning = document.getElementById('noCourseWarning');
+    const coursePageContent = document.getElementById('coursePageContent');
     
+    if (show) {
+        noCourseWarning.style.display = 'flex';
+        coursePageContent.style.display = 'none';
+    } else {
+        noCourseWarning.style.display = 'none';
+        coursePageContent.style.display = 'block';
+    }
+}
     // 切换课程时加载
     async function loadCourseDataByCourseId(courseId) {
         try {
@@ -1922,27 +1935,33 @@
     }
     
     function renderAssignmentItem(a) {
-        const analysis = a.submission_analysis || {};
-        const dueAt = a.due_at || a.due_date;
-        const now = new Date();
-        const isExpired = dueAt && new Date(dueAt) < now;
-        const statusClass = isExpired ? 'expired' : 'upcoming';
-        const statusText = isExpired ? '已截止' : '进行中';
-        const subRate = analysis.submission_rate ?? 0;
-    
-        return `
-            <div class="activity-item assignment ${statusClass}">
-                <div class="activity-info">
-                    <h3>${escapeHtml(a.name || '未命名作业')}</h3>
-                    <p>${a.points_possible || 0}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
-                    <div class="activity-meta">
-                        <span class="submission-count">提交率: ${subRate.toFixed(1)}%</span>
-                        <span class="status status-${statusClass}">${statusText}</span>
-                        ${analysis.has_ungraded_submissions ? '<span class="status status-pending">待评分</span>' : ''}
-                    </div>
+    const analysis = a.submission_analysis || {};
+    const dueAt = a.due_at || a.due_date;
+    const now = new Date();
+    const isExpired = dueAt && new Date(dueAt) < now;
+    const statusClass = isExpired ? 'expired' : 'upcoming';
+    const statusText = isExpired ? '已截止' : '进行中';
+    const subRate = analysis.submission_rate ?? 0;
+
+    // --- 核心修改：提取具体的份数数据 ---
+    const submittedCount = analysis.submitted_count || 0;
+    const ungradedCount = analysis.ungraded_count || 0;
+
+    return `
+        <div class="activity-item assignment ${statusClass}">
+            <div class="activity-info">
+                <h3>${escapeHtml(a.name || '未命名作业')}</h3>
+                <p>${a.points_possible || 0}分 • ${dueAt ? '截止: ' + formatDate(dueAt) : '无截止时间'}</p>
+                <div class="activity-meta">
+                    <span class="submission-count">提交率: ${subRate.toFixed(1)}% (${submittedCount}份已交)</span>
+                    <span class="status status-${statusClass}">${statusText}</span>
+                    
+                    <!-- 这里修改为显示具体份数 -->
+                    ${ungradedCount > 0 ? `<span class="status status-pending">${ungradedCount} 份待评分</span>` : ''}
                 </div>
-            </div>`;
-    }
+            </div>
+        </div>`;
+}
     
     function renderQuizItem(q) {
         const dueAt = q.due_at || q.due_date;
@@ -2126,11 +2145,6 @@
         let url = FIXED_AI_ASSISTANT_URL;
         if (CURRENT_SIS_ID) url += `&studentUid=${encodeURIComponent(CURRENT_SIS_ID)}`;
         iframe.src = url;
-    }
-    
-    function toggleNoCourseWarning(show) {
-        document.getElementById('noCourseWarning').style.display = show ? 'flex' : 'none';
-        document.getElementById('coursePageContent').style.display = show ? 'none' : 'block';
     }
     
     function formatDate(ds) {
