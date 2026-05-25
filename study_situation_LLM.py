@@ -1952,102 +1952,238 @@ def get_student_myprogress():
     }), 200
 
 
+
 @study_situation_LLM.route('/dashboard/study_situation/chat_archive')
 def get_chat_archive_status():
     """
-    查询用户在特定资源来源(resource_name)下的所有交互档案
-    - studentUid: 必填，用户ID
-    - resource_name: 必填，课程名称/来源名称 (例如: '流程图')
+    查询用户在当前课程下的交互档案
+    - studentUid: 必填，传入的是用户的教务 ID (sis_id)
     
-    返回数据包括：
-    - raw_interactions: 原始对话列表
-    - processed_insights: AI提取的知识点统计和意图分布
-    - resource: 资料查看历史、点击数及反馈
+    业务流：
+    1. 使用 studentUid 匹配 user_sessions 表中的 sis_id，获取其系统内部唯一 username 以及当前课程。
+    2. 使用解析出的 username 去匹配 chat_records 表中的 student_id。
+    3. 提取对应的课程智能体交互数据。
     """
-    student_uid = request.args.get('studentUid', '').strip()
-    resource_name = request.args.get('resource_name', '').strip()
+    # 这里的参数名保持跟之前一致，但物理意义上它是 sis_id
+    sis_id_query = request.args.get('studentUid', '').strip()
 
-    # 1. 参数验证
-    if not student_uid or not resource_name:
+    # 1. 验证参数
+    if not sis_id_query:
         return jsonify({
             "error": "缺少必要参数",
-            "message": "请同时提供 studentUid 和 resource_name"
+            "message": "请提供 studentUid 参数以识别用户身份"
         }), 400
 
-    print(f"查询用户档案交互 - UID: {student_uid}, 来源: {resource_name}")
-
     try:
-        # 2. 从 MongoDB 查询 chat_records 集合
-        # 使用 $elemMatch 过滤出特定的 student_id 和对应的 resource_name
-        archive = db.chat_records.find_one(
-            {
-                "student_id": student_uid,
-                "chat_record.resource_name": resource_name
-            },
-            {
-                "_id": 0,
-                "has_unprocessed": 1,
-                "last_processed_time": 1,
-                "chat_record.$": 1  # 关键：只返回匹配 resource_name 的那一个数组元素
-            }
+        # ================= 🚀 核心逻辑 1：通过 sis_id 换取内部系统的唯一 username =================
+        # 同时从 session 集合记录里拿出来他当前的 current_course 信息
+        user_session_doc = db.user_sessions.find_one(
+            {"sis_id": sis_id_query},
+            {"_id": 0, "username": 1, "current_course": 1}
         )
 
-        if not archive or not archive.get('chat_record'):
+        if not user_session_doc:
             return jsonify({
-                "error": "未找到相关档案",
-                "message": f"用户 {student_uid} 在来源 '{resource_name}' 下暂无交互记录",
-                "studentUid": student_uid,
-                "resource_name": resource_name
+                "error": "未找到用户会话",
+                "message": f"未在活跃会话库中检索到教务学号为 '{sis_id_query}' 的用户，请确认该用户是否已登录系统"
+            }), 444
+
+        target_username = user_session_doc.get("username")
+        current_course = user_session_doc.get("current_course", {})
+        course_title = current_course.get('name') or current_course.get('course_name')
+
+        if not target_username:
+            return jsonify({
+                "error": "用户信息不完整",
+                "message": "在会话记录中未找到关联的系统内部用户名(username)"
+            }), 500
+
+        if not course_title:
+            return jsonify({
+                "error": "当前课程未指定",
+                "message": f"未识别到用户账号({target_username})当前的活跃课程，请让其先在学情页面选择一门课程"
             }), 404
 
-        # 3. 提取匹配的数据节点
-        # 因为使用了 "chat_record.$"，匹配的项在数组的第一位
-        target_record = archive['chat_record'][0]
-        
+        core_course_name = str(course_title).strip()
+        print(f"🔗 账号映射对齐成功: 教务学号({sis_id_query}) -> 内部用户名({target_username}) | 当前核心课程: '{core_course_name}'")
+
+        # ================= 🚀 核心逻辑 2：安全可靠的正则模糊匹配资源 =================
+        # 构造不区分大小写的正则表达式：匹配包含“核心课程名”的任意资源名称 (解决带书名号/版本号不匹配问题)
+        resource_regex = re.compile(f".*{re.escape(core_course_name)}.*", re.IGNORECASE)
+
+        # 使用映射出来的 target_username 作为 student_id 查库
+        archive_doc = db.chat_records.find_one(
+            {
+                "student_id": target_username,
+                "chat_record.resource_name": {"$regex": resource_regex}
+            },
+            {"_id": 0}
+        )
+
+        if not archive_doc or not archive_doc.get('chat_record'):
+            return jsonify({
+                "error": "未找到相关学情档案",
+                "message": f"用户({target_username})在课程 '{core_course_name}' 下暂无任何智能体聊天交互历史",
+                "studentUid": sis_id_query,
+                "username": target_username,
+                "core_course_name": core_course_name
+            }), 404
+
+        # ================= 🚀 核心逻辑 3：内存动态精准过滤 =================
+        target_record = None
+        for record in archive_doc.get('chat_record', []):
+            r_name = record.get('resource_name', '')
+            if core_course_name.lower() in r_name.lower():
+                target_record = record
+                break
+
+        if not target_record:
+            return jsonify({
+                "error": "匹配失效",
+                "message": f"在数据库交互列表中未找到与核心词 '{core_course_name}' 精准匹配的资源项"
+            }), 404
+
+        # 4. 提取匹配的数据节点结构
         raw_interactions = target_record.get('raw_interactions', [])
         processed_insights = target_record.get('processed_insights', {})
         resource_history = target_record.get('resource', [])
 
-        # 4. 数据统计与格式化
         knowledge_points = processed_insights.get('knowledge_points', [])
         intents = processed_insights.get('intents', [])
 
-        # 计算一些摘要信息
+        # 计算概要统计摘要
         summary = {
             "total_questions": len(raw_interactions),
             "unique_knowledge_count": len(knowledge_points),
             "total_resource_clicks": sum(item.get('click_count', 0) for item in resource_history),
-            "is_analysis_ready": archive.get('has_unprocessed') == "No"
+            "is_analysis_ready": archive_doc.get('has_unprocessed') == "No"
         }
 
-        # 5. 返回结果
+        # 5. 整合并组装格式化返回
         return jsonify({
-            "student_id": student_uid,
-            "resource_name": resource_name,
+            "sis_id": sis_id_query,
+            "student_id": target_username,                               # 系统聊天室对应的真正的独立加密/数字 username
+            "derived_course_name": core_course_name,                     # 系统自动推导出的课程名
+            "matched_resource_name": target_record.get('resource_name'), # 数据库中带书名号/版本号的真实名称
             "summary": summary,
-            "last_processed_time": archive.get('last_processed_time'),
-            "has_unprocessed": archive.get('has_unprocessed'),
+            "last_processed_time": archive_doc.get('last_processed_time'),
+            "has_unprocessed": archive_doc.get('has_unprocessed'),
             
-            # 详细数据部分
             "details": {
-                "raw_interactions": raw_interactions[-20:], # 默认只返回最近20条原始记录，防止数据量过大
+                "raw_interactions": raw_interactions[-20:], # 截断处理，防止大模型/前端包体过大
                 "knowledge_points": knowledge_points,
                 "intents": intents,
                 "resource": resource_history
             },
             
             "query_info": {
-                "note": f"成功获取学生 {student_uid} 关于 '{resource_name}' 的学情档案",
+                "note": f"成功跨会话表打通教务标识并对齐学情交互档案",
                 "timestamp": datetime.now().isoformat()
             }
         }), 200
 
     except Exception as e:
-        print(f"查询 chat_records 时出错: {str(e)}")
+        print(f"查询 chat_records 核心链路异常:\n{traceback.format_exc()}")
         return jsonify({
             "error": "服务器内部错误",
             "message": str(e)
         }), 500
+# @study_situation_LLM.route('/dashboard/study_situation/chat_archive')
+# def get_chat_archive_status():
+#     """
+#     查询用户在特定资源来源(resource_name)下的所有交互档案
+#     - studentUid: 必填，用户ID
+#     - resource_name: 必填，课程名称/来源名称 (例如: '流程图')
+    
+#     返回数据包括：
+#     - raw_interactions: 原始对话列表
+#     - processed_insights: AI提取的知识点统计和意图分布
+#     - resource: 资料查看历史、点击数及反馈
+#     """
+#     student_uid = request.args.get('studentUid', '').strip()
+#     resource_name = request.args.get('resource_name', '').strip()
+
+#     # 1. 参数验证
+#     if not student_uid or not resource_name:
+#         return jsonify({
+#             "error": "缺少必要参数",
+#             "message": "请同时提供 studentUid 和 resource_name"
+#         }), 400
+
+#     print(f"查询用户档案交互 - UID: {student_uid}, 来源: {resource_name}")
+
+#     try:
+#         # 2. 从 MongoDB 查询 chat_records 集合
+#         # 使用 $elemMatch 过滤出特定的 student_id 和对应的 resource_name
+#         archive = db.chat_records.find_one(
+#             {
+#                 "student_id": student_uid,
+#                 "chat_record.resource_name": resource_name
+#             },
+#             {
+#                 "_id": 0,
+#                 "has_unprocessed": 1,
+#                 "last_processed_time": 1,
+#                 "chat_record.$": 1  # 关键：只返回匹配 resource_name 的那一个数组元素
+#             }
+#         )
+
+#         if not archive or not archive.get('chat_record'):
+#             return jsonify({
+#                 "error": "未找到相关档案",
+#                 "message": f"用户 {student_uid} 在来源 '{resource_name}' 下暂无交互记录",
+#                 "studentUid": student_uid,
+#                 "resource_name": resource_name
+#             }), 404
+
+#         # 3. 提取匹配的数据节点
+#         # 因为使用了 "chat_record.$"，匹配的项在数组的第一位
+#         target_record = archive['chat_record'][0]
+        
+#         raw_interactions = target_record.get('raw_interactions', [])
+#         processed_insights = target_record.get('processed_insights', {})
+#         resource_history = target_record.get('resource', [])
+
+#         # 4. 数据统计与格式化
+#         knowledge_points = processed_insights.get('knowledge_points', [])
+#         intents = processed_insights.get('intents', [])
+
+#         # 计算一些摘要信息
+#         summary = {
+#             "total_questions": len(raw_interactions),
+#             "unique_knowledge_count": len(knowledge_points),
+#             "total_resource_clicks": sum(item.get('click_count', 0) for item in resource_history),
+#             "is_analysis_ready": archive.get('has_unprocessed') == "No"
+#         }
+
+#         # 5. 返回结果
+#         return jsonify({
+#             "student_id": student_uid,
+#             "resource_name": resource_name,
+#             "summary": summary,
+#             "last_processed_time": archive.get('last_processed_time'),
+#             "has_unprocessed": archive.get('has_unprocessed'),
+            
+#             # 详细数据部分
+#             "details": {
+#                 "raw_interactions": raw_interactions[-20:], # 默认只返回最近20条原始记录，防止数据量过大
+#                 "knowledge_points": knowledge_points,
+#                 "intents": intents,
+#                 "resource": resource_history
+#             },
+            
+#             "query_info": {
+#                 "note": f"成功获取学生 {student_uid} 关于 '{resource_name}' 的学情档案",
+#                 "timestamp": datetime.now().isoformat()
+#             }
+#         }), 200
+
+#     except Exception as e:
+#         print(f"查询 chat_records 时出错: {str(e)}")
+#         return jsonify({
+#             "error": "服务器内部错误",
+#             "message": str(e)
+#         }), 500
 
 
 
@@ -2447,3 +2583,10 @@ def search_quizzes_student():
 
     except Exception as e:
         return jsonify({"error": "查询测验失败", "details": str(e)}), 500
+    
+    
+    
+    
+
+
+
