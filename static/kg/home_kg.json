@@ -1,0 +1,3269 @@
+{
+  "categories": [
+    {
+      "name": "课程"
+    },
+    {
+      "name": "人工智能"
+    },
+    {
+      "name": "机电"
+    },
+    {
+      "name": "其他"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "产品制造",
+      "name": "产品制造",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 8
+    },
+    {
+      "id": "产品设计",
+      "name": "产品设计",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 14
+    },
+    {
+      "id": "信号与系统",
+      "name": "信号与系统",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 10
+    },
+    {
+      "id": "增材制造原理与实践",
+      "name": "增材制造原理与实践",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 9
+    },
+    {
+      "id": "多足系统运动学与步态规划",
+      "name": "多足系统运动学与步态规划",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 11
+    },
+    {
+      "id": "大模型原理与应用",
+      "name": "大模型原理与应用",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 8
+    },
+    {
+      "id": "工效学",
+      "name": "工效学",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 9
+    },
+    {
+      "id": "工程原理",
+      "name": "工程原理",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 34
+    },
+    {
+      "id": "开源处理器芯片设计",
+      "name": "开源处理器芯片设计",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 16
+    },
+    {
+      "id": "控制原理",
+      "name": "控制原理",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 12
+    },
+    {
+      "id": "无人机飞控技术",
+      "name": "无人机飞控技术",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 9
+    },
+    {
+      "id": "智能扫地机器人主控板设计",
+      "name": "智能扫地机器人主控板设计",
+      "category": "课程",
+      "symbolSize": 26,
+      "value": 4
+    },
+    {
+      "id": "智能系统设计与实现",
+      "name": "智能系统设计与实现",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 13
+    },
+    {
+      "id": "智能设备交互设计",
+      "name": "智能设备交互设计",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 9
+    },
+    {
+      "id": "机器人基础",
+      "name": "机器人基础",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 10
+    },
+    {
+      "id": "机器人进阶",
+      "name": "机器人进阶",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 8
+    },
+    {
+      "id": "桌面智能宠物",
+      "name": "桌面智能宠物",
+      "category": "课程",
+      "symbolSize": 26,
+      "value": 8
+    },
+    {
+      "id": "灵巧手设计与运动学控制",
+      "name": "灵巧手设计与运动学控制",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 9
+    },
+    {
+      "id": "自然与设计",
+      "name": "自然与设计",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 9
+    },
+    {
+      "id": "软件设计",
+      "name": "软件设计",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 14
+    },
+    {
+      "id": "运动神经生理与人机交互",
+      "name": "运动神经生理与人机交互",
+      "category": "课程",
+      "symbolSize": 60,
+      "value": 8
+    },
+    {
+      "id": "C++",
+      "name": "C++",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "PyTorch",
+      "name": "PyTorch",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "Transformer",
+      "name": "Transformer",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 11
+    },
+    {
+      "id": "人工智能",
+      "name": "人工智能",
+      "category": "人工智能",
+      "symbolSize": 70,
+      "value": 58
+    },
+    {
+      "id": "关键词唤醒",
+      "name": "关键词唤醒",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 5
+    },
+    {
+      "id": "具身智能",
+      "name": "具身智能",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 12
+    },
+    {
+      "id": "卡尔曼滤波",
+      "name": "卡尔曼滤波",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "图像处理",
+      "name": "图像处理",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 9
+    },
+    {
+      "id": "多模态交互",
+      "name": "多模态交互",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 13
+    },
+    {
+      "id": "大模型",
+      "name": "大模型",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 9
+    },
+    {
+      "id": "大语言模型",
+      "name": "大语言模型",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "导航机器人",
+      "name": "导航机器人",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "强化学习",
+      "name": "强化学习",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 15
+    },
+    {
+      "id": "抓取原语",
+      "name": "抓取原语",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 19
+    },
+    {
+      "id": "数据融合算法",
+      "name": "数据融合算法",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "消息通知",
+      "name": "消息通知",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "深度学习",
+      "name": "深度学习",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "社交机器人",
+      "name": "社交机器人",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "神经网络",
+      "name": "神经网络",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "算法重构",
+      "name": "算法重构",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "肌电假肢人机交互系统",
+      "name": "肌电假肢人机交互系统",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "肌电手势识别模块",
+      "name": "肌电手势识别模块",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "视觉识别",
+      "name": "视觉识别",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "语音识别",
+      "name": "语音识别",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "运动意图",
+      "name": "运动意图",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "运动意图识别",
+      "name": "运动意图识别",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "运动记录",
+      "name": "运动记录",
+      "category": "人工智能",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "3D打印",
+      "name": "3D打印",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 33
+    },
+    {
+      "id": "3D打印机",
+      "name": "3D打印机",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 15
+    },
+    {
+      "id": "BLE通信",
+      "name": "BLE通信",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "BOM表",
+      "name": "BOM表",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 12
+    },
+    {
+      "id": "CNC加工",
+      "name": "CNC加工",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 9
+    },
+    {
+      "id": "DFM",
+      "name": "DFM",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 15
+    },
+    {
+      "id": "ESP32",
+      "name": "ESP32",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "G1",
+      "name": "G1",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "LVGL",
+      "name": "LVGL",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 4
+    },
+    {
+      "id": "MCU",
+      "name": "MCU",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "MPU6050",
+      "name": "MPU6050",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 9
+    },
+    {
+      "id": "PCB设计",
+      "name": "PCB设计",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 17
+    },
+    {
+      "id": "STM32",
+      "name": "STM32",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 9
+    },
+    {
+      "id": "SolidWorks",
+      "name": "SolidWorks",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 32
+    },
+    {
+      "id": "minirv处理器",
+      "name": "minirv处理器",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 11
+    },
+    {
+      "id": "三维建模",
+      "name": "三维建模",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "两轮平衡车",
+      "name": "两轮平衡车",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 15
+    },
+    {
+      "id": "两轮平衡车仿真系统",
+      "name": "两轮平衡车仿真系统",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "主控板",
+      "name": "主控板",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "人形机器人",
+      "name": "人形机器人",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "仿生跳跃机构",
+      "name": "仿生跳跃机构",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 11
+    },
+    {
+      "id": "传感器",
+      "name": "传感器",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 31
+    },
+    {
+      "id": "伺服舵机",
+      "name": "伺服舵机",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "假肢运动控制",
+      "name": "假肢运动控制",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "健康监测",
+      "name": "健康监测",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "六足机器人",
+      "name": "六足机器人",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 12
+    },
+    {
+      "id": "姿态平衡",
+      "name": "姿态平衡",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "姿态平衡控制",
+      "name": "姿态平衡控制",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 11
+    },
+    {
+      "id": "姿态检测",
+      "name": "姿态检测",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "定量工程设计方法",
+      "name": "定量工程设计方法",
+      "category": "机电",
+      "symbolSize": 60,
+      "value": 10
+    },
+    {
+      "id": "工程图纸",
+      "name": "工程图纸",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "工程设计",
+      "name": "工程设计",
+      "category": "机电",
+      "symbolSize": 60,
+      "value": 12
+    },
+    {
+      "id": "开源固件",
+      "name": "开源固件",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 13
+    },
+    {
+      "id": "扫描隧道显微镜",
+      "name": "扫描隧道显微镜",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 17
+    },
+    {
+      "id": "数字电路",
+      "name": "数字电路",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "斯特林发动机",
+      "name": "斯特林发动机",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 16
+    },
+    {
+      "id": "机械原理",
+      "name": "机械原理",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "机械结构",
+      "name": "机械结构",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 12
+    },
+    {
+      "id": "机械设计",
+      "name": "机械设计",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 12
+    },
+    {
+      "id": "机电",
+      "name": "机电",
+      "category": "机电",
+      "symbolSize": 70,
+      "value": 91
+    },
+    {
+      "id": "材料力学",
+      "name": "材料力学",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "材料选择",
+      "name": "材料选择",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 12
+    },
+    {
+      "id": "温控系统",
+      "name": "温控系统",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 9
+    },
+    {
+      "id": "灵巧手",
+      "name": "灵巧手",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 11
+    },
+    {
+      "id": "物理设计",
+      "name": "物理设计",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "电源管理",
+      "name": "电源管理",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "直流电机",
+      "name": "直流电机",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 13
+    },
+    {
+      "id": "硬件",
+      "name": "硬件",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "系统集成",
+      "name": "系统集成",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 17
+    },
+    {
+      "id": "编码器",
+      "name": "编码器",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "肌电信号采集",
+      "name": "肌电信号采集",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "脑电信号采集",
+      "name": "脑电信号采集",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 6
+    },
+    {
+      "id": "舵机",
+      "name": "舵机",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 11
+    },
+    {
+      "id": "轮足机器人",
+      "name": "轮足机器人",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 5
+    },
+    {
+      "id": "运动控制",
+      "name": "运动控制",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 18
+    },
+    {
+      "id": "运动系统",
+      "name": "运动系统",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 12
+    },
+    {
+      "id": "连杆机构",
+      "name": "连杆机构",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 11
+    },
+    {
+      "id": "通信",
+      "name": "通信",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "麦克风阵列",
+      "name": "麦克风阵列",
+      "category": "机电",
+      "symbolSize": 30,
+      "value": 7
+    },
+    {
+      "id": "IMU",
+      "name": "IMU",
+      "category": "其他",
+      "symbolSize": 30,
+      "value": 33
+    },
+    {
+      "id": "PID控制",
+      "name": "PID控制",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 29
+    },
+    {
+      "id": "Python",
+      "name": "Python",
+      "category": "其他",
+      "symbolSize": 30,
+      "value": 13
+    },
+    {
+      "id": "交叉",
+      "name": "交叉",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 28
+    },
+    {
+      "id": "传感器融合",
+      "name": "传感器融合",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 18
+    },
+    {
+      "id": "基础",
+      "name": "基础",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 56
+    },
+    {
+      "id": "控制算法",
+      "name": "控制算法",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 15
+    },
+    {
+      "id": "数据采集",
+      "name": "数据采集",
+      "category": "其他",
+      "symbolSize": 30,
+      "value": 10
+    },
+    {
+      "id": "核心功能",
+      "name": "核心功能",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 13
+    },
+    {
+      "id": "状态机",
+      "name": "状态机",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 22
+    },
+    {
+      "id": "电机",
+      "name": "电机",
+      "category": "其他",
+      "symbolSize": 30,
+      "value": 17
+    },
+    {
+      "id": "软件",
+      "name": "软件",
+      "category": "其他",
+      "symbolSize": 30,
+      "value": 8
+    },
+    {
+      "id": "运动学算法",
+      "name": "运动学算法",
+      "category": "其他",
+      "symbolSize": 24,
+      "value": 19
+    }
+  ],
+  "links": [
+    {
+      "source": "工程原理",
+      "target": "PID控制",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "传感器融合",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "运动控制",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "DFM",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "核心功能",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "PCB设计",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "系统集成",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "电源管理",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "硬件",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "软件",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "通信",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "智能扫地机器人主控板设计",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "数字电路",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "STM32",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "机械结构",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "数据融合算法",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "编码器",
+      "value": "包含"
+    },
+    {
+      "source": "工程原理",
+      "target": "强化学习",
+      "value": "包含"
+    },
+    {
+      "source": "PID控制",
+      "target": "运动控制",
+      "value": "用于"
+    },
+    {
+      "source": "工程原理",
+      "target": "运动控制",
+      "value": "实现"
+    },
+    {
+      "source": "工程原理",
+      "target": "系统集成",
+      "value": "完成"
+    },
+    {
+      "source": "工程原理",
+      "target": "硬件",
+      "value": "融合"
+    },
+    {
+      "source": "工程原理",
+      "target": "软件",
+      "value": "融合"
+    },
+    {
+      "source": "工程原理",
+      "target": "通信",
+      "value": "融合"
+    },
+    {
+      "source": "硬件",
+      "target": "软件",
+      "value": "协同"
+    },
+    {
+      "source": "传感器融合",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "数据融合算法",
+      "target": "传感器融合",
+      "value": "属于"
+    },
+    {
+      "source": "运动控制",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "系统集成",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "电源管理",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "硬件",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "通信",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "智能扫地机器人主控板设计",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "智能扫地机器人主控板设计",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "STM32",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "PCB设计",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "机械结构",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "数据融合算法",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "编码器",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "强化学习",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "工程原理",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "工程原理",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "机器人基础",
+      "target": "SolidWorks",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "3D打印",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "MCU",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "ESP32",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "STM32",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "MPU6050",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "舵机",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "Python",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "PID控制",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "状态机",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "机械设计",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "控制算法",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "电机",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "PCB设计",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "轮足机器人",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "传感器融合",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "图像处理",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "深度学习",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "Transformer",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "三维建模",
+      "value": "包含"
+    },
+    {
+      "source": "机器人基础",
+      "target": "神经网络",
+      "value": "包含"
+    },
+    {
+      "source": "MCU",
+      "target": "ESP32",
+      "value": "包括"
+    },
+    {
+      "source": "MCU",
+      "target": "STM32",
+      "value": "包括"
+    },
+    {
+      "source": "IMU",
+      "target": "MPU6050",
+      "value": "包括"
+    },
+    {
+      "source": "控制算法",
+      "target": "PID控制",
+      "value": "包括"
+    },
+    {
+      "source": "轮足机器人",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "深度学习",
+      "target": "Transformer",
+      "value": "包含"
+    },
+    {
+      "source": "轮足机器人",
+      "target": "深度学习",
+      "value": "应用"
+    },
+    {
+      "source": "三维建模",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "机械设计",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "SolidWorks",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "IMU",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "深度学习",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "机器人基础",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "机器人基础",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "控制原理",
+      "target": "两轮平衡车",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "直流电机",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "PID控制",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "传感器",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "姿态平衡控制",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "卡尔曼滤波",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "姿态检测",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "控制算法",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "姿态平衡",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "系统集成",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "MPU6050",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "两轮平衡车仿真系统",
+      "value": "包含"
+    },
+    {
+      "source": "控制原理",
+      "target": "数据融合算法",
+      "value": "包含"
+    },
+    {
+      "source": "两轮平衡车",
+      "target": "直流电机",
+      "value": "使用"
+    },
+    {
+      "source": "姿态平衡控制",
+      "target": "控制算法",
+      "value": "属于"
+    },
+    {
+      "source": "两轮平衡车",
+      "target": "姿态平衡控制",
+      "value": "使用"
+    },
+    {
+      "source": "两轮平衡车",
+      "target": "姿态平衡控制",
+      "value": "需要"
+    },
+    {
+      "source": "直流电机",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "PID控制",
+      "target": "直流电机",
+      "value": "控制"
+    },
+    {
+      "source": "两轮平衡车",
+      "target": "直流电机",
+      "value": "应用"
+    },
+    {
+      "source": "两轮平衡车",
+      "target": "姿态平衡控制",
+      "value": "包含"
+    },
+    {
+      "source": "数据融合算法",
+      "target": "卡尔曼滤波",
+      "value": "包含"
+    },
+    {
+      "source": "PID控制",
+      "target": "姿态平衡",
+      "value": "应用于"
+    },
+    {
+      "source": "直流电机",
+      "target": "PID控制",
+      "value": "控制"
+    },
+    {
+      "source": "数据融合算法",
+      "target": "姿态平衡",
+      "value": "实现"
+    },
+    {
+      "source": "两轮平衡车",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "传感器",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "姿态检测",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "两轮平衡车",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "姿态平衡",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "两轮平衡车仿真系统",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "姿态平衡控制",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "MPU6050",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "卡尔曼滤波",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "MPU6050",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "控制原理",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "控制原理",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "软件设计",
+      "target": "Python",
+      "value": "包含"
+    },
+    {
+      "source": "软件设计",
+      "target": "C++",
+      "value": "包含"
+    },
+    {
+      "source": "软件设计",
+      "target": "数据采集",
+      "value": "包含"
+    },
+    {
+      "source": "软件设计",
+      "target": "硬件",
+      "value": "包含"
+    },
+    {
+      "source": "C++",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "Python",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "软件设计",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "软件设计",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "信号与系统",
+      "target": "扫描隧道显微镜",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "数据采集",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "Python",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "C++",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "机械结构",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "系统集成",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "PCB设计",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "传感器",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "PID控制",
+      "value": "包含"
+    },
+    {
+      "source": "信号与系统",
+      "target": "图像处理",
+      "value": "包含"
+    },
+    {
+      "source": "数据采集",
+      "target": "扫描隧道显微镜",
+      "value": "属于"
+    },
+    {
+      "source": "扫描隧道显微镜",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "数据采集",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "机械结构",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "系统集成",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "扫描隧道显微镜",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "PCB设计",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "图像处理",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "信号与系统",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "信号与系统",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "PID控制",
+      "value": "包含"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "传感器融合",
+      "value": "包含"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "C++",
+      "value": "包含"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "图像处理",
+      "value": "包含"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "卡尔曼滤波",
+      "value": "包含"
+    },
+    {
+      "source": "传感器融合",
+      "target": "IMU",
+      "value": "依赖于"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "无人机飞控技术",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "产品设计",
+      "target": "PCB设计",
+      "value": "包含"
+    },
+    {
+      "source": "产品设计",
+      "target": "软件",
+      "value": "包含"
+    },
+    {
+      "source": "产品设计",
+      "target": "工程设计",
+      "value": "包含"
+    },
+    {
+      "source": "产品设计",
+      "target": "定量工程设计方法",
+      "value": "包含"
+    },
+    {
+      "source": "产品设计",
+      "target": "机器人基础",
+      "value": "包含"
+    },
+    {
+      "source": "产品设计",
+      "target": "核心功能",
+      "value": "包含"
+    },
+    {
+      "source": "产品设计",
+      "target": "系统集成",
+      "value": "包含"
+    },
+    {
+      "source": "软件",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "机器人基础",
+      "target": "系统集成",
+      "value": "支撑"
+    },
+    {
+      "source": "软件",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "工程设计",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "产品设计",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "产品设计",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "SolidWorks",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "3D打印",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "BOM表",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "工程图纸",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "三维建模",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "核心功能",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "CNC加工",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "电机",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "舵机",
+      "value": "包含"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "传感器",
+      "value": "包含"
+    },
+    {
+      "source": "SolidWorks",
+      "target": "三维建模",
+      "value": "用于"
+    },
+    {
+      "source": "3D打印",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "BOM表",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "工程图纸",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "CNC加工",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "电机",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "舵机",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "定量工程设计方法",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "工程设计",
+      "target": "斯特林发动机",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "机械原理",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "SolidWorks",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "连杆机构",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "DFM",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "材料选择",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "工程图纸",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "BOM表",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "材料力学",
+      "value": "包含"
+    },
+    {
+      "source": "工程设计",
+      "target": "电机",
+      "value": "包含"
+    },
+    {
+      "source": "斯特林发动机",
+      "target": "连杆机构",
+      "value": "包含"
+    },
+    {
+      "source": "斯特林发动机",
+      "target": "SolidWorks",
+      "value": "使用"
+    },
+    {
+      "source": "斯特林发动机",
+      "target": "DFM",
+      "value": "应用"
+    },
+    {
+      "source": "DFM",
+      "target": "材料选择",
+      "value": "应用于"
+    },
+    {
+      "source": "斯特林发动机",
+      "target": "材料力学",
+      "value": "需要"
+    },
+    {
+      "source": "斯特林发动机",
+      "target": "机械原理",
+      "value": "需要"
+    },
+    {
+      "source": "材料选择",
+      "target": "DFM",
+      "value": "应用于"
+    },
+    {
+      "source": "工程图纸",
+      "target": "BOM表",
+      "value": "包含"
+    },
+    {
+      "source": "斯特林发动机",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "斯特林发动机",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "SolidWorks",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "连杆机构",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "电机",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "机械原理",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "连杆机构",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "材料力学",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "DFM",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "工程设计",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "工效学",
+      "target": "社交机器人",
+      "value": "包含"
+    },
+    {
+      "source": "工效学",
+      "target": "导航机器人",
+      "value": "包含"
+    },
+    {
+      "source": "工效学",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "工效学",
+      "target": "Python",
+      "value": "包含"
+    },
+    {
+      "source": "工效学",
+      "target": "数据采集",
+      "value": "包含"
+    },
+    {
+      "source": "工效学",
+      "target": "多模态交互",
+      "value": "包含"
+    },
+    {
+      "source": "社交机器人",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "导航机器人",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "IMU",
+      "target": "数据采集",
+      "value": "用于"
+    },
+    {
+      "source": "社交机器人",
+      "target": "多模态交互",
+      "value": "使用"
+    },
+    {
+      "source": "多模态交互",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "工效学",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "工效学",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "自然与设计",
+      "target": "仿生跳跃机构",
+      "value": "包含"
+    },
+    {
+      "source": "自然与设计",
+      "target": "连杆机构",
+      "value": "包含"
+    },
+    {
+      "source": "自然与设计",
+      "target": "电机",
+      "value": "包含"
+    },
+    {
+      "source": "自然与设计",
+      "target": "SolidWorks",
+      "value": "包含"
+    },
+    {
+      "source": "自然与设计",
+      "target": "3D打印",
+      "value": "包含"
+    },
+    {
+      "source": "自然与设计",
+      "target": "机械原理",
+      "value": "包含"
+    },
+    {
+      "source": "自然与设计",
+      "target": "机械设计",
+      "value": "包含"
+    },
+    {
+      "source": "仿生跳跃机构",
+      "target": "连杆机构",
+      "value": "包含"
+    },
+    {
+      "source": "仿生跳跃机构",
+      "target": "机械原理",
+      "value": "依赖于"
+    },
+    {
+      "source": "仿生跳跃机构",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "自然与设计",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "开源处理器芯片设计",
+      "target": "状态机",
+      "value": "包含"
+    },
+    {
+      "source": "开源处理器芯片设计",
+      "target": "物理设计",
+      "value": "包含"
+    },
+    {
+      "source": "开源处理器芯片设计",
+      "target": "数字电路",
+      "value": "包含"
+    },
+    {
+      "source": "开源处理器芯片设计",
+      "target": "minirv处理器",
+      "value": "包含"
+    },
+    {
+      "source": "数字电路",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "minirv处理器",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "物理设计",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "开源处理器芯片设计",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "桌面智能宠物",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "ESP32",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "状态机",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "麦克风阵列",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "语音识别",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "主控板",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "关键词唤醒",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "大模型",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "传感器",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "PyTorch",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "运动控制",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "机械结构",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "电源管理",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "控制算法",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "3D打印",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "视觉识别",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "舵机",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "传感器融合",
+      "value": "包含"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "具身智能",
+      "value": "包含"
+    },
+    {
+      "source": "桌面智能宠物",
+      "target": "ESP32",
+      "value": "包含"
+    },
+    {
+      "source": "传感器",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "传感器",
+      "target": "麦克风阵列",
+      "value": "包含"
+    },
+    {
+      "source": "麦克风阵列",
+      "target": "关键词唤醒",
+      "value": "实现"
+    },
+    {
+      "source": "桌面智能宠物",
+      "target": "机械结构",
+      "value": "包含"
+    },
+    {
+      "source": "桌面智能宠物",
+      "target": "运动控制",
+      "value": "包含"
+    },
+    {
+      "source": "语音识别",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "电源管理",
+      "target": "基础",
+      "value": "属于"
+    },
+    {
+      "source": "运动控制",
+      "target": "交叉",
+      "value": "属于"
+    },
+    {
+      "source": "控制算法",
+      "target": "交叉",
+      "value": "属于"
+    },
+    {
+      "source": "主控板",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "状态机",
+      "target": "舵机",
+      "value": "控制"
+    },
+    {
+      "source": "桌面智能宠物",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "桌面智能宠物",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "ESP32",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "IMU",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "麦克风阵列",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "语音识别",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "主控板",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "关键词唤醒",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "大模型",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "PyTorch",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "传感器",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "3D打印",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "视觉识别",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "麦克风阵列",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "具身智能",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "肌电假肢人机交互系统",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "肌电手势识别模块",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "肌电信号采集",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "脑电信号采集",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "运动意图识别",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "运动意图",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "控制算法",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "运动控制",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "假肢运动控制",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "编码器",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "神经网络",
+      "value": "包含"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "姿态检测",
+      "value": "包含"
+    },
+    {
+      "source": "肌电假肢人机交互系统",
+      "target": "肌电手势识别模块",
+      "value": "包含"
+    },
+    {
+      "source": "肌电信号采集",
+      "target": "肌电手势识别模块",
+      "value": "支撑"
+    },
+    {
+      "source": "脑电信号采集",
+      "target": "运动意图识别",
+      "value": "用于"
+    },
+    {
+      "source": "运动意图识别",
+      "target": "肌电手势识别模块",
+      "value": "关联"
+    },
+    {
+      "source": "运动意图",
+      "target": "肌电信号采集",
+      "value": "通过"
+    },
+    {
+      "source": "运动意图",
+      "target": "交叉",
+      "value": "属于"
+    },
+    {
+      "source": "IMU",
+      "target": "姿态检测",
+      "value": "用于"
+    },
+    {
+      "source": "姿态检测",
+      "target": "IMU",
+      "value": "使用"
+    },
+    {
+      "source": "肌电假肢人机交互系统",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "肌电假肢人机交互系统",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "肌电手势识别模块",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "肌电信号采集",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "脑电信号采集",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "运动意图识别",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "运动意图",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "运动意图识别",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "假肢运动控制",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "神经网络",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "运动神经生理与人机交互",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "产品制造",
+      "target": "3D打印",
+      "value": "包含"
+    },
+    {
+      "source": "产品制造",
+      "target": "CNC加工",
+      "value": "包含"
+    },
+    {
+      "source": "产品制造",
+      "target": "SolidWorks",
+      "value": "包含"
+    },
+    {
+      "source": "产品制造",
+      "target": "DFM",
+      "value": "包含"
+    },
+    {
+      "source": "产品制造",
+      "target": "工程图纸",
+      "value": "包含"
+    },
+    {
+      "source": "产品制造",
+      "target": "材料选择",
+      "value": "包含"
+    },
+    {
+      "source": "产品制造",
+      "target": "BOM表",
+      "value": "包含"
+    },
+    {
+      "source": "材料选择",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "产品制造",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "产品制造",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "强化学习",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "PyTorch",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "Python",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "硬件",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "G1",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "Transformer",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "多模态交互",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "语音识别",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "人形机器人",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "深度学习",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "神经网络",
+      "value": "包含"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "多模态交互",
+      "target": "语音识别",
+      "value": "包含"
+    },
+    {
+      "source": "PyTorch",
+      "target": "深度学习",
+      "value": "用于"
+    },
+    {
+      "source": "Transformer",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "人形机器人",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "深度学习",
+      "target": "基础",
+      "value": "属于"
+    },
+    {
+      "source": "神经网络",
+      "target": "基础",
+      "value": "属于"
+    },
+    {
+      "source": "人形机器人",
+      "target": "强化学习",
+      "value": "应用"
+    },
+    {
+      "source": "G1",
+      "target": "机电",
+      "value": "控制"
+    },
+    {
+      "source": "PyTorch",
+      "target": "人工智能",
+      "value": "实现"
+    },
+    {
+      "source": "人形机器人",
+      "target": "机电",
+      "value": "应用"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "机器人进阶",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "大模型原理与应用",
+      "target": "大模型",
+      "value": "包含"
+    },
+    {
+      "source": "大模型原理与应用",
+      "target": "Transformer",
+      "value": "包含"
+    },
+    {
+      "source": "大模型原理与应用",
+      "target": "具身智能",
+      "value": "包含"
+    },
+    {
+      "source": "大模型原理与应用",
+      "target": "PyTorch",
+      "value": "包含"
+    },
+    {
+      "source": "大模型原理与应用",
+      "target": "Python",
+      "value": "包含"
+    },
+    {
+      "source": "大模型",
+      "target": "Transformer",
+      "value": "包含"
+    },
+    {
+      "source": "Transformer",
+      "target": "大模型",
+      "value": "用于"
+    },
+    {
+      "source": "大模型原理与应用",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "3D打印机",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "运动系统",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "温控系统",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "开源固件",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "BOM表",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "机械结构",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "主控板",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "运动学算法",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "控制算法",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "系统集成",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "PID控制",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "电机",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "材料力学",
+      "value": "包含"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "机械原理",
+      "value": "包含"
+    },
+    {
+      "source": "3D打印机",
+      "target": "运动系统",
+      "value": "包含"
+    },
+    {
+      "source": "3D打印机",
+      "target": "温控系统",
+      "value": "包含"
+    },
+    {
+      "source": "3D打印机",
+      "target": "增材制造原理与实践",
+      "value": "应用于"
+    },
+    {
+      "source": "主控板",
+      "target": "运动系统",
+      "value": "控制"
+    },
+    {
+      "source": "开源固件",
+      "target": "主控板",
+      "value": "配置"
+    },
+    {
+      "source": "开源固件",
+      "target": "运动学算法",
+      "value": "实现"
+    },
+    {
+      "source": "控制算法",
+      "target": "运动学算法",
+      "value": "关联"
+    },
+    {
+      "source": "系统集成",
+      "target": "3D打印机",
+      "value": "应用于"
+    },
+    {
+      "source": "温控系统",
+      "target": "PID控制",
+      "value": "包含"
+    },
+    {
+      "source": "开源固件",
+      "target": "3D打印机",
+      "value": "控制"
+    },
+    {
+      "source": "3D打印机",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "运动系统",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "温控系统",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "开源固件",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "灵巧手",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "伺服舵机",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "传感器",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "抓取原语",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "3D打印",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "机械设计",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "系统集成",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "BOM表",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "运动学算法",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "SolidWorks",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "MCU",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "通信",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "运动控制",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "数据采集",
+      "value": "包含"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "具身智能",
+      "value": "包含"
+    },
+    {
+      "source": "抓取原语",
+      "target": "运动学算法",
+      "value": "封装"
+    },
+    {
+      "source": "3D打印",
+      "target": "灵巧手",
+      "value": "制造"
+    },
+    {
+      "source": "机械设计",
+      "target": "灵巧手",
+      "value": "属于"
+    },
+    {
+      "source": "灵巧手",
+      "target": "伺服舵机",
+      "value": "使用"
+    },
+    {
+      "source": "灵巧手",
+      "target": "3D打印",
+      "value": "使用"
+    },
+    {
+      "source": "抓取原语",
+      "target": "运动学算法",
+      "value": "基于"
+    },
+    {
+      "source": "灵巧手",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "伺服舵机",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "MCU",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "抓取原语",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "SolidWorks",
+      "target": "机电",
+      "value": "用于"
+    },
+    {
+      "source": "3D打印",
+      "target": "机电",
+      "value": "用于"
+    },
+    {
+      "source": "抓取原语",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "具身智能",
+      "target": "人工智能",
+      "value": "相关"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "大语言模型",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "LVGL",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "传感器",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "状态机",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "3D打印",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "SolidWorks",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "健康监测",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "消息通知",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "BLE通信",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "人工智能",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "运动记录",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "核心功能",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "通信",
+      "value": "包含"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "DFM",
+      "value": "包含"
+    },
+    {
+      "source": "大语言模型",
+      "target": "LVGL",
+      "value": "用于"
+    },
+    {
+      "source": "传感器",
+      "target": "健康监测",
+      "value": "用于"
+    },
+    {
+      "source": "BLE通信",
+      "target": "消息通知",
+      "value": "实现"
+    },
+    {
+      "source": "传感器",
+      "target": "运动记录",
+      "value": "用于"
+    },
+    {
+      "source": "消息通知",
+      "target": "核心功能",
+      "value": "属于"
+    },
+    {
+      "source": "健康监测",
+      "target": "核心功能",
+      "value": "属于"
+    },
+    {
+      "source": "运动记录",
+      "target": "核心功能",
+      "value": "属于"
+    },
+    {
+      "source": "3D打印",
+      "target": "DFM",
+      "value": "用于"
+    },
+    {
+      "source": "大语言模型",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "健康监测",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "BLE通信",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "人工智能",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "消息通知",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "健康监测",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "运动记录",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "LVGL",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "BLE通信",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "机电",
+      "value": "主题关联"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "六足机器人",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "舵机",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "主控板",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "算法重构",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "运动学算法",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "状态机",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "伺服舵机",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "IMU",
+      "value": "包含"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "具身智能",
+      "value": "包含"
+    },
+    {
+      "source": "六足机器人",
+      "target": "舵机",
+      "value": "包含"
+    },
+    {
+      "source": "运动学算法",
+      "target": "多足系统运动学与步态规划",
+      "value": "评估"
+    },
+    {
+      "source": "六足机器人",
+      "target": "伺服舵机",
+      "value": "使用"
+    },
+    {
+      "source": "六足机器人",
+      "target": "机电",
+      "value": "属于"
+    },
+    {
+      "source": "算法重构",
+      "target": "人工智能",
+      "value": "属于"
+    },
+    {
+      "source": "伺服舵机",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "六足机器人",
+      "target": "机电",
+      "value": "相关"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "人工智能",
+      "value": "主题关联"
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "机电",
+      "value": "主题关联"
+    }
+  ],
+  "meta": {
+    "source_graph": "/root/code/kg-graph/knowledge_graph.json",
+    "target_nodes": 120,
+    "actual_nodes": 120,
+    "actual_links": 480,
+    "protected_nodes": 21,
+    "skipped_links_during_load": 0,
+    "strategy": "keep centers and course anchors, rank remaining nodes by connectivity and center relevance, then trim low-value leaves"
+  }
+}

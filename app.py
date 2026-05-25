@@ -692,8 +692,8 @@ def process_user_courses(username, role, sis_id):
 # 路由
 @app.route('/')
 def index():
-    if 'user_email' in session:
-        return redirect(url_for('new_chat'))
+    if session.get('username'):
+        return redirect(url_for('home'))
     return redirect(url_for('login'))
 
 
@@ -722,7 +722,7 @@ def login():
                 session['user_courses'] = user_courses
                 session['current_course'] = current_course
                 flash('登录成功', 'success')
-                return redirect(url_for('new_chat'))
+                return redirect(url_for('home'))
             else:
                 print("error")
                 flash('用户名或密码错误，请重试！', 'danger')
@@ -949,7 +949,7 @@ def register():
                 meta={"register_source": "email_verification"},
             )
             refresh_online_user(db, username, role, request)
-            return redirect(url_for('new_chat'))
+            return redirect(url_for('home'))
 
     return render_template('auth/register.html', form_data=form_data)
 
