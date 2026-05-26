@@ -142,6 +142,23 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
 
     print(f"   ★ 本地原始文件保存目录: {_RAW_SOURCE_DIR}")
     print("   ★ v4.6 已启用：源文件按原始文件名保存、重命名同步、孤儿源文件自动清理")
+    
+        # 排序记录索引：用于保存每个用户、每个目录下的文件/文件夹顺序
+    try:
+        if _db is not None:
+            _db.kb_sort_orders.create_index(
+                [
+                    ('username', 1),
+                    ('item_type', 1),
+                    ('scope_id', 1)
+                ],
+                unique=True,
+                background=True
+            )
+            print("   ★ 已启用：个人知识库文件/文件夹排序持久化")
+    except Exception as e:
+        print(f"   ⚠️ 创建 kb_sort_orders 排序索引失败: {e}")
+
 
 
 # ================== FastGPT 图片上传 ==================
@@ -1673,6 +1690,234 @@ def _format_document(doc, username=None):
         'original_download_url': _build_original_download_url(doc_id) if has_original_file and doc_id else '',
         'download_url': _build_original_download_url(doc_id) if has_original_file and doc_id else '',
     }
+
+# ================== 文件 / 文件夹排序辅助函数 ==================
+
+def _normalize_sort_folder_id(value):
+    """
+    前端 root / null / undefined / '' 都统一视为根目录 None。
+    """
+    if value is None:
+        return None
+
+    value = str(value).strip()
+
+    if value in ('', 'root', 'null', 'undefined', 'None'):
+        return None
+
+    return value
+
+
+def _sort_scope_key(folder_id):
+    """
+    MongoDB 中用于区分排序作用域。
+    根目录统一使用 __root__。
+    """
+    folder_id = _normalize_sort_folder_id(folder_id)
+    return folder_id or '__root__'
+
+
+def _get_saved_sort_order_ids(username, item_type, folder_id):
+    """
+    读取指定用户、指定目录下的排序 ID 列表。
+    item_type:
+        - doc
+        - folder
+    """
+    if _db is None:
+        return []
+
+    try:
+        folder_id = _normalize_sort_folder_id(folder_id)
+        scope_id = _sort_scope_key(folder_id)
+
+        rec = _db.kb_sort_orders.find_one(
+            {
+                'username': username,
+                'item_type': item_type,
+                'scope_id': scope_id
+            },
+            {
+                '_id': 0,
+                'ids': 1
+            }
+        )
+
+        ids = rec.get('ids', []) if rec else []
+
+        if not isinstance(ids, list):
+            return []
+
+        return [str(x) for x in ids if x]
+
+    except Exception as e:
+        print(f"⚠️ 读取排序记录失败: username={username}, item_type={item_type}, folder_id={folder_id}, error={e}")
+        return []
+
+
+def _apply_sort_order_to_items(username, items, item_type, folder_id, id_key):
+    """
+    按 MongoDB 中保存的顺序排序。
+    未出现在排序记录里的新项目，放到后面，并保持服务原始顺序。
+    """
+    if not items:
+        return items
+
+    try:
+        order_ids = _get_saved_sort_order_ids(
+            username=username,
+            item_type=item_type,
+            folder_id=folder_id
+        )
+
+        if not order_ids:
+            return items
+
+        order_map = {
+            str(item_id): index
+            for index, item_id in enumerate(order_ids)
+        }
+
+        def _sort_key(pair):
+            original_index, item = pair
+            item_id = str(item.get(id_key) or '')
+
+            if item_id in order_map:
+                return 0, order_map[item_id]
+
+            return 1, original_index
+
+        return [
+            item
+            for _, item in sorted(
+                enumerate(items),
+                key=_sort_key
+            )
+        ]
+
+    except Exception as e:
+        print(f"⚠️ 应用排序失败: item_type={item_type}, folder_id={folder_id}, error={e}")
+        return items
+
+
+def _apply_sort_order_to_folder_tree(username, tree, parent_id=None):
+    """
+    对文件夹树递归应用排序。
+    """
+    if not isinstance(tree, list):
+        return tree
+
+    sorted_tree = _apply_sort_order_to_items(
+        username=username,
+        items=tree,
+        item_type='folder',
+        folder_id=parent_id,
+        id_key='folder_id'
+    )
+
+    for node in sorted_tree:
+        if not isinstance(node, dict):
+            continue
+
+        children = node.get('children')
+
+        if isinstance(children, list):
+            node['children'] = _apply_sort_order_to_folder_tree(
+                username=username,
+                tree=children,
+                parent_id=node.get('folder_id')
+            )
+
+    return sorted_tree
+
+
+def _build_doc_folder_query(username, folder_id):
+    """
+    用于校验某个目录下当前有效文档。
+    """
+    folder_id = _normalize_sort_folder_id(folder_id)
+
+    query = {
+        'username': username,
+        'status': {'$ne': 'deleted'}
+    }
+
+    if folder_id is None:
+        query['$or'] = [
+            {'folder_id': None},
+            {'folder_id': ''},
+            {'folder_id': {'$exists': False}}
+        ]
+    else:
+        query['folder_id'] = folder_id
+
+    return query
+
+
+def _get_existing_sort_item_ids(username, item_type, folder_id):
+    """
+    获取当前目录下真实存在的文件或文件夹 ID。
+    用于防止前端提交不存在或越权 ID。
+    """
+    folder_id = _normalize_sort_folder_id(folder_id)
+
+    if item_type == 'doc':
+        if _db is None:
+            return []
+
+        try:
+            docs = _db.kb_documents.find(
+                _build_doc_folder_query(username, folder_id),
+                {
+                    '_id': 0,
+                    'doc_id': 1
+                }
+            )
+
+            return [
+                str(d.get('doc_id'))
+                for d in docs
+                if d.get('doc_id')
+            ]
+
+        except Exception as e:
+            print(f"⚠️ 获取当前目录文档 ID 失败: {e}")
+            return []
+
+    if item_type == 'folder':
+        if not _fastgpt_kb_service:
+            return []
+
+        try:
+            folders = _fastgpt_kb_service.get_folders(
+                username,
+                folder_id
+            )
+
+            return [
+                str(f.get('folder_id'))
+                for f in folders
+                if f.get('folder_id')
+            ]
+
+        except Exception as e:
+            print(f"⚠️ 获取当前目录文件夹 ID 失败: {e}")
+            return []
+
+    return []
+
+
+def _normalize_sort_item_type(item_type):
+    item_type = str(item_type or '').strip().lower()
+
+    if item_type in ('doc', 'docs', 'document', 'documents', 'file', 'files'):
+        return 'doc'
+
+    if item_type in ('folder', 'folders', 'dir', 'directory'):
+        return 'folder'
+
+    return ''
+
 
 
 def _require_login(f):
@@ -3849,6 +4094,200 @@ def api_kb_rename_doc(doc_id):
 
 # ================== 文件夹管理 API ==================
 
+@kb_bp.route('/api/kb/sort-order', methods=['POST'])
+@_require_login
+def api_kb_save_sort_order():
+    """
+    保存文件 / 文件夹排序。
+
+    前端提交示例：
+    {
+        "item_type": "doc" 或 "folder",
+        "folder_id": null 或 "xxx",
+        "parent_id": null 或 "xxx",
+        "ids": ["id1", "id2", "id3"]
+    }
+
+    说明：
+    - item_type=doc 时，folder_id 表示这些文件所在文件夹；
+    - item_type=folder 时，folder_id / parent_id 表示这些文件夹的父目录；
+    - 根目录统一保存为 scope_id=__root__。
+    """
+    username, _, _ = _get_user_info()
+
+    if _db is None:
+        return jsonify({
+            'success': False,
+            'error': 'MongoDB 未初始化'
+        }), 500
+
+    try:
+        data = request.get_json() or {}
+
+        item_type = _normalize_sort_item_type(
+            data.get('item_type') or data.get('type')
+        )
+
+        if item_type not in ('doc', 'folder'):
+            return jsonify({
+                'success': False,
+                'error': 'item_type 必须是 doc 或 folder'
+            }), 400
+
+        # 前端 folder_id 和 parent_id 都兼容
+        folder_id = data.get('folder_id', data.get('parent_id', None))
+        folder_id = _normalize_sort_folder_id(folder_id)
+
+        raw_ids = data.get('ids') or data.get('order') or []
+
+        if not isinstance(raw_ids, list):
+            return jsonify({
+                'success': False,
+                'error': 'ids 必须是数组'
+            }), 400
+
+        # 清洗 ID，去重，限制数量
+        cleaned_ids = []
+        seen = set()
+
+        for item_id in raw_ids:
+            item_id = str(item_id or '').strip()
+
+            if not item_id:
+                continue
+
+            # 防止异常长字符串
+            if len(item_id) > 200:
+                continue
+
+            if item_id in seen:
+                continue
+
+            seen.add(item_id)
+            cleaned_ids.append(item_id)
+
+            if len(cleaned_ids) >= 1000:
+                break
+
+        existing_ids = _get_existing_sort_item_ids(
+            username=username,
+            item_type=item_type,
+            folder_id=folder_id
+        )
+
+        # 如果能查到当前目录真实 ID，则只保存真实存在的 ID
+        if existing_ids:
+            existing_set = set(existing_ids)
+
+            final_ids = [
+                item_id
+                for item_id in cleaned_ids
+                if item_id in existing_set
+            ]
+
+            # 防止前端漏传新项目：追加当前目录中存在但未提交的项目
+            final_seen = set(final_ids)
+
+            for item_id in existing_ids:
+                if item_id not in final_seen:
+                    final_ids.append(item_id)
+                    final_seen.add(item_id)
+
+        else:
+            # 如果当前目录为空，或者服务暂时无法验证，则保存清洗后的 ID
+            final_ids = cleaned_ids
+
+        scope_id = _sort_scope_key(folder_id)
+        now = datetime.now()
+
+        _db.kb_sort_orders.update_one(
+            {
+                'username': username,
+                'item_type': item_type,
+                'scope_id': scope_id
+            },
+            {
+                '$set': {
+                    'username': username,
+                    'item_type': item_type,
+                    'folder_id': folder_id,
+                    'parent_id': folder_id,
+                    'scope_id': scope_id,
+                    'ids': final_ids,
+                    'updated_at': now
+                },
+                '$setOnInsert': {
+                    'created_at': now
+                }
+            },
+            upsert=True
+        )
+
+        return jsonify({
+            'success': True,
+            'message': '排序已保存',
+            'item_type': item_type,
+            'folder_id': folder_id,
+            'scope_id': scope_id,
+            'ids': final_ids,
+            'total': len(final_ids)
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@kb_bp.route('/api/kb/sort-order', methods=['GET'])
+@_require_login
+def api_kb_get_sort_order():
+    """
+    获取排序记录，可选接口。
+    前端目前不一定需要单独调用，因为列表接口会直接按排序返回。
+    """
+    username, _, _ = _get_user_info()
+
+    try:
+        item_type = _normalize_sort_item_type(
+            request.args.get('item_type') or request.args.get('type')
+        )
+
+        if item_type not in ('doc', 'folder'):
+            return jsonify({
+                'success': False,
+                'error': 'item_type 必须是 doc 或 folder'
+            }), 400
+
+        folder_id = request.args.get('folder_id', request.args.get('parent_id', None))
+        folder_id = _normalize_sort_folder_id(folder_id)
+        scope_id = _sort_scope_key(folder_id)
+
+        ids = _get_saved_sort_order_ids(
+            username=username,
+            item_type=item_type,
+            folder_id=folder_id
+        )
+
+        return jsonify({
+            'success': True,
+            'item_type': item_type,
+            'folder_id': folder_id,
+            'scope_id': scope_id,
+            'ids': ids,
+            'total': len(ids)
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @kb_bp.route('/api/kb/folders', methods=['GET'])
 @_require_login
 def api_kb_folders():
@@ -3857,6 +4296,8 @@ def api_kb_folders():
 
     if parent_id == '':
         parent_id = None
+
+    parent_id = _normalize_sort_folder_id(parent_id)
 
     if not _fastgpt_kb_service:
         return jsonify({
@@ -3867,6 +4308,14 @@ def api_kb_folders():
 
     try:
         folders = _fastgpt_kb_service.get_folders(username, parent_id)
+
+        folders = _apply_sort_order_to_items(
+            username=username,
+            items=folders,
+            item_type='folder',
+            folder_id=parent_id,
+            id_key='folder_id'
+        )
 
         return jsonify({
             'success': True,
@@ -3897,6 +4346,12 @@ def api_kb_folder_tree():
 
     try:
         tree = _fastgpt_kb_service.get_folder_tree(username)
+
+        tree = _apply_sort_order_to_folder_tree(
+            username=username,
+            tree=tree,
+            parent_id=None
+        )
 
         return jsonify({
             'success': True,
@@ -4089,13 +4544,25 @@ def api_kb_folder_documents(folder_id):
 
     try:
         actual_folder_id = None if folder_id == 'root' else folder_id
+        actual_folder_id = _normalize_sort_folder_id(actual_folder_id)
 
         documents = _fastgpt_kb_service.get_documents_in_folder(
             username,
             actual_folder_id
         )
 
-        formatted_docs = [_format_document(doc, username=username) for doc in documents]
+        documents = _apply_sort_order_to_items(
+            username=username,
+            items=documents,
+            item_type='doc',
+            folder_id=actual_folder_id,
+            id_key='doc_id'
+        )
+
+        formatted_docs = [
+            _format_document(doc, username=username)
+            for doc in documents
+        ]
 
         return jsonify({
             'success': True,
@@ -5001,6 +5468,9 @@ def api_kb_health():
             'raw_source_status_api': '/api/kb/raw-source/status',
             'rename_syncs_mongodb_and_raw_source_file': True,
             'all_uploads_save_raw_source': True,
+
+            'server_side_sort_order': True,
+            'sort_order_api': '/api/kb/sort-order',
 
             'workflow_quote_dedupe': True,
             'quote_text_clean': True
