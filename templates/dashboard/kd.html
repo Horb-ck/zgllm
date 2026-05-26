@@ -24,7 +24,7 @@
                     <h3>{{ agent.name }}</h3>
                     <p>{{ agent.description }}</p>
                     <div class="agent-actions">
-                        <a href="{{ url_for('app_comp.view_kd', agent_id=agent.id) }}" class="btn btn-primary">打开对话</a>
+                        <a href="{{ url_for('app_comp.view_kd', agent_route_name=agent.route_name) }}" class="btn btn-primary">打开对话</a>
                     </div>
                 </div>
             </div>

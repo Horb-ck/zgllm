@@ -8,20 +8,15 @@
     <main class="spark-dashboard-main">
         <div class="dashboard-container">
     <div class="main-content robocon-page">
-        <div class="page-header">
-            <h1>{{ agent.name }}</h1>
-            <p>{{ agent.description }}</p>
-        </div>
-
         <div class="robocon-layout" id="robocon-layout" data-layout="list-chat">
             <section class="rules-panel" id="rules-panel">
                 <div class="panel-header">
-                    <div>
-                        <span class="panel-tag">官方规则</span>
-                        <h2>比赛资料区</h2>
-                        <p>默认展示规则标题与问答页面。点击某条资料后，PDF 会优先占据右侧；如果再折叠列表，PDF 会移动到左侧，右边恢复问答。</p>
+                    <div class="panel-header-main">
+                        <div class="panel-header-top">
+                            <span class="panel-tag">官方规则</span>
+                        </div>
+                        <h2>{{ competition_name }}比赛资料区</h2>
                     </div>
-                    <button type="button" class="panel-action-btn" id="collapse-rules-btn">折叠列表</button>
                 </div>
 
                 <div class="resource-switcher" id="resource-switcher"></div>
@@ -37,20 +32,9 @@
                     </div>
                 </div>
 
-                <p class="resource-note" id="resource-note"></p>
-
                 <div class="resource-list" id="resource-list"></div>
+                <p class="resource-sync-time" id="resource-sync-time"></p>
             </section>
-
-            <div class="rail-hover-zone" id="rail-hover-zone" hidden></div>
-            <aside class="rules-rail" id="rules-rail" hidden>
-                <button type="button" class="rail-toggle-btn" id="expand-rules-btn" title="展开规则列表">
-                    <span>比</span>
-                    <span>赛</span>
-                    <span>规</span>
-                    <span>则</span>
-                </button>
-            </aside>
 
             <section class="pdf-panel" id="pdf-panel" hidden>
                 <div class="pdf-panel-header">
@@ -60,7 +44,7 @@
                         <p id="preview-subtitle"></p>
                     </div>
                     <div class="pdf-actions">
-                        <button type="button" class="panel-action-btn secondary" id="back-to-list-btn">返回规则列表</button>
+                        <button type="button" class="panel-action-btn secondary" id="back-to-list-btn">返回对话</button>
                         <a class="preview-link" id="preview-link" href="#" target="_blank" rel="noopener">打开原文</a>
                     </div>
                 </div>
@@ -89,19 +73,49 @@
 <style>
 .robocon-page {
     flex: 1;
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
     background:
         radial-gradient(circle at top left, rgba(21, 101, 192, 0.08), transparent 28%),
         linear-gradient(180deg, #f7fbff 0%, #eef4f7 100%);
+    padding-top: 4px;
+}
+
+.spark-dashboard-page {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.spark-dashboard-page .spark-dashboard-main {
+    height: calc(100vh - 84px);
+    padding: 12px 0;
+    overflow: hidden;
+}
+
+.spark-dashboard-page > .spark-dashboard-main > .dashboard-container,
+.spark-dashboard-page .main-content.robocon-page {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.spark-dashboard-page .main-content.robocon-page {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .robocon-layout {
     display: grid;
-    grid-template-columns: minmax(340px, 0.9fr) minmax(460px, 1.1fr);
+    grid-template-columns: 400px minmax(0, 1fr);
     gap: 20px;
-    height: calc(100vh - 190px);
+    height: 100%;
     min-height: 0;
-    padding: 0 24px 24px;
+    padding: 0 24px 8px;
     box-sizing: border-box;
     align-items: stretch;
     position: relative;
@@ -116,7 +130,6 @@
 }
 
 .rules-panel[hidden],
-.rules-rail[hidden],
 .pdf-panel[hidden],
 .chat-panel[hidden] {
     display: none !important;
@@ -124,8 +137,7 @@
 
 .rules-panel,
 .pdf-panel,
-.chat-shell,
-.rules-rail {
+.chat-shell {
     border: 1px solid rgba(15, 23, 42, 0.08);
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
@@ -149,16 +161,27 @@
     align-items: flex-start;
 }
 
-.panel-header h2 {
-    margin: 12px 0 10px;
-    font-size: 28px;
-    color: #0f172a;
+.panel-header-main {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    width: 100%;
 }
 
-.panel-header p {
+.panel-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.panel-header h2 {
     margin: 0;
-    line-height: 1.7;
-    color: #475569;
+    font-size: 24px;
+    color: #0f172a;
+    line-height: 1.2;
+    word-break: keep-all;
 }
 
 .panel-tag {
@@ -205,20 +228,24 @@
 
 .panel-action-btn {
     flex-shrink: 0;
-    padding: 10px 14px;
-    border: 1px solid rgba(59, 130, 246, 0.18);
-    border-radius: 12px;
-    background: #eff6ff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: #dbeafe;
     color: #1d4ed8;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
+    line-height: 1;
+    min-height: 32px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .panel-action-btn:hover,
-.preview-link:hover,
-.rail-toggle-btn:hover {
+.preview-link:hover {
     transform: translateY(-1px);
     box-shadow: 0 10px 20px rgba(37, 99, 235, 0.12);
 }
@@ -257,21 +284,24 @@
     font-size: 15px;
 }
 
-.resource-note {
-    margin: 0;
-    color: #475569;
-    line-height: 1.7;
-}
-
 .resource-list {
     display: grid;
     flex: 1 1 auto;
+    grid-auto-rows: max-content;
     gap: 12px;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
     padding-right: 8px;
     scrollbar-gutter: stable;
+    align-content: start;
+}
+
+.resource-sync-time {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #64748b;
 }
 
 .resource-list::-webkit-scrollbar {
@@ -346,65 +376,6 @@
     font-size: 13px;
 }
 
-.rules-rail {
-    position: absolute;
-    left: -18px;
-    top: 50%;
-    z-index: 6;
-    transform: translateY(-50%);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.rail-toggle-btn {
-    width: 56px;
-    height: 148px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    border: 0;
-    border-radius: 16px;
-    background: #1d4ed8;
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    box-shadow: 0 12px 28px rgba(29, 78, 216, 0.22);
-}
-
-.rail-toggle-btn span {
-    display: block;
-    line-height: 1;
-}
-
-.rail-hover-zone {
-    position: absolute;
-    left: -24px;
-    top: 0;
-    width: 28px;
-    height: 100%;
-    z-index: 5;
-    background: transparent;
-}
-
-.robocon-layout[data-layout="rail-chat"] .rail-hover-zone,
-.robocon-layout[data-layout="rail-pdf-chat"] .rail-hover-zone {
-    display: block;
-}
-
-.robocon-layout[data-layout="rail-chat"] .rail-hover-zone:hover + .rules-rail,
-.robocon-layout[data-layout="rail-pdf-chat"] .rail-hover-zone:hover + .rules-rail,
-.robocon-layout[data-layout="rail-chat"] .rules-rail:hover,
-.robocon-layout[data-layout="rail-pdf-chat"] .rules-rail:hover {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(-50%) translateX(-2px);
-}
-
 .pdf-panel {
     overflow: hidden;
 }
@@ -428,9 +399,10 @@
 
 .pdf-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px;
     align-items: center;
+    justify-content: flex-end;
 }
 
 .preview-link {
@@ -443,6 +415,7 @@
     font-size: 13px;
     font-weight: 700;
     text-decoration: none;
+    white-space: nowrap;
 }
 
 #rules-preview {
@@ -475,15 +448,6 @@
     background: #ffffff;
 }
 
-.chat-shell-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 16px 18px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-    color: #0f172a;
-}
-
 #chat-iframe {
     width: 100%;
     height: 100%;
@@ -492,28 +456,35 @@
     display: block;
 }
 
-.robocon-layout[data-layout="list-chat"] {
-    grid-template-columns: minmax(340px, 0.9fr) minmax(520px, 1.1fr);
-}
-
+.robocon-layout[data-layout="list-chat"],
 .robocon-layout[data-layout="list-pdf"] {
-    grid-template-columns: minmax(340px, 0.82fr) minmax(580px, 1.18fr);
-}
-
-.robocon-layout[data-layout="rail-chat"] {
-    grid-template-columns: minmax(520px, 1fr);
-}
-
-.robocon-layout[data-layout="rail-pdf-chat"] {
-    grid-template-columns: minmax(460px, 1.02fr) minmax(420px, 0.98fr);
+    grid-template-columns: 400px minmax(0, 1fr);
 }
 
 @media (max-width: 1100px) {
+    .spark-dashboard-page {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+    }
+
+    .spark-dashboard-page .spark-dashboard-main {
+        height: auto;
+        overflow: visible;
+    }
+
+    .spark-dashboard-page > .spark-dashboard-main > .dashboard-container,
+    .spark-dashboard-page .main-content.robocon-page {
+        height: auto;
+        overflow: visible;
+    }
+
     .robocon-layout {
         grid-template-columns: 1fr;
         height: auto;
         min-height: auto;
         overflow: visible;
+        padding-bottom: 12px;
     }
 
     .resource-meta {
@@ -521,14 +492,8 @@
     }
 
     .robocon-layout[data-layout="list-chat"],
-    .robocon-layout[data-layout="list-pdf"],
-    .robocon-layout[data-layout="rail-chat"],
-    .robocon-layout[data-layout="rail-pdf-chat"] {
+    .robocon-layout[data-layout="list-pdf"] {
         grid-template-columns: 1fr;
-    }
-
-    .rules-rail {
-        left: -10px;
     }
 
     .rules-panel,
@@ -539,17 +504,17 @@
 
     .chat-shell,
     .pdf-panel {
-        min-height: 760px;
+        min-height: 700px;
     }
 
     #rules-preview {
-        min-height: 560px;
+        min-height: 520px;
     }
 }
 
 @media (max-width: 768px) {
     .robocon-layout {
-        padding: 0 16px 16px;
+        padding: 0 16px 12px;
         gap: 16px;
     }
 
@@ -564,19 +529,8 @@
     }
 
     .chat-shell {
-        min-height: 680px;
+        min-height: 620px;
         border-radius: 20px;
-    }
-
-    .rules-rail {
-        left: -6px;
-    }
-
-    .rail-toggle-btn {
-        width: 46px;
-        height: 124px;
-        border-radius: 14px;
-        font-size: 12px;
     }
 
     .panel-header h2 {
@@ -586,6 +540,10 @@
     .panel-header,
     .pdf-panel-header {
         flex-direction: column;
+    }
+
+    .panel-header-top {
+        width: 100%;
     }
 
     .pdf-actions {
@@ -598,41 +556,40 @@
     }
 
     #rules-preview {
-        min-height: 460px;
+        min-height: 420px;
     }
 }
 </style>
 
 <script>
 const competitionResources = {{ competition_resources|tojson }};
+const configuredDefaultCategory = {{ default_category|tojson }};
+const defaultCategory = competitionResources[configuredDefaultCategory]
+    ? configuredDefaultCategory
+    : (Object.keys(competitionResources)[0] || "");
 
 const state = {
-    category: "national",
-    activeDocIndex: null,
-    rulesCollapsed: false
+    category: defaultCategory,
+    activeDocIndex: null
 };
 
 const layoutEl = document.getElementById("robocon-layout");
 const rulesPanelEl = document.getElementById("rules-panel");
-const rulesRailEl = document.getElementById("rules-rail");
-const railHoverZoneEl = document.getElementById("rail-hover-zone");
 const pdfPanelEl = document.getElementById("pdf-panel");
 const chatPanelEl = document.getElementById("chat-panel");
 const switcherEl = document.getElementById("resource-switcher");
 const officialLinkEl = document.getElementById("resource-official-link");
 const updatedAtEl = document.getElementById("resource-updated-at");
-const noteEl = document.getElementById("resource-note");
 const listEl = document.getElementById("resource-list");
+const syncTimeEl = document.getElementById("resource-sync-time");
 const previewTitleEl = document.getElementById("preview-title");
 const previewSubtitleEl = document.getElementById("preview-subtitle");
 const previewLinkEl = document.getElementById("preview-link");
 const previewFrameEl = document.getElementById("rules-preview");
-const collapseRulesBtnEl = document.getElementById("collapse-rules-btn");
-const expandRulesBtnEl = document.getElementById("expand-rules-btn");
 const backToListBtnEl = document.getElementById("back-to-list-btn");
 
 function getSection() {
-    return competitionResources[state.category];
+    return competitionResources[state.category] || competitionResources[defaultCategory] || { docs: [] };
 }
 
 function getDoc() {
@@ -650,7 +607,6 @@ function openDoc(index) {
 
 function showRulesList() {
     state.activeDocIndex = null;
-    state.rulesCollapsed = false;
     render();
 }
 
@@ -711,40 +667,16 @@ function renderPreview(doc) {
 function renderLayout() {
     const hasActiveDoc = state.activeDocIndex !== null;
 
-    if (hasActiveDoc && state.rulesCollapsed) {
-        layoutEl.dataset.layout = "rail-pdf-chat";
-        rulesPanelEl.hidden = true;
-        railHoverZoneEl.hidden = false;
-        rulesRailEl.hidden = false;
-        pdfPanelEl.hidden = false;
-        chatPanelEl.hidden = false;
-        return;
-    }
-
     if (hasActiveDoc) {
         layoutEl.dataset.layout = "list-pdf";
         rulesPanelEl.hidden = false;
-        railHoverZoneEl.hidden = true;
-        rulesRailEl.hidden = true;
         pdfPanelEl.hidden = false;
         chatPanelEl.hidden = true;
         return;
     }
 
-    if (state.rulesCollapsed) {
-        layoutEl.dataset.layout = "rail-chat";
-        rulesPanelEl.hidden = true;
-        railHoverZoneEl.hidden = false;
-        rulesRailEl.hidden = false;
-        pdfPanelEl.hidden = true;
-        chatPanelEl.hidden = false;
-        return;
-    }
-
     layoutEl.dataset.layout = "list-chat";
     rulesPanelEl.hidden = false;
-    railHoverZoneEl.hidden = true;
-    rulesRailEl.hidden = true;
     pdfPanelEl.hidden = true;
     chatPanelEl.hidden = false;
 }
@@ -756,22 +688,11 @@ function render() {
     officialLinkEl.href = section.official_url;
     officialLinkEl.textContent = {{ official_link_label|tojson }};
     updatedAtEl.textContent = section.updated_at;
-    noteEl.textContent = `${section.description} ${section.update_note}`;
+    syncTimeEl.textContent = `最近同步时间：${section.synced_at || section.updated_at || ""}`;
     renderList(section);
     renderPreview(doc);
-    collapseRulesBtnEl.textContent = state.rulesCollapsed ? "展开列表" : "折叠列表";
     renderLayout();
 }
-
-collapseRulesBtnEl.addEventListener("click", () => {
-    state.rulesCollapsed = !state.rulesCollapsed;
-    render();
-});
-
-expandRulesBtnEl.addEventListener("click", () => {
-    state.rulesCollapsed = false;
-    render();
-});
 
 backToListBtnEl.addEventListener("click", showRulesList);
 
