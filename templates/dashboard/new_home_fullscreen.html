@@ -4,50 +4,15 @@
 
 {% block content %}
 <div class="spark-home">
-    <header class="spark-topbar">
-        <div class="spark-brand">
-            <div class="spark-brand-mark">M</div>
-            <div class="spark-brand-copy">
-                <strong>明月科创教育大模型</strong>
-                <span>Large Model Learning Platform</span>
-            </div>
-        </div>
-
-        <nav class="spark-nav">
-            <a href="{{ url_for('home') }}" class="active">首页</a>
-            <a href="{{ url_for('course_agents') }}">课程广场</a>
-            <a href="{{ url_for('app_comp.course_kd') }}">智能体广场</a>
-            <a href="{{ url_for('his') }}">个人知识库</a>
-            <a href="{{ url_for('chat') }}">学情分析</a>
-        </nav>
-
-        <div class="spark-userbar">
-            <div class="spark-user-pill">
-                <span class="spark-avatar">{{ username[0].upper() }}</span>
-                <span>{{ username }}</span>
-            </div>
-            <a href="{{ url_for('logout') }}" class="spark-link">退出</a>
-        </div>
-    </header>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="spark-flashes">
-        {% for category, message in messages %}
-        <div class="spark-flash {{ category or 'info' }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    {% include "dashboard/_spark_topbar.html" %}
 
     <main class="spark-main">
         <section class="spark-hero">
             <div class="spark-hero-copy">
-                <span class="spark-kicker">课程学习 · 智能体 · 知识图谱 · 学情分析</span>
                 <h1>明月科创教育大模型</h1>
                 <p>
-                    首页不再使用大量厚重卡片堆叠，而是改成更展开、更连续的平铺式布局。
-                    在同一页面中快速进入课程广场、智能问答、知识图谱和实验空间。
+                    融合课程学习、引导式问答、动态知识图谱、个性化推荐与学情分析，
+                    帮助学生更高效学习，帮助教师更精准教学。
                 </p>
 
                 <div class="spark-actions">
@@ -63,30 +28,36 @@
             </div>
         </section>
 
-        <section class="spark-strip">
+        <!-- ===== BEGIN: homepage key metrics strip ===== -->
+        <section class="spark-strip" aria-label="平台关键数据">
             <article class="strip-item">
-                <strong>课程广场</strong>
-                <span>统一展示课程与教学入口</span>
+                <span class="strip-label">对话次数</span>
+                <strong class="strip-value">{{ homepage_stats.total_dialogues }}</strong>
+                <span>记录平台持续陪伴学习与问答交流的活跃度</span>
             </article>
             <article class="strip-item">
-                <strong>智能体广场</strong>
-                <span>聚合问答、辅学与任务代理</span>
+                <span class="strip-label">注册人数</span>
+                <strong class="strip-value">{{ homepage_stats.total_registered_users }}</strong>
+                <span>汇聚正在使用平台开展学习与教学的用户规模</span>
             </article>
             <article class="strip-item">
-                <strong>知识图谱</strong>
-                <span>关联知识点、资源与案例链路</span>
+                <span class="strip-label">课程资源数</span>
+                <strong class="strip-value">{{ homepage_stats.total_course_resources }}</strong>
+                <span>沉淀课程内容、案例资料与教学入口的资源总览</span>
             </article>
             <article class="strip-item">
-                <strong>实验空间</strong>
-                <span>保留开放探索和扩展能力</span>
+                <span class="strip-label">支持竞赛数</span>
+                <strong class="strip-value">{{ homepage_stats.total_competitions }}</strong>
+                <span>覆盖多类竞赛场景，帮助团队高效备赛与训练</span>
             </article>
         </section>
+        <!-- ===== END: homepage key metrics strip ===== -->
 
         <section class="spark-section spark-feature-section" id="feature-showcase">
             <div class="spark-section-heading">
                 <span class="spark-kicker">核心能力</span>
-                <h2>用平铺式分区介绍平台功能</h2>
-                <p>每一块都直接展开，不再用厚边框卡片把页面切得太碎。</p>
+                <h2>围绕学习过程整合平台能力</h2>
+                <p>从课程入口、智能体支持到知识图谱与学情分析，帮助你更顺畅地完成学习与教学活动。</p>
             </div>
 
             <div class="spark-tabs" role="tablist" aria-label="平台功能切换">
@@ -94,82 +65,89 @@
                 <button class="spark-tab" type="button" data-feature-target="feature-course">智能体广场</button>
                 <button class="spark-tab" type="button" data-feature-target="feature-kg">知识图谱</button>
                 <button class="spark-tab" type="button" data-feature-target="feature-analysis">学情分析</button>
-                <button class="spark-tab" type="button" data-feature-target="feature-lab">实验空间</button>
+                <button class="spark-tab" type="button" data-feature-target="feature-lab">个人知识库</button>
             </div>
 
             <div class="spark-feature-stage">
                 <article class="spark-feature active" id="feature-agents">
                     <div class="spark-feature-copy">
-                        <h3>面向课程入口的统一展示页</h3>
-                        <p>用于承接课程主页、资源导航、课程说明和课堂相关的 AI 助手入口。</p>
+                        <h3>课程入口与资源组织</h3>
+                        <p>集中展示课程内容、学习任务与相关资源，作为课程学习的统一入口。</p>
                         <ul>
-                            <li>适合作为课程主页的总入口。</li>
-                            <li>支持把课程资源、任务和智能体集中展示。</li>
-                            <li>便于学生先浏览，再决定进入具体模块。</li>
+                            <li>查看课程结构与学习内容</li>
+                            <li>统一访问课程资源与任务</li>
+                            <li>进入对应课程的 AI 学习支持</li>
                         </ul>
                         <a href="{{ url_for('course_agents') }}" class="spark-inline-link">进入课程广场</a>
                     </div>
-                    <div class="spark-feature-media spark-gradient-agents"></div>
+                    <div class="spark-feature-media spark-feature-image">
+                        <img src="{{ url_for('static', filename='img/课程广场.png') }}" alt="课程广场展示图">
+                    </div>
                 </article>
 
                 <article class="spark-feature" id="feature-course">
                     <div class="spark-feature-copy">
-                        <h3>适合聚合不同场景的学习助手</h3>
-                        <p>把课程问答、任务协作、个性化辅学和专题助手整合到同一个展示区中。</p>
+                        <h3>面向比赛队员的 AI 辅助工具</h3>
+                        <p>帮助新手快速了解比赛、解读官方规则并获取历届经验参考。通过实时规则同步与经验知识库支持，帮助队员更高效地备赛与学习。</p>
                         <ul>
-                            <li>减少用户在多个页面之间来回切换。</li>
-                            <li>让不同类型的智能体统一曝光。</li>
-                            <li>适合作为教学活动的能力入口层。</li>
+                            <li>接入经验知识库</li>
+                            <li>新手成长路径引导</li>
+                            <li>赛事答疑助手</li>
+                            <li>规则智能解读</li>
                         </ul>
                         <a href="{{ url_for('app_comp.course_kd') }}" class="spark-inline-link">进入智能体广场</a>
                     </div>
-                    <div class="spark-feature-media spark-gradient-course"></div>
+                    <div class="spark-feature-media spark-feature-image">
+                        <img src="{{ url_for('static', filename='img/智能体广场.png') }}" alt="智能体广场展示图">
+                    </div>
                 </article>
 
                 <article class="spark-feature" id="feature-kg">
                     <div class="spark-feature-copy">
-                        <h3>把知识点关系直接带到首页</h3>
-                        <p>支持课程知识点、概念依赖、案例链路和教学内容的结构化展示。</p>
+                        <h3>课程知识结构展示</h3>
+                        <p>以图谱形式展示知识点及其关系，帮助理解课程整体结构。</p>
                         <ul>
-                            <li>适合作为首页里的重点能力展示区。</li>
-                            <li>帮助学生更快理解课程知识结构。</li>
-                            <li>也方便教师串联资源与教学设计。</li>
+                            <li>查看知识点之间的关联</li>
+                            <li>辅助理解课程逻辑结构</li>
+                            <li>支持按内容逐步展开</li>
                         </ul>
                         <a href="#kg-showcase" class="spark-inline-link">查看知识图谱</a>
                     </div>
-                    <div class="spark-feature-media spark-gradient-kg"></div>
+                    <div class="spark-feature-media spark-feature-image">
+                        <img src="{{ url_for('static', filename='img/知识图谱.png') }}" alt="知识图谱展示图">
+                    </div>
                 </article>
 
                 <article class="spark-feature" id="feature-analysis">
                     <div class="spark-feature-copy">
-                        <h3>把数据分析能力作为教学支持层</h3>
-                        <p>支持从行为、作业、知识掌握和互动情况中提炼可视化分析结果。</p>
+                        <h3>学习数据与进度分析</h3>
+                        <p>基于学习过程数据，提供进度、掌握情况与问题分析。</p>
                         <ul>
-                            <li>兼顾教师侧洞察与学生侧反馈。</li>
-                            <li>支持结合课程过程数据做分析。</li>
-                            <li>让首页不只是展示，也能承接分析入口。</li>
+                            <li>查看个人或班级学习情况</li>
+                            <li>定位知识或教学薄弱点</li>
+                            <li>为学生与教师提供改进建议参考</li>
                         </ul>
                         <a href="{{ url_for('chat') }}" class="spark-inline-link">进入学情分析</a>
                     </div>
-                    <div class="spark-feature-media spark-feature-video">
-                        <video controls preload="metadata" playsinline poster="{{ url_for('static', filename='img/welcome.c39845a1.png') }}">
-                            <source src="{{ url_for('static', filename='video/明月科创大模型视频.mp4') }}" type="video/mp4">
-                        </video>
+                    <div class="spark-feature-media spark-feature-image">
+                        <img src="{{ url_for('static', filename='img/学情分析.png') }}" alt="学情分析展示图">
                     </div>
                 </article>
 
                 <article class="spark-feature" id="feature-lab">
                     <div class="spark-feature-copy">
-                        <h3>保留探索式学习和扩展实验能力</h3>
-                        <p>用于承接自由实验、个性化探索、作品尝试和非标准学习流程。</p>
+                        <h3>个人学习资料管理</h3>
+                        <p>让每位用户拥有专属学习空间，系统优先引用个人知识库作答，支持公开共享、资源推荐与知识图谱联动。</p>
                         <ul>
-                            <li>让平台具备更开放的延展空间。</li>
-                            <li>支持面向研究和创新的场景扩展。</li>
-                            <li>形成展示区之外的实践闭环。</li>
+                            <li>自动创建独立个人知识库，避免不同用户资料串库</li>
+                            <li>问答时根据用户身份自动匹配个人知识库</li>
+                            <li>支持资料分享，公开资源匿名化进入共享池</li>
                         </ul>
-                        <a href="{{ url_for('his') }}" class="spark-inline-link">进入实验空间</a>
+                        <a href="{{ url_for('his') }}" class="spark-inline-link">进入个人知识库</a>
                     </div>
-                    <div class="spark-feature-media spark-gradient-lab"></div>
+                    <div class="spark-feature-media spark-feature-image">
+                        <img src="{{ url_for('static', filename='img/个人知识库.png') }}" alt="个人知识库展示图">
+                    </div>
                 </article>
             </div>
         </section>
@@ -177,8 +155,8 @@
         <section class="spark-section spark-workspace-section" id="ai-workspace">
             <div class="spark-section-heading">
                 <span class="spark-kicker">AI 对话</span>
-                <h2>直接在首页继续交互</h2>
-                <p>保留对话工作区，但整体放进平铺布局里，不再单独做厚重边框包裹。</p>
+                <h2>通过对话式交互学习</h2>
+                <p>逐步引导思考，规划学习路径。</p>
             </div>
             <div class="spark-embed-frame spark-embed-frame-chat">
                 <iframe
@@ -194,17 +172,11 @@
         <section class="spark-section spark-kg-section" id="kg-showcase">
             <div class="spark-section-heading">
                 <span class="spark-kicker">知识图谱</span>
-                <h2>首页中的课程知识图谱展示</h2>
-                <p>继续保留知识图谱嵌入，但视觉上改成更轻的平铺结构，弱化“框中框”的感觉。</p>
+                <h2>查看课程知识结构</h2>
+                <p>通过课程知识图谱快速理解知识点之间的关联关系，帮助你把握学习路径与重点内容。</p>
             </div>
             <div class="spark-embed-frame spark-embed-frame-kg">
-                <iframe
-                    src="{{ kg_embed_url }}"
-                    frameborder="0"
-                    allowfullscreen
-                    loading="lazy"
-                    title="课程知识图谱展示区"
-                ></iframe>
+                <div class="spark-kg-chart" id="homeKgChart" role="img" aria-label="课程知识图谱展示区"></div>
             </div>
         </section>
     </main>
@@ -322,6 +294,16 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.spark-link-subtle {
+    color: rgba(71, 97, 143, 0.82);
+}
+
+.spark-link-subtle:hover {
+    color: #244173;
 }
 
 .spark-user-pill {
@@ -343,14 +325,18 @@
 }
 
 .spark-avatar {
-    width: 30px;
+    min-width: 44px;
     height: 30px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: #fff;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
     background: linear-gradient(135deg, #6a76ff, #4bc6ef);
 }
 
@@ -555,13 +541,8 @@
     transform: rotate(var(--angle));
 }
 
-.knowledge-map-link.application {
-    background: linear-gradient(90deg, rgba(125, 211, 252, 0.22), rgba(125, 211, 252, 0.04));
-}
-
 .knowledge-center-node,
-.knowledge-category,
-.knowledge-application {
+.knowledge-category {
     position: absolute;
     left: 50%;
     top: 50%;
@@ -598,8 +579,7 @@
     letter-spacing: 0.06em;
 }
 
-.knowledge-category,
-.knowledge-application {
+.knowledge-category {
     transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y)));
 }
 
@@ -623,7 +603,6 @@
     backdrop-filter: blur(10px);
 }
 
-.knowledge-category.is-active .knowledge-category-button,
 .knowledge-category-button:hover,
 .knowledge-category-button:focus-visible {
     transform: scale(1.04);
@@ -631,105 +610,6 @@
     box-shadow: 0 20px 42px rgba(107, 127, 255, 0.18);
     color: var(--primary-deep);
     outline: none;
-}
-
-.knowledge-tooltip-card {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 220px;
-    padding: 16px 16px 14px;
-    border-radius: 24px;
-    border: 1px solid rgba(132, 152, 214, 0.18);
-    background: rgba(255, 255, 255, 0.78);
-    box-shadow: 0 22px 42px rgba(79, 97, 156, 0.12);
-    backdrop-filter: blur(16px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.22s ease, transform 0.22s ease;
-    z-index: 5;
-}
-
-.knowledge-tooltip-card.anchor-top {
-    transform: translate(calc(-50% + var(--card-x)), calc(-100% + var(--card-y) - 14px)) translateY(10px);
-}
-
-.knowledge-tooltip-card.anchor-bottom {
-    transform: translate(calc(-50% + var(--card-x)), calc(0% + var(--card-y) + 14px)) translateY(10px);
-}
-
-.knowledge-tooltip-card.anchor-left {
-    transform: translate(calc(-100% + var(--card-x) - 14px), calc(-50% + var(--card-y))) translateY(10px);
-}
-
-.knowledge-tooltip-card.anchor-right {
-    transform: translate(calc(0% + var(--card-x) + 14px), calc(-50% + var(--card-y))) translateY(10px);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card {
-    opacity: 1;
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-top {
-    transform: translate(calc(-50% + var(--card-x)), calc(-100% + var(--card-y) - 14px)) translateY(0);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-bottom {
-    transform: translate(calc(-50% + var(--card-x)), calc(0% + var(--card-y) + 14px)) translateY(0);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-left {
-    transform: translate(calc(-100% + var(--card-x) - 14px), calc(-50% + var(--card-y))) translateY(0);
-}
-
-.knowledge-category.is-active .knowledge-tooltip-card.anchor-right {
-    transform: translate(calc(0% + var(--card-x) + 14px), calc(-50% + var(--card-y))) translateY(0);
-}
-
-.knowledge-tooltip-title {
-    display: block;
-    margin-bottom: 12px;
-    color: var(--primary-deep);
-    font-size: 14px;
-    font-weight: 700;
-}
-
-.knowledge-tooltip-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.knowledge-tooltip-chip {
-    min-height: 30px;
-    padding: 0 10px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    background: rgba(108, 124, 255, 0.08);
-    border: 1px solid rgba(132, 152, 214, 0.16);
-    color: var(--text);
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-.knowledge-application {
-    z-index: 2;
-}
-
-.knowledge-application-badge {
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(132, 152, 214, 0.14);
-    box-shadow: 0 12px 28px rgba(79, 97, 156, 0.08);
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 600;
-    backdrop-filter: blur(8px);
 }
 
 .knowledge-mobile-shell {
@@ -780,48 +660,6 @@
     cursor: pointer;
 }
 
-.knowledge-mobile-item.is-open .knowledge-mobile-trigger {
-    color: var(--primary-deep);
-}
-
-.knowledge-mobile-chevron {
-    color: var(--muted);
-    transition: transform 0.2s ease;
-}
-
-.knowledge-mobile-item.is-open .knowledge-mobile-chevron {
-    transform: rotate(45deg);
-}
-
-.knowledge-mobile-children {
-    display: none;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 0 18px 18px;
-}
-
-.knowledge-mobile-item.is-open .knowledge-mobile-children {
-    display: flex;
-}
-
-.knowledge-mobile-chip,
-.knowledge-mobile-application {
-    min-height: 32px;
-    padding: 0 10px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    background: rgba(108, 124, 255, 0.08);
-    color: var(--text);
-    font-size: 12px;
-}
-
-.knowledge-mobile-applications {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
 .spark-strip {
     margin-top: 0;
     display: grid;
@@ -849,6 +687,20 @@
 
 .strip-item strong {
     font-size: 20px;
+}
+
+.strip-label {
+    margin-top: 0 !important;
+    font-size: 14px;
+    color: rgba(44, 68, 122, 0.72);
+    letter-spacing: 0.04em;
+}
+
+.strip-value {
+    margin-top: 6px;
+    font-size: clamp(28px, 3vw, 40px) !important;
+    line-height: 1.1;
+    color: var(--ink);
 }
 
 .strip-item span {
@@ -958,48 +810,13 @@
     overflow: hidden;
 }
 
-.spark-feature-video {
-    background: rgba(255, 255, 255, 0.66);
-    border: 1px solid rgba(132, 152, 214, 0.14);
-}
-
-.spark-feature-video video {
+.spark-feature-image img {
     width: 100%;
     height: 100%;
     min-height: 320px;
     display: block;
     object-fit: cover;
-    background: #000;
-}
-
-.spark-gradient-agents {
-    background:
-        radial-gradient(circle at 20% 20%, rgba(92, 110, 255, 0.35), transparent 24%),
-        linear-gradient(135deg, rgba(230, 236, 255, 0.9), rgba(245, 251, 255, 0.98));
-}
-
-.spark-gradient-course {
-    background:
-        radial-gradient(circle at 78% 26%, rgba(72, 220, 245, 0.26), transparent 18%),
-        linear-gradient(135deg, rgba(238, 243, 255, 0.94), rgba(247, 250, 255, 0.98));
-}
-
-.spark-gradient-kg {
-    background:
-        radial-gradient(circle at 50% 50%, rgba(91, 108, 255, 0.24), transparent 22%),
-        linear-gradient(135deg, rgba(237, 242, 255, 0.95), rgba(247, 252, 255, 0.98));
-}
-
-.spark-gradient-analysis {
-    background:
-        radial-gradient(circle at 18% 76%, rgba(100, 211, 255, 0.28), transparent 24%),
-        linear-gradient(135deg, rgba(239, 247, 255, 0.95), rgba(248, 250, 255, 0.98));
-}
-
-.spark-gradient-lab {
-    background:
-        radial-gradient(circle at 78% 22%, rgba(151, 110, 255, 0.22), transparent 20%),
-        linear-gradient(135deg, rgba(241, 244, 255, 0.94), rgba(250, 252, 255, 0.98));
+    object-position: center;
 }
 
 .spark-embed-frame {
@@ -1023,6 +840,25 @@
 
 .spark-embed-frame-kg iframe {
     height: 760px;
+}
+
+.spark-kg-chart {
+    width: 100%;
+    height: 760px;
+    min-height: 520px;
+    background:
+        radial-gradient(circle at 18% 16%, rgba(91, 108, 255, 0.1), transparent 24%),
+        radial-gradient(circle at 82% 22%, rgba(54, 211, 216, 0.1), transparent 22%),
+        #ffffff;
+}
+
+.spark-kg-error {
+    height: 100%;
+    min-height: inherit;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-weight: 700;
 }
 
 @media (max-width: 1280px) {
@@ -1108,7 +944,8 @@
     }
 
     .spark-embed-frame-chat iframe,
-    .spark-embed-frame-kg iframe {
+    .spark-embed-frame-kg iframe,
+    .spark-kg-chart {
         height: 560px;
     }
 }
@@ -1116,6 +953,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const topbar = document.querySelector('.spark-topbar');
@@ -1132,38 +970,25 @@ document.addEventListener('DOMContentLoaded', function () {
         center: 'AI + 机电',
         categories: [
             {
-                id: 'ai',
-                name: '人工智能',
-                children: ['大模型', 'Transformer', '强化学习', '具身智能']
+                id: 'engineering',
+                name: '工程原理'
             },
             {
-                id: 'manufacture',
-                name: '制造技术',
-                children: ['3D打印', 'SolidWorks', 'CNC加工', 'DFM']
+                id: 'robotics',
+                name: '机器人基础'
             },
             {
-                id: 'battery',
-                name: '动力电池',
-                children: ['电源管理', '主控板', '系统集成']
+                id: 'control',
+                name: '控制原理'
             },
             {
-                id: 'motor',
-                name: '电机控制',
-                children: ['电机', 'PID控制', '运动控制', '直流电机']
+                id: 'large-model',
+                name: '大模型应用'
             },
             {
-                id: 'chip',
-                name: '智能芯片',
-                children: ['MCU', 'STM32', 'ESP32', 'minirv处理器']
+                id: 'product-design',
+                name: '产品设计'
             }
-        ],
-        outerApplications: [
-            '无人机技术',
-            '新能源动力',
-            '具身智能',
-            '机器人应用创新',
-            '车联网',
-            '集成芯片与系统应用'
         ]
     };
 
@@ -1172,8 +997,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const desktopRoot = document.getElementById('knowledgeMapDesktop');
     const mobileRoot = document.getElementById('knowledgeMapMobile');
     const compactMedia = window.matchMedia('(max-width: 720px)');
-    let activeCategoryId = null;
-
     tabs.forEach((tab) => {
         tab.addEventListener('click', function () {
             const targetId = this.getAttribute('data-feature-target');
@@ -1198,22 +1021,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    function setActiveCategory(categoryId) {
-        activeCategoryId = categoryId;
-        if (!desktopRoot) return;
-        desktopRoot.querySelectorAll('.knowledge-category').forEach((node) => {
-            node.classList.toggle('is-active', node.dataset.categoryId === categoryId);
-        });
-    }
-
-    function clearActiveCategory() {
-        activeCategoryId = null;
-        if (!desktopRoot) return;
-        desktopRoot.querySelectorAll('.knowledge-category').forEach((node) => {
-            node.classList.remove('is-active');
-        });
-    }
-
     function buildDesktopMap() {
         if (!desktopRoot) return;
         desktopRoot.innerHTML = '';
@@ -1230,32 +1037,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const categoryLayer = document.createElement('div');
         categoryLayer.className = 'knowledge-map-layer';
 
-        const applicationLayer = document.createElement('div');
-        applicationLayer.className = 'knowledge-map-layer';
-
         const center = document.createElement('div');
         center.className = 'knowledge-center-node';
         center.innerHTML = '<div><strong>' + knowledgeMap.center + '</strong><span>课程知识架构</span></div>';
 
-        desktopRoot.append(grid, rings, links, applicationLayer, categoryLayer, center);
+        desktopRoot.append(grid, rings, links, categoryLayer, center);
 
         const categoryRadius = 170;
-        const applicationRadius = 256;
         const angleOffset = -Math.PI / 2;
-        const appOffset = -Math.PI / 2 + Math.PI / 6;
 
         knowledgeMap.categories.forEach((category, index) => {
             const position = getPolarPosition(index, knowledgeMap.categories.length, categoryRadius, angleOffset);
-            const positionLength = Math.hypot(position.x, position.y) || 1;
-            const cardOffsetDistance = 118;
-            const cardOffsetX = (position.x / positionLength) * cardOffsetDistance;
-            const cardOffsetY = (position.y / positionLength) * cardOffsetDistance;
-            let cardAnchor = 'anchor-top';
-            if (Math.abs(position.x) > Math.abs(position.y)) {
-                cardAnchor = position.x > 0 ? 'anchor-right' : 'anchor-left';
-            } else if (position.y > 0) {
-                cardAnchor = 'anchor-bottom';
-            }
 
             const line = document.createElement('div');
             line.className = 'knowledge-map-link';
@@ -1274,55 +1066,8 @@ document.addEventListener('DOMContentLoaded', function () {
             button.className = 'knowledge-category-button';
             button.textContent = category.name;
 
-            const card = document.createElement('div');
-            card.className = 'knowledge-tooltip-card ' + cardAnchor;
-            card.style.setProperty('--card-x', cardOffsetX + 'px');
-            card.style.setProperty('--card-y', cardOffsetY + 'px');
-            card.innerHTML = '<span class="knowledge-tooltip-title">' + category.name + '</span>';
-
-            const chips = document.createElement('div');
-            chips.className = 'knowledge-tooltip-chips';
-            category.children.forEach((child) => {
-                const chip = document.createElement('span');
-                chip.className = 'knowledge-tooltip-chip';
-                chip.textContent = child;
-                chips.appendChild(chip);
-            });
-            card.appendChild(chips);
-
-            function activate() {
-                setActiveCategory(category.id);
-            }
-
-            function deactivate() {
-                if (activeCategoryId !== category.id) return;
-                clearActiveCategory();
-            }
-
-            node.addEventListener('mouseenter', activate);
-            node.addEventListener('mouseleave', deactivate);
-            button.addEventListener('focus', activate);
-            button.addEventListener('blur', deactivate);
-
-            node.append(button, card);
+            node.appendChild(button);
             categoryLayer.appendChild(node);
-        });
-
-        knowledgeMap.outerApplications.forEach((application, index) => {
-            const position = getPolarPosition(index, knowledgeMap.outerApplications.length, applicationRadius, appOffset);
-
-            const line = document.createElement('div');
-            line.className = 'knowledge-map-link application';
-            line.style.setProperty('--length', applicationRadius + 'px');
-            line.style.setProperty('--angle', position.angle + 'rad');
-            links.appendChild(line);
-
-            const node = document.createElement('div');
-            node.className = 'knowledge-application';
-            node.style.setProperty('--x', position.x + 'px');
-            node.style.setProperty('--y', position.y + 'px');
-            node.innerHTML = '<span class="knowledge-application-badge">' + application + '</span>';
-            applicationLayer.appendChild(node);
         });
     }
 
@@ -1334,32 +1079,13 @@ document.addEventListener('DOMContentLoaded', function () {
         shell.className = 'knowledge-mobile-shell';
         shell.innerHTML = '<div class="knowledge-mobile-center"><strong>' + knowledgeMap.center + '</strong><span>按模块查看课程知识主干与应用场景</span></div>';
 
-        knowledgeMap.categories.forEach((category, index) => {
+        knowledgeMap.categories.forEach((category) => {
             const item = document.createElement('div');
-            item.className = 'knowledge-mobile-item' + (index === 0 ? ' is-open' : '');
-            item.innerHTML = '<button type="button" class="knowledge-mobile-trigger"><span>' + category.name + '</span><span class="knowledge-mobile-chevron">+</span></button><div class="knowledge-mobile-children"></div>';
-            const childrenBox = item.querySelector('.knowledge-mobile-children');
-            category.children.forEach((child) => {
-                const chip = document.createElement('span');
-                chip.className = 'knowledge-mobile-chip';
-                chip.textContent = child;
-                childrenBox.appendChild(chip);
-            });
-            item.querySelector('.knowledge-mobile-trigger').addEventListener('click', function () {
-                item.classList.toggle('is-open');
-            });
+            item.className = 'knowledge-mobile-item';
+            item.innerHTML = '<div class="knowledge-mobile-trigger"><span>' + category.name + '</span></div>';
             shell.appendChild(item);
         });
 
-        const applications = document.createElement('div');
-        applications.className = 'knowledge-mobile-applications';
-        knowledgeMap.outerApplications.forEach((application) => {
-            const badge = document.createElement('span');
-            badge.className = 'knowledge-mobile-application';
-            badge.textContent = application;
-            applications.appendChild(badge);
-        });
-        shell.appendChild(applications);
         mobileRoot.appendChild(shell);
     }
 
@@ -1378,6 +1104,106 @@ document.addEventListener('DOMContentLoaded', function () {
         compactMedia.addEventListener('change', renderKnowledgeMap);
     } else if (typeof compactMedia.addListener === 'function') {
         compactMedia.addListener(renderKnowledgeMap);
+    }
+
+    const homeKgChartEl = document.getElementById('homeKgChart');
+    if (homeKgChartEl && window.echarts) {
+        const homeKgChart = echarts.init(homeKgChartEl);
+        const categoryColors = ['#5b6cff', '#22b8cf', '#2f9e44', '#f59f00', '#845ef7', '#e64980'];
+
+        fetch("{{ url_for('static', filename='kg/home_kg.json') }}")
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('知识图谱数据加载失败');
+                }
+                return response.json();
+            })
+            .then((graph) => {
+                const categories = Array.isArray(graph.categories) ? graph.categories : [];
+                const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
+                const links = Array.isArray(graph.links) ? graph.links : [];
+
+                homeKgChart.setOption({
+                    color: categoryColors,
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: function (params) {
+                            if (params.dataType === 'edge') {
+                                return [
+                                    params.data.source + ' → ' + params.data.target,
+                                    params.data.value ? '关系：' + params.data.value : ''
+                                ].filter(Boolean).join('<br>');
+                            }
+                            return [
+                                params.data.name || params.data.id,
+                                params.data.category ? '分类：' + params.data.category : '',
+                                params.data.value ? '权重：' + params.data.value : ''
+                            ].filter(Boolean).join('<br>');
+                        }
+                    },
+                    legend: {
+                        top: 18,
+                        left: 24,
+                        data: categories.map((category) => category.name),
+                        textStyle: {
+                            color: '#66738f'
+                        }
+                    },
+                    series: [
+                        {
+                            name: '首页知识图谱',
+                            type: 'graph',
+                            layout: 'force',
+                            data: nodes,
+                            links: links,
+                            categories: categories,
+                            roam: true,
+                            draggable: true,
+                            focusNodeAdjacency: true,
+                            symbolSize: function (value, params) {
+                                return params.data.symbolSize || Math.max(18, Math.min(72, Number(value) || 28));
+                            },
+                            label: {
+                                show: true,
+                                position: 'right',
+                                formatter: '{b}',
+                                color: '#1f2c44',
+                                fontSize: 12
+                            },
+                            edgeLabel: {
+                                show: false
+                            },
+                            lineStyle: {
+                                color: 'source',
+                                curveness: 0.16,
+                                opacity: 0.32,
+                                width: 1
+                            },
+                            emphasis: {
+                                focus: 'adjacency',
+                                lineStyle: {
+                                    opacity: 0.78,
+                                    width: 2
+                                }
+                            },
+                            force: {
+                                repulsion: 210,
+                                gravity: 0.08,
+                                edgeLength: [70, 160],
+                                layoutAnimation: true
+                            }
+                        }
+                    ]
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                homeKgChartEl.innerHTML = '<div class="spark-kg-error">知识图谱暂时无法加载</div>';
+            });
+
+        window.addEventListener('resize', function () {
+            homeKgChart.resize();
+        });
     }
 });
 </script>

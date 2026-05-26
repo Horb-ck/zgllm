@@ -52,7 +52,7 @@ from utils.usage_analytics import (
 from database_mongo import db, user_sessions_collection
 from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL,FASTGPT_MONGO_URI,ANALYTICS_ACCESS_KEY
 from app_kg import app_kg
-from app_comp import app_comp
+from app_comp import app_comp, agents_kd
 from study_situation_LLM import study_situation_LLM
 from study_situation_canvas import study_situation_canvas
 
@@ -163,6 +163,8 @@ ed_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=h26F3
 he_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=llaiuXe8HwjymvXjkfpiLdhr&studentUid="
 rb_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=d15FrTplAcL52KMK3oKFmzRP&studentUid="
 pd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=jwv1RfhutIzIxvM8o6Ubgij3&studentUid="
+pm_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=pgTOHEGASrW4VgImEp9dtX1c&studentUid="
+lmpa_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=hP0Nptl04DfkZQFLTrKhjGjU&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
@@ -227,7 +229,7 @@ agents = [
     },
     { 
         "id": 7,
-        "name": "机器人基础",
+        "name": "机器人数学基础",
         "description": "掌握机器人数学核心理论，实现算法设计与工程落地的全链路应用。",
         "url": rm_agent_class_url,
         "image_url": "/static/img/rm.jpg"
@@ -308,6 +310,20 @@ agents = [
         "description": "经历完整产品创新流程，培养设计思维与原型制作综合能力。",
         "url": pd_agent_class_url,
         "image_url": "/static/img/pd.png"
+    },
+    {
+        "id": 19,
+        "name": "产品制造",
+        "description": "聚焦齿轮全流程制造，系统学习材料选择、成形工艺等核心技术。",
+        "url": pm_agent_class_url,
+        "image_url": "/static/img/pm.png"
+    },
+    {
+        "id": 20,
+        "name": "大模型原理及应用",
+        "description": "系统掌握大模型构建、微调与智能体开发核心技术。",
+        "url": lmpa_agent_class_url,
+        "image_url": "/static/img/lmpa.png"
     }
 ]
 
@@ -316,11 +332,12 @@ agents = [
 COURSES_LIST = [
     "定量工程设计方法", "自动控制原理", "程序设计实践", 
     "移动机器人应用与开发", "线性代数",
-    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计","机器人动力学与控制",
-    # 新增后三行
+    "机器人基础", "概率论与数理统计", "人类文明史", "科技发展史","软件设计",
+    # 新增后四行
     "机器人动力学与控制", "无人机飞控技术", "信号与系统", 
     "工程原理", "工程设计", "工效学", 
-    "机器人基础", "产品设计"
+    "机器人基础", "产品设计",
+    "产品制造", "大模型原理及应用"
 ]
 
 # 允许的学期ID列表
@@ -675,8 +692,8 @@ def process_user_courses(username, role, sis_id):
 # 路由
 @app.route('/')
 def index():
-    if 'user_email' in session:
-        return redirect(url_for('new_chat'))
+    if session.get('username'):
+        return redirect(url_for('home'))
     return redirect(url_for('login'))
 
 
@@ -705,7 +722,7 @@ def login():
                 session['user_courses'] = user_courses
                 session['current_course'] = current_course
                 flash('登录成功', 'success')
-                return redirect(url_for('new_chat'))
+                return redirect(url_for('home'))
             else:
                 print("error")
                 flash('用户名或密码错误，请重试！', 'danger')
@@ -932,7 +949,7 @@ def register():
                 meta={"register_source": "email_verification"},
             )
             refresh_online_user(db, username, role, request)
-            return redirect(url_for('new_chat'))
+            return redirect(url_for('home'))
 
     return render_template('auth/register.html', form_data=form_data)
 
@@ -1045,11 +1062,29 @@ def _build_new_home_context():
             kg_mode = 'student'
         kg_embed_url = url_for('kg_page', course_id=showcase_agent['id'], mode=kg_mode)
 
+    total_registered_users = 0
+    try:
+        with closing(get_conn()) as conn, conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM student")
+            result = cursor.fetchone()
+            total_registered_users = int((result or [0])[0] or 0)
+    except Exception as exc:
+        print(f"获取首页注册人数失败: {exc}")
+
+    dialogue_stats = get_fastgpt_super_teacher_question_stats()
+    homepage_stats = {
+        'total_dialogues': dialogue_stats.get('total_questions_all_time', 0),
+        'total_registered_users': total_registered_users,
+        'total_course_resources': len(agents),
+        'total_competitions': len(agents_kd),
+    }
+
     return {
         'username': username,
         'role': role,
         'embed_url': new_chat_url,
         'kg_embed_url': kg_embed_url,
+        'homepage_stats': homepage_stats,
     }
 
 

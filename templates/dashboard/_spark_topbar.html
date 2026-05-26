@@ -1,0 +1,297 @@
+<header class="spark-topbar">
+    <div class="spark-brand">
+        <div class="spark-brand-mark">M</div>
+        <div class="spark-brand-copy">
+            <strong>明月科创教育大模型</strong>
+            <span>Large Model Learning Platform</span>
+        </div>
+    </div>
+
+    <nav class="spark-nav" aria-label="仪表盘导航">
+        <a href="{{ url_for('home') }}" class="{% if request.path == url_for('home') %}active{% endif %}">首页</a>
+        <a href="{{ url_for('course_agents') }}" class="{% if request.path == url_for('course_agents') or request.endpoint == 'view_agent' %}active{% endif %}">课程广场</a>
+        <a href="{{ url_for('app_comp.course_kd') }}" class="{% if request.path == url_for('app_comp.course_kd') or request.endpoint in ['app_comp.view_kd', 'app_comp.view_competition_chat', 'app_comp.view_robocon_main_chat'] %}active{% endif %}">智能体广场</a>
+        <a href="{{ url_for('his') }}" class="{% if request.path == url_for('his') %}active{% endif %}">个人知识库</a>
+        <a href="{{ url_for('chat') }}" class="{% if request.path == url_for('chat') or request.endpoint in ['student_learning_analysis', 'teacher_learning_analysis', 'study_situation'] %}active{% endif %}">学情分析</a>
+    </nav>
+
+    <div class="spark-userbar">
+        <div class="spark-user-pill">
+            <span class="spark-avatar">{{ '教师' if role == 'teacher' else '学生' }}</span>
+            <span>{{ username }}</span>
+        </div>
+        <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2" target="_blank" rel="noopener noreferrer" class="spark-link spark-link-subtle">意见反馈</a>
+        <a href="{{ url_for('logout') }}" class="spark-link">退出</a>
+    </div>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="spark-flashes">
+    {% for category, message in messages %}
+    <div class="spark-flash {{ category or 'info' }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<style>
+.spark-dashboard-page {
+    --bg: #f3f6ff;
+    --surface: rgba(255, 255, 255, 0.76);
+    --line: rgba(132, 152, 214, 0.18);
+    --text: #1f2c44;
+    --muted: #66738f;
+    --primary: #5b6cff;
+    --primary-deep: #4250db;
+    --shadow-soft: 0 18px 50px rgba(73, 97, 153, 0.08);
+    min-height: 100vh;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 18% 10%, rgba(103, 115, 255, 0.15), transparent 24%),
+        radial-gradient(circle at 78% 18%, rgba(62, 212, 244, 0.12), transparent 20%),
+        linear-gradient(180deg, #fcfdff 0%, var(--bg) 100%);
+}
+
+.spark-dashboard-page .spark-topbar,
+.spark-dashboard-page .spark-dashboard-main,
+.spark-dashboard-page .spark-flashes {
+    width: min(1600px, calc(100% - 64px));
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.spark-dashboard-page .spark-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    min-height: 84px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 28px;
+    align-items: center;
+    padding: 0 22px;
+    border: 1px solid transparent;
+    border-top: none;
+    border-radius: 0 0 28px 28px;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: blur(0);
+    transition: background 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, backdrop-filter 0.22s ease;
+}
+
+.spark-dashboard-page .spark-topbar.is-scrolled,
+.spark-dashboard-page .spark-topbar:hover {
+    border-color: rgba(132, 152, 214, 0.12);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 14px 30px rgba(79, 97, 156, 0.06);
+    backdrop-filter: blur(12px);
+}
+
+.spark-dashboard-page .spark-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.spark-dashboard-page .spark-brand-mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #4b78ff, #36d3d8);
+}
+
+.spark-dashboard-page .spark-brand-copy strong {
+    display: block;
+    font-size: 20px;
+}
+
+.spark-dashboard-page .spark-brand-copy span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.spark-dashboard-page .spark-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 28px;
+}
+
+.spark-dashboard-page .spark-nav a,
+.spark-dashboard-page .spark-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s ease;
+}
+
+.spark-dashboard-page .spark-nav a.active,
+.spark-dashboard-page .spark-nav a:hover,
+.spark-dashboard-page .spark-link:hover {
+    color: var(--primary-deep);
+}
+
+.spark-dashboard-page .spark-userbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.spark-dashboard-page .spark-link-subtle {
+    color: rgba(71, 97, 143, 0.82);
+}
+
+.spark-dashboard-page .spark-user-pill {
+    min-height: 44px;
+    padding: 0 16px 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.46);
+    border: 1px solid rgba(132, 152, 214, 0.1);
+    transition: background 0.22s ease, border-color 0.22s ease;
+}
+
+.spark-dashboard-page .spark-topbar.is-scrolled .spark-user-pill,
+.spark-dashboard-page .spark-topbar:hover .spark-user-pill {
+    background: rgba(246, 248, 255, 0.96);
+    border-color: rgba(132, 152, 214, 0.14);
+}
+
+.spark-dashboard-page .spark-avatar {
+    min-width: 44px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #6a76ff, #4bc6ef);
+}
+
+.spark-dashboard-page .spark-flashes {
+    padding-top: 12px;
+}
+
+.spark-dashboard-page .spark-flash {
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+}
+
+.spark-dashboard-page .spark-dashboard-main {
+    padding: 18px 0 72px;
+}
+
+.spark-dashboard-page > .spark-dashboard-main > .dashboard-container {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: auto;
+    display: block;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: visible;
+}
+
+.spark-dashboard-page .main-content {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 28px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(14px);
+    overflow: visible;
+}
+
+.spark-dashboard-page .page-header {
+    margin-bottom: 24px;
+}
+
+.spark-dashboard-page .page-header h1,
+.spark-dashboard-page .spark-page-title {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1.12;
+    letter-spacing: 0;
+}
+
+.spark-dashboard-page .page-header p {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 16px;
+}
+
+.spark-dashboard-page #main-iframe {
+    min-height: 620px;
+    height: calc(100vh - 230px);
+    border-radius: 20px;
+    background: #fff;
+}
+
+@media (max-width: 920px) {
+    .spark-dashboard-page .spark-topbar {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 18px 0;
+    }
+
+    .spark-dashboard-page .spark-nav {
+        justify-content: flex-start;
+        gap: 18px;
+    }
+
+    .spark-dashboard-page .spark-userbar {
+        justify-content: space-between;
+    }
+
+    .spark-dashboard-page .spark-dashboard-main,
+    .spark-dashboard-page .spark-topbar,
+    .spark-dashboard-page .spark-flashes {
+        width: min(100% - 28px, 1600px);
+    }
+
+    .spark-dashboard-page .main-content {
+        padding: 18px;
+        border-radius: 22px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const topbar = document.querySelector('.spark-dashboard-page .spark-topbar');
+    function syncTopbarState() {
+        if (!topbar) return;
+        topbar.classList.toggle('is-scrolled', window.scrollY > 8);
+    }
+    syncTopbarState();
+    window.addEventListener('scroll', syncTopbarState, { passive: true });
+});
+</script>

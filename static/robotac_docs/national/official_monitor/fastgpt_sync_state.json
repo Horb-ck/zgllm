@@ -1,0 +1,545 @@
+{
+  "dataset_id": "69ba94c8799878a22bcaf349",
+  "items": [
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则（v1.1）.pdf",
+      "collection_id": "6a0fc4fcb4edc71b119b2970",
+      "date": "2026-04-13",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则",
+      "track_key": "ROBOTAC|AIROBOTIC创新挑战赛",
+      "version_text": "V1.1",
+      "semantic_tags": [
+        "ROBOTAC",
+        "AIROBOTIC创新挑战赛",
+        "挑战赛",
+        "创新挑战赛",
+        "规则",
+        "V1.1"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "AIROBOTIC创新挑战赛",
+        "挑战赛",
+        "创新挑战赛",
+        "规则",
+        "V1.1",
+        "创新挑战赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgvPiszwYopPrs1QI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%20AIROBOTIC%E5%88%9B%E6%96%B0%E6%8C%91%E6%88%98%E8%B5%9B%E8%A7%84%E5%88%99%EF%BC%88v1.1%EF%BC%89.pdf&v=1777024060",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:02"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则（v1.1）.pdf（问答对）",
+      "source_filename": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则（v1.1）.pdf",
+      "collection_id": "6a0fc4fdb4edc71b119b299d",
+      "date": "2026-04-13",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则",
+      "track_key": "ROBOTAC|AIROBOTIC创新挑战赛",
+      "version_text": "V1.1",
+      "semantic_tags": [
+        "ROBOTAC",
+        "AIROBOTIC创新挑战赛",
+        "挑战赛",
+        "创新挑战赛",
+        "规则",
+        "V1.1"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "AIROBOTIC创新挑战赛",
+        "挑战赛",
+        "创新挑战赛",
+        "规则",
+        "V1.1",
+        "创新挑战赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgvPiszwYopPrs1QI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%20AIROBOTIC%E5%88%9B%E6%96%B0%E6%8C%91%E6%88%98%E8%B5%9B%E8%A7%84%E5%88%99%EF%BC%88v1.1%EF%BC%89.pdf&v=1777024060",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:02"
+    },
+    {
+      "filename": "全国大学生机器人大赛 ROBOTAC 数字仿真挑战赛比赛规则.pdf",
+      "collection_id": "6a0fc4fdb4edc71b119b29ce",
+      "date": "2026-03-31",
+      "title": "第二十五届全国大学生机器人大赛 ROBOTAC 数字仿真挑战赛比赛规则——智能驾驶仿真（V1.0）",
+      "track_key": "ROBOTAC|数字仿真挑战赛",
+      "version_text": "V1.0",
+      "semantic_tags": [
+        "ROBOTAC",
+        "数字仿真挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.0"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "数字仿真挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.0",
+        "数字仿真挑战赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgouuszgYogPqblQQ.pdf?f=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%20ROBOTAC%20%E6%95%B0%E5%AD%97%E4%BB%BF%E7%9C%9F%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99.pdf&v=1774925218",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:02"
+    },
+    {
+      "filename": "全国大学生机器人大赛 ROBOTAC 数字仿真挑战赛比赛规则.pdf（问答对）",
+      "source_filename": "全国大学生机器人大赛 ROBOTAC 数字仿真挑战赛比赛规则.pdf",
+      "collection_id": "6a0fc4fdb4edc71b119b29fb",
+      "date": "2026-03-31",
+      "title": "第二十五届全国大学生机器人大赛 ROBOTAC 数字仿真挑战赛比赛规则——智能驾驶仿真（V1.0）",
+      "track_key": "ROBOTAC|数字仿真挑战赛",
+      "version_text": "V1.0",
+      "semantic_tags": [
+        "ROBOTAC",
+        "数字仿真挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.0"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "数字仿真挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.0",
+        "数字仿真挑战赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgouuszgYogPqblQQ.pdf?f=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%20ROBOTAC%20%E6%95%B0%E5%AD%97%E4%BB%BF%E7%9C%9F%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99.pdf&v=1774925218",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:02"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则足式机器人挑战赛(V1.1).pdf",
+      "collection_id": "6a0fc4fdb4edc71b119b2a2c",
+      "date": "2026-01-06",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则——足式机器人挑战赛（V1.0）",
+      "track_key": "ROBOTAC|足式机器人挑战赛",
+      "version_text": "V1.1",
+      "semantic_tags": [
+        "ROBOTAC",
+        "足式机器人挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.1"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "足式机器人挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.1",
+        "挑战赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg0vmszwYotKDyaQ.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E8%B6%B3%E5%BC%8F%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%8C%91%E6%88%98%E8%B5%9B%28V1.1%29.pdf&v=1777024210",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:03"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则足式机器人挑战赛(V1.1).pdf（问答对）",
+      "source_filename": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则足式机器人挑战赛(V1.1).pdf",
+      "collection_id": "6a0fc4feb4edc71b119b2a5a",
+      "date": "2026-01-06",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则——足式机器人挑战赛（V1.0）",
+      "track_key": "ROBOTAC|足式机器人挑战赛",
+      "version_text": "V1.1",
+      "semantic_tags": [
+        "ROBOTAC",
+        "足式机器人挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.1"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "足式机器人挑战赛",
+        "挑战赛",
+        "规则",
+        "V1.1",
+        "挑战赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg0vmszwYotKDyaQ.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E8%B6%B3%E5%BC%8F%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%8C%91%E6%88%98%E8%B5%9B%28V1.1%29.pdf&v=1777024210",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:03"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC三维数字设计赛规则(v1.1).pdf",
+      "collection_id": "6a0fc4feb4edc71b119b2a8b",
+      "date": "2025-12-08",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC设计赛比赛规则——三维数字设计赛",
+      "track_key": "ROBOTAC|三维数字设计赛",
+      "version_text": "V1.1",
+      "semantic_tags": [
+        "ROBOTAC",
+        "三维数字设计赛",
+        "设计赛",
+        "规则",
+        "V1.1"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "三维数字设计赛",
+        "设计赛",
+        "规则",
+        "V1.1",
+        "设计赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg0PeszwYopYnMnwE.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E4%B8%89%E7%BB%B4%E6%95%B0%E5%AD%97%E8%AE%BE%E8%AE%A1%E8%B5%9B%E8%A7%84%E5%88%99%28v1.1%29.pdf&v=1777023953",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:04"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC三维数字设计赛规则(v1.1).pdf（问答对）",
+      "source_filename": "第二十五届全国大学生机器人大赛ROBOTAC三维数字设计赛规则(v1.1).pdf",
+      "collection_id": "6a0fc4feb4edc71b119b2ab8",
+      "date": "2025-12-08",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC设计赛比赛规则——三维数字设计赛",
+      "track_key": "ROBOTAC|三维数字设计赛",
+      "version_text": "V1.1",
+      "semantic_tags": [
+        "ROBOTAC",
+        "三维数字设计赛",
+        "设计赛",
+        "规则",
+        "V1.1"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "三维数字设计赛",
+        "设计赛",
+        "规则",
+        "V1.1",
+        "设计赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg0PeszwYopYnMnwE.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E4%B8%89%E7%BB%B4%E6%95%B0%E5%AD%97%E8%AE%BE%E8%AE%A1%E8%B5%9B%E8%A7%84%E5%88%99%28v1.1%29.pdf&v=1777023953",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:04"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则人形功夫搏击赛（大型组）(v2.0).pdf",
+      "collection_id": "6a0fc4ffb4edc71b119b2aeb",
+      "date": "2025-11-17",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（大型组）（v1.0）",
+      "track_key": "ROBOTAC|人形功夫搏击赛（大型组）",
+      "version_text": "V2.0",
+      "semantic_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（大型组）",
+        "对抗赛",
+        "规则",
+        "V2.0"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（大型组）",
+        "对抗赛",
+        "规则",
+        "V2.0",
+        "对抗赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgi-mszwYo7MeVYw.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E4%BA%BA%E5%BD%A2%E5%8A%9F%E5%A4%AB%E6%90%8F%E5%87%BB%E8%B5%9B%EF%BC%88%E5%A4%A7%E5%9E%8B%E7%BB%84%EF%BC%89%28v2.0%29.pdf&v=1777024139",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:04"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则人形功夫搏击赛（大型组）(v2.0).pdf（问答对）",
+      "source_filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则人形功夫搏击赛（大型组）(v2.0).pdf",
+      "collection_id": "6a0fc4ffb4edc71b119b2b19",
+      "date": "2025-11-17",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（大型组）（v1.0）",
+      "track_key": "ROBOTAC|人形功夫搏击赛（大型组）",
+      "version_text": "V2.0",
+      "semantic_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（大型组）",
+        "对抗赛",
+        "规则",
+        "V2.0"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（大型组）",
+        "对抗赛",
+        "规则",
+        "V2.0",
+        "对抗赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgi-mszwYo7MeVYw.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E4%BA%BA%E5%BD%A2%E5%8A%9F%E5%A4%AB%E6%90%8F%E5%87%BB%E8%B5%9B%EF%BC%88%E5%A4%A7%E5%9E%8B%E7%BB%84%EF%BC%89%28v2.0%29.pdf&v=1777024139",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:04"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则【深蓝使命v1.01】.pdf",
+      "collection_id": "6a0fc500b4edc71b119b2b4d",
+      "date": "2025-11-17",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-深蓝使命（1.01)",
+      "track_key": "ROBOTAC|深蓝使命",
+      "version_text": "V1.01",
+      "semantic_tags": [
+        "ROBOTAC",
+        "深蓝使命",
+        "对抗赛",
+        "规则",
+        "V1.01"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "深蓝使命",
+        "对抗赛",
+        "规则",
+        "V1.01",
+        "对抗赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgxLC1yQYo7PyooQI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E3%80%90%E6%B7%B1%E8%93%9D%E4%BD%BF%E5%91%BDv1.01%E3%80%91.pdf&v=1764579397",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:05"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则【深蓝使命v1.01】.pdf（问答对）",
+      "source_filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则【深蓝使命v1.01】.pdf",
+      "collection_id": "6a0fc500b4edc71b119b2b7e",
+      "date": "2025-11-17",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-深蓝使命（1.01)",
+      "track_key": "ROBOTAC|深蓝使命",
+      "version_text": "V1.01",
+      "semantic_tags": [
+        "ROBOTAC",
+        "深蓝使命",
+        "对抗赛",
+        "规则",
+        "V1.01"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "深蓝使命",
+        "对抗赛",
+        "规则",
+        "V1.01",
+        "对抗赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgxLC1yQYo7PyooQI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E3%80%90%E6%B7%B1%E8%93%9D%E4%BD%BF%E5%91%BDv1.01%E3%80%91.pdf&v=1764579397",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:06"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0).pdf",
+      "collection_id": "6a0fc501b4edc71b119b2bae",
+      "date": "2025-11-17",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0)",
+      "track_key": "ROBOTAC|人形功夫搏击赛（小型组）",
+      "version_text": "V1.0",
+      "semantic_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（小型组）",
+        "对抗赛",
+        "规则",
+        "V1.0"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（小型组）",
+        "对抗赛",
+        "规则",
+        "V1.0",
+        "对抗赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg9P-qyAYotObCogc.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99-%E4%BA%BA%E5%BD%A2%E5%8A%9F%E5%A4%AB%E6%90%8F%E5%87%BB%E8%B5%9B%EF%BC%88%E5%B0%8F%E5%9E%8B%E7%BB%84%EF%BC%89%EF%BC%88v1.0%29.pdf&v=1763360756",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:06"
+    },
+    {
+      "filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0).pdf（问答对）",
+      "source_filename": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0).pdf",
+      "collection_id": "6a0fc501b4edc71b119b2bf0",
+      "date": "2025-11-17",
+      "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0)",
+      "track_key": "ROBOTAC|人形功夫搏击赛（小型组）",
+      "version_text": "V1.0",
+      "semantic_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（小型组）",
+        "对抗赛",
+        "规则",
+        "V1.0"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "人形功夫搏击赛（小型组）",
+        "对抗赛",
+        "规则",
+        "V1.0",
+        "对抗赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg9P-qyAYotObCogc.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99-%E4%BA%BA%E5%BD%A2%E5%8A%9F%E5%A4%AB%E6%90%8F%E5%87%BB%E8%B5%9B%EF%BC%88%E5%B0%8F%E5%9E%8B%E7%BB%84%EF%BC%89%EF%BC%88v1.0%29.pdf&v=1763360756",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:06"
+    },
+    {
+      "filename": "第二十四届全国大学生机器人大赛 ROBOTAC 设计赛——竞技机器人方案设计赛规则20250331.pdf",
+      "collection_id": "6a0fc501b4edc71b119b2c54",
+      "date": "2025-03-31",
+      "title": "第二十四届全国大学生机器人大赛 ROBOTAC 设计赛——竞技机器人方案设计赛规则",
+      "track_key": "ROBOTAC|竞技机器人方案设计赛",
+      "version_text": null,
+      "semantic_tags": [
+        "ROBOTAC",
+        "竞技机器人方案设计赛",
+        "设计赛",
+        "规则"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "竞技机器人方案设计赛",
+        "设计赛",
+        "规则",
+        "设计赛规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgl-mrvwYokuaYrwI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E5%9B%9B%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%20ROBOTAC%20%E8%AE%BE%E8%AE%A1%E8%B5%9B%E2%80%94%E2%80%94%E7%AB%9E%E6%8A%80%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1%E8%B5%9B%E8%A7%84%E5%88%9920250331.pdf&v=1743453335",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:07"
+    },
+    {
+      "filename": "第二十四届全国大学生机器人大赛 ROBOTAC 设计赛——竞技机器人方案设计赛规则20250331.pdf（问答对）",
+      "source_filename": "第二十四届全国大学生机器人大赛 ROBOTAC 设计赛——竞技机器人方案设计赛规则20250331.pdf",
+      "collection_id": "6a0fc502b4edc71b119b2c81",
+      "date": "2025-03-31",
+      "title": "第二十四届全国大学生机器人大赛 ROBOTAC 设计赛——竞技机器人方案设计赛规则",
+      "track_key": "ROBOTAC|竞技机器人方案设计赛",
+      "version_text": null,
+      "semantic_tags": [
+        "ROBOTAC",
+        "竞技机器人方案设计赛",
+        "设计赛",
+        "规则"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "竞技机器人方案设计赛",
+        "设计赛",
+        "规则",
+        "设计赛规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgl-mrvwYokuaYrwI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E5%9B%9B%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%20ROBOTAC%20%E8%AE%BE%E8%AE%A1%E8%B5%9B%E2%80%94%E2%80%94%E7%AB%9E%E6%8A%80%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1%E8%B5%9B%E8%A7%84%E5%88%9920250331.pdf&v=1743453335",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:07"
+    },
+    {
+      "filename": "第二十四届全国大学生机器人大赛ROBOTAC“长城烽火”比赛规则V1.02.pdf",
+      "collection_id": "6a0fc502b4edc71b119b2cb8",
+      "date": "2025-03-04",
+      "title": "第二十四届全国大学生机器人大赛ROBOTAC比赛规则V1.02",
+      "track_key": "ROBOTAC|长城烽火",
+      "version_text": "V1.02",
+      "semantic_tags": [
+        "ROBOTAC",
+        "长城烽火",
+        "规则",
+        "V1.02"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "长城烽火",
+        "规则",
+        "V1.02",
+        "规则",
+        "最新版本"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgv_OZvgYo3pWNuwE.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E5%9B%9B%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E2%80%9C%E9%95%BF%E5%9F%8E%E7%83%BD%E7%81%AB%E2%80%9D%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99V1.02.pdf&v=1741058495",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:08"
+    },
+    {
+      "filename": "第二十四届全国大学生机器人大赛ROBOTAC“长城烽火”比赛规则V1.02.pdf（问答对）",
+      "source_filename": "第二十四届全国大学生机器人大赛ROBOTAC“长城烽火”比赛规则V1.02.pdf",
+      "collection_id": "6a0fc503b4edc71b119b2d10",
+      "date": "2025-03-04",
+      "title": "第二十四届全国大学生机器人大赛ROBOTAC比赛规则V1.02",
+      "track_key": "ROBOTAC|长城烽火",
+      "version_text": "V1.02",
+      "semantic_tags": [
+        "ROBOTAC",
+        "长城烽火",
+        "规则",
+        "V1.02"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "长城烽火",
+        "规则",
+        "V1.02",
+        "规则",
+        "最新版本",
+        "问答对提取"
+      ],
+      "is_latest_version": true,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgv_OZvgYo3pWNuwE.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E5%9B%9B%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E2%80%9C%E9%95%BF%E5%9F%8E%E7%83%BD%E7%81%AB%E2%80%9D%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99V1.02.pdf&v=1741058495",
+      "training_type": "qa",
+      "uploaded_at": "2026-05-22 10:58:09"
+    },
+    {
+      "filename": "全国大学生机器人大赛章程.pdf",
+      "collection_id": "6a0fc503b4edc71b119b2d41",
+      "date": "2022-09-30",
+      "title": "【比赛章程】全国大学生机器人大赛章程",
+      "track_key": "ROBOTAC|章程",
+      "version_text": null,
+      "semantic_tags": [
+        "ROBOTAC",
+        "章程"
+      ],
+      "effective_tags": [
+        "ROBOTAC",
+        "章程",
+        "章程",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAghJG1nQYo_6njCw.pdf?f=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%E7%AB%A0%E7%A8%8B.pdf&v=1703483327",
+      "training_type": "chunk",
+      "uploaded_at": "2026-05-22 10:58:09"
+    }
+  ]
+}

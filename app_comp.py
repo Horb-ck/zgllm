@@ -64,9 +64,26 @@ ROBOCON_FASTGPT_DATASET_ID = os.environ.get(
 ROBOCON_FASTGPT_TIMEOUT = 120
 
 ROBOTAC_HOME_URL = "https://www.robotac.cn/"
+ROBOTAC_NEWS_URL = "https://www.robotac.cn/h-col-104.html"
 ROBOTAC_INTRO_URL = "https://www.robotac.cn/h-col-141.html"
 ROBOTAC_CACHE_TTL_SECONDS = 6 * 60 * 60
 ROBOTAC_REQUEST_TIMEOUT = 12
+ROBOTAC_VERIFY_SSL = False
+ROBOTAC_BASE_DIR = ROBOCON_BASE_DIR
+ROBOTAC_DOC_DIR = os.path.join(
+    ROBOTAC_BASE_DIR,
+    "static",
+    "robotac_docs",
+    "national",
+    "official_monitor"
+)
+ROBOTAC_STATE_PATH = os.path.join(ROBOTAC_DOC_DIR, "resources_state.json")
+ROBOTAC_FASTGPT_SYNC_STATE_PATH = os.path.join(ROBOTAC_DOC_DIR, "fastgpt_sync_state.json")
+ROBOTAC_FASTGPT_DATASET_ID = os.environ.get(
+    "FASTGPT_ROBOTAC_DATASET_ID",
+    "69ba94c8799878a22bcaf349"
+)
+ROBOTAC_FASTGPT_TIMEOUT = 120
 
 
 agents_kd = [
@@ -74,7 +91,7 @@ agents_kd = [
         "id": 1,
         "name": "Robocon-主赛",
         "description": "Robocon 主赛智能体，聚焦赛题解析、方案设计与实战复盘。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=invnfCJLBhZmIM8fLdj0E0SN",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=zySpIiRuWbyjrqqvmqu32GRj",
         "image_url": "/static/img/robocon_logo.png"
     },
     {
@@ -319,6 +336,28 @@ def requests_get_robocon(url):
     return requests.get(url, **kwargs)
 
 
+def requests_get_robotac(url):
+    kwargs = {
+        "headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/131.0.0.0 Safari/537.36"
+            )
+        },
+        "timeout": ROBOTAC_REQUEST_TIMEOUT
+    }
+    if (
+        url.startswith("https://www.robotac.cn/")
+        or url.startswith("http://www.robotac.cn/")
+        or url.startswith("https://robotac.cn/")
+        or url.startswith("http://robotac.cn/")
+    ) and not ROBOTAC_VERIFY_SSL:
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        kwargs["verify"] = False
+    return requests.get(url, **kwargs)
+
+
 def is_relevant_robocon_title(title):
     text = normalize_text(title)
     if not text:
@@ -380,6 +419,104 @@ def relative_static_path(local_path):
 
 def ensure_robocon_storage():
     os.makedirs(ROBOCON_DOC_DIR, exist_ok=True)
+
+
+def ensure_robotac_storage():
+    os.makedirs(ROBOTAC_DOC_DIR, exist_ok=True)
+
+
+def load_robotac_resources_state():
+    if not os.path.exists(ROBOTAC_STATE_PATH):
+        return None
+    try:
+        with open(ROBOTAC_STATE_PATH, "r", encoding="utf-8") as file_obj:
+            return json.load(file_obj)
+    except Exception as exc:
+        print(f"读取 Robotac 本地缓存失败: {exc}")
+        return None
+
+
+def save_robotac_resources_state(resources):
+    ensure_robotac_storage()
+    with open(ROBOTAC_STATE_PATH, "w", encoding="utf-8") as file_obj:
+        json.dump(resources, file_obj, ensure_ascii=False, indent=2)
+
+
+def load_robotac_fastgpt_sync_state():
+    if not os.path.exists(ROBOTAC_FASTGPT_SYNC_STATE_PATH):
+        return {"dataset_id": ROBOTAC_FASTGPT_DATASET_ID, "items": []}
+    try:
+        with open(ROBOTAC_FASTGPT_SYNC_STATE_PATH, "r", encoding="utf-8") as file_obj:
+            data = json.load(file_obj)
+            if not isinstance(data, dict):
+                return {"dataset_id": ROBOTAC_FASTGPT_DATASET_ID, "items": []}
+            data.setdefault("dataset_id", ROBOTAC_FASTGPT_DATASET_ID)
+            data.setdefault("items", [])
+            return data
+    except Exception as exc:
+        print(f"读取 Robotac FastGPT 同步状态失败: {exc}")
+        return {"dataset_id": ROBOTAC_FASTGPT_DATASET_ID, "items": []}
+
+
+def save_robotac_fastgpt_sync_state(state):
+    ensure_robotac_storage()
+    with open(ROBOTAC_FASTGPT_SYNC_STATE_PATH, "w", encoding="utf-8") as file_obj:
+        json.dump(state, file_obj, ensure_ascii=False, indent=2)
+
+
+def normalize_robotac_filename(filename):
+    return normalize_text((filename or "").strip())
+
+
+def download_robotac_file(file_url, file_name):
+    ensure_robotac_storage()
+    response = requests_get_robotac(file_url)
+    response.raise_for_status()
+    file_bytes = response.content
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
+    parsed_path = urlparse(file_url).path
+    suffix = os.path.splitext(parsed_path)[1] or os.path.splitext(file_name)[1] or ".pdf"
+    local_filename = f"{sanitize_filename(os.path.splitext(file_name)[0])}_{file_hash[:12]}{suffix}"
+    local_path = os.path.join(ROBOTAC_DOC_DIR, local_filename)
+    if not os.path.exists(local_path):
+        with open(local_path, "wb") as file_obj:
+            file_obj.write(file_bytes)
+    return {
+        "file_hash": file_hash,
+        "local_path": local_path,
+        "local_url": relative_static_path(local_path)
+    }
+
+
+def extract_robotac_attachment_links(main_node, page_url):
+    attach_box = None
+    if hasattr(main_node, "select_one"):
+        attach_box = main_node.select_one(".attachBox")
+    search_root = attach_box or main_node
+
+    attachments = []
+    seen_urls = set()
+    for anchor in search_root.select("a[href]"):
+        href = normalize_text(anchor.get("href"))
+        if not href:
+            continue
+        full_url = urljoin(page_url, href)
+        parsed_path = urlparse(full_url).path.lower()
+        is_attachment = any(
+            parsed_path.endswith(ext)
+            for ext in (".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".rar")
+        )
+        if not is_attachment and not any(token in parsed_path for token in ("/upload/", "/uploads/", "/file/", "/_upload/")):
+            continue
+        if full_url in seen_urls:
+            continue
+
+        anchor_text = normalize_text(anchor.get_text(" ", strip=True))
+        title_text = normalize_text(anchor.get("title"))
+        file_name = title_text or anchor_text or os.path.basename(unquote(urlparse(full_url).path)) or "attachment"
+        attachments.append({"file_name": file_name, "file_url": full_url})
+        seen_urls.add(full_url)
+    return attachments
 
 
 def download_robocon_file(file_url, file_name):
@@ -678,6 +815,66 @@ def detect_robocon_content_type(filename):
     return content_type or "application/octet-stream"
 
 
+def extract_robotac_semantic_tags(filename, title="", doc_type=""):
+    base_name = os.path.splitext(filename or "")[0]
+    base_name = re.sub(r'_[0-9a-f]{8,}$', '', base_name, flags=re.IGNORECASE)
+    base_name = normalize_text(base_name)
+    base_name = base_name.replace("“", "").replace("”", "").replace('"', "")
+
+    title_text = normalize_text(title or "")
+    doc_type_text = normalize_text(doc_type or "")
+    merged_text = " ".join(part for part in (base_name, title_text, doc_type_text) if part)
+
+    track_labels = [
+        "AIROBOTIC创新挑战赛",
+        "数字仿真挑战赛",
+        "侦察任务挑战赛",
+        "能量球灌篮挑战赛",
+        "足式机器人挑战赛",
+        "三维数字设计赛",
+        "竞技机器人方案设计赛",
+        "人形功夫搏击赛（大型组）",
+        "人形功夫搏击赛（小型组）",
+        "人形功夫搏击赛大型组",
+        "人形功夫搏击赛小型组",
+        "深蓝使命",
+        "长城烽火",
+        "章程"
+    ]
+
+    tags = ["ROBOTAC"]
+    family_parts = []
+    for label in track_labels:
+        if label in merged_text and label not in tags:
+            tags.append(label)
+            family_parts.append(label)
+
+    for label in ("对抗赛", "挑战赛", "设计赛", "创新挑战赛", "数字仿真挑战赛", "规则", "章程"):
+        if label in merged_text and label not in tags:
+            tags.append(label)
+
+    version_text, version_parts = parse_robocon_version(merged_text)
+    if version_text and version_text not in tags:
+        tags.append(version_text)
+
+    if not family_parts:
+        normalized_base = base_name
+        if "ROBOTAC" in normalized_base:
+            normalized_base = normalized_base.split("ROBOTAC", 1)[1]
+        normalized_base = normalize_text(normalized_base).strip("-_ ")
+        family_parts.append(normalized_base or doc_type_text or "未分类")
+
+    family_key = "|".join(part for part in family_parts if part)
+
+    return {
+        "base_name": base_name,
+        "tags": tags,
+        "family_key": family_key,
+        "version_text": version_text,
+        "version_parts": version_parts
+    }
+
+
 def should_upload_robocon_rule_pdf_as_qa(candidate):
     """规则类 PDF 除了分块训练外，还需要额外按问答对提取方式训练一份。"""
     filename = (candidate or {}).get("filename", "") or ""
@@ -704,8 +901,9 @@ def upload_robocon_file_to_fastgpt_with_config(dataset_id, candidate, *, collect
     content_type = detect_robocon_content_type(filename)
     is_pdf_file = content_type == "application/pdf"
 
+    metadata_source = (candidate or {}).get("metadata_source") or "robocon_official_monitor"
     metadata = {
-        "source": "robocon_official_monitor",
+        "source": metadata_source,
         "title": candidate.get("title", ""),
         "publishDate": candidate.get("date", ""),
         "sourceUrl": candidate.get("source_url", ""),
@@ -1329,6 +1527,42 @@ def start_robocon_fastgpt_backfill():
     thread.start()
 
 
+def sync_robotac_main_resources(force_refresh=False):
+    print(f"开始同步 Robotac 官网资料: {ROBOTAC_NEWS_URL}")
+    resources = get_robotac_resources(force_refresh=force_refresh) if not force_refresh else scrape_robotac_resources()
+    try:
+        save_robotac_resources_state(resources)
+    except Exception as exc:
+        print(f"Robotac 保存本地缓存失败: {exc}")
+
+    try:
+        sync_result = sync_robotac_resources_to_fastgpt(resources)
+        print(
+            "Robotac FastGPT 同步完成: "
+            f"uploaded={sync_result.get('uploaded', 0)}, "
+            f"skipped={sync_result.get('skipped', 0)}, "
+            f"errors={len(sync_result.get('errors', []))}"
+        )
+    except Exception as exc:
+        print(f"Robotac FastGPT 自动同步失败: {exc}")
+    return resources
+
+
+def start_robotac_fastgpt_backfill():
+    def run():
+        try:
+            resources = load_robotac_resources_state() or get_robotac_resources(force_refresh=True)
+            sync_robotac_resources_to_fastgpt(resources)
+        except Exception as exc:
+            print(f"Robotac FastGPT 启动回填失败: {exc}")
+
+    thread = threading.Thread(
+        target=run,
+        name="robotac-fastgpt-backfill",
+        daemon=True
+    )
+    thread.start()
+
 def sync_robocon_main_resources():
     print(f"开始同步 Robocon 官网规则: {ROBOCON_NEWS_URL}")
     response = requests_get_robocon(ROBOCON_NEWS_URL)
@@ -1463,6 +1697,7 @@ def start_robocon_scheduler():
 def on_app_comp_registered(state):
     start_robocon_scheduler()
     start_robocon_fastgpt_backfill()
+    start_robotac_fastgpt_backfill()
 
 
 def classify_robotac_doc(title):
@@ -1496,11 +1731,14 @@ def infer_robotac_doc_type(title):
 
 
 def extract_robotac_article_links(html):
-    hrefs = re.findall(r'href=["\'](/sys-nd/\d+\.html)["\']', html)
+    hrefs = re.findall(
+        r'href=["\']((?:https?://(?:www\.)?robotac\.cn)?/sys-nd/\d+\.html)["\']',
+        html
+    )
     results = []
     seen = set()
     for href in hrefs:
-        full_url = f"https://www.robotac.cn{href}"
+        full_url = urljoin(ROBOTAC_HOME_URL, href)
         if full_url in seen:
             continue
         seen.add(full_url)
@@ -1509,7 +1747,7 @@ def extract_robotac_article_links(html):
 
 
 def fetch_robotac_article(url):
-    response = requests.get(url, timeout=ROBOTAC_REQUEST_TIMEOUT)
+    response = requests_get_robotac(url)
     response.raise_for_status()
     html = response.text
 
@@ -1531,8 +1769,69 @@ def fetch_robotac_article(url):
     }
 
 
+def should_download_robotac_doc(title, doc_type=None):
+    title = normalize_text(title or "")
+    doc_type = normalize_text(doc_type or "")
+    if "规则" in title or "规则" in doc_type:
+        return True
+    if "章程" in title or "章程" in doc_type:
+        return True
+    # 通知类通常只有正文，无附件时不强制下载
+    return False
+
+
+def fetch_robotac_detail_resource(article_url):
+    response = requests_get_robotac(article_url)
+    response.raise_for_status()
+    html = response.text
+    soup = BeautifulSoup(html, "lxml")
+
+    title_match = re.search(r"<title>(.*?)</title>", html, re.S | re.I)
+    raw_title = strip_html(title_match.group(1)) if title_match else article_url
+    title = raw_title.split(" - 全国大学生机器人大赛ROBOTAC官网")[0].strip()
+    doc_type = infer_robotac_doc_type(title)
+
+    date_match = re.search(r"发表时间[:：]?\s*([0-9]{4}-[0-9]{2}-[0-9]{2})", strip_html(html))
+    published_at = date_match.group(1) if date_match else "官网当前页面"
+
+    main_node = extract_detail_main_node(soup)
+    attach_root = soup.select_one(".attachBox") or main_node
+    attachments = extract_robotac_attachment_links(attach_root, article_url)
+
+    doc = {
+        "title": title,
+        "type": doc_type,
+        "date": published_at,
+        "url": article_url,
+        "preview_url": article_url,
+        "source": "ROBOTAC 官网动态页",
+        "category": classify_robotac_doc(title),
+        "download_policy": "download" if should_download_robotac_doc(title, doc_type) else "metadata_only"
+    }
+
+    if doc["download_policy"] == "download" and attachments:
+        # 优先 PDF，其次按出现顺序
+        attachments.sort(
+            key=lambda item: (0 if urlparse(item.get("file_url", "")).path.lower().endswith(".pdf") else 1, item.get("file_name", ""))
+        )
+        selected = attachments[0]
+        try:
+            downloaded = download_robotac_file(selected["file_url"], selected["file_name"])
+            if downloaded.get("local_url"):
+                doc["preview_url"] = downloaded["local_url"]
+                doc["url"] = selected["file_url"]
+                doc["source"] = f"{doc['source']} / 本地副本"
+                # 与 Robocon 保持一致：用于 FastGPT collection 命名的是原始附件文件名
+                doc["downloaded_attachment"] = selected["file_name"]
+                doc["downloaded_hash"] = downloaded.get("file_hash")
+        except Exception as exc:
+            print(f"下载 ROBOTAC 附件失败: {selected.get('file_url')} -> {exc}")
+
+    return doc
+
+
 def scrape_robotac_resources():
-    response = requests.get(ROBOTAC_HOME_URL, timeout=ROBOTAC_REQUEST_TIMEOUT)
+    response = requests_get_robotac(ROBOTAC_NEWS_URL)
     response.raise_for_status()
     links = extract_robotac_article_links(response.text)
 
@@ -1550,7 +1849,7 @@ def scrape_robotac_resources():
 
     for article_url in links[:18]:
         try:
-            article = fetch_robotac_article(article_url)
+            article = fetch_robotac_detail_resource(article_url)
         except Exception as exc:
             print(f"抓取 ROBOTAC 文章失败: {article_url} -> {exc}")
             continue
@@ -1561,7 +1860,10 @@ def scrape_robotac_resources():
             "date": article["date"],
             "url": article["url"],
             "preview_url": article["preview_url"],
-            "source": article["source"]
+            "source": article["source"],
+            "category": article.get("category", ""),
+            "download_policy": article.get("download_policy", "metadata_only"),
+            "downloaded_attachment": article.get("downloaded_attachment", "")
         }
 
         if article["category"] == "notices":
@@ -1580,7 +1882,7 @@ def scrape_robotac_resources():
             "key": "notices",
             "label": "通知公告",
             "description": "ROBOTAC 官网实时抓取的通知、规则与章程。",
-            "official_url": ROBOTAC_HOME_URL,
+            "official_url": ROBOTAC_NEWS_URL,
             "updated_at": latest_date,
             "update_note": "当前页面数据由服务端定期从 ROBOTAC 官网抓取，并带缓存兜底。",
             "docs": notices or copy.deepcopy(ROBOTAC_RESOURCES_SNAPSHOT["notices"]["docs"])
@@ -1607,7 +1909,18 @@ def get_robotac_resources(force_refresh=False):
             return copy.deepcopy(cached_data)
 
         try:
+            # 优先使用本地落盘缓存（若存在），避免每次页面访问都触发抓取
+            local_state = load_robotac_resources_state()
+            if local_state and not force_refresh:
+                ROBOTAC_CACHE["data"] = local_state
+                ROBOTAC_CACHE["fetched_at"] = now
+                return copy.deepcopy(local_state)
+
             fresh_data = scrape_robotac_resources()
+            try:
+                save_robotac_resources_state(fresh_data)
+            except Exception as exc:
+                print(f"保存 ROBOTAC 本地缓存失败: {exc}")
             ROBOTAC_CACHE["data"] = fresh_data
             ROBOTAC_CACHE["fetched_at"] = now
             return copy.deepcopy(fresh_data)
@@ -1615,10 +1928,264 @@ def get_robotac_resources(force_refresh=False):
             print(f"抓取 ROBOTAC 官网失败，回退缓存/快照: {exc}")
             if cached_data:
                 return copy.deepcopy(cached_data)
+            local_state = load_robotac_resources_state()
+            if local_state:
+                ROBOTAC_CACHE["data"] = local_state
+                ROBOTAC_CACHE["fetched_at"] = now
+                return copy.deepcopy(local_state)
             fallback = build_resources_with_local_overrides(ROBOTAC_RESOURCES_SNAPSHOT)
             ROBOTAC_CACHE["data"] = fallback
             ROBOTAC_CACHE["fetched_at"] = now
             return copy.deepcopy(fallback)
+
+
+def build_robotac_fastgpt_upload_candidates(resources):
+    candidates = []
+    for section_key, section in (resources or {}).items():
+        docs = (section or {}).get("docs", [])
+        for doc in docs:
+            if doc.get("download_policy") != "download":
+                continue
+            preview_url = doc.get("preview_url", "")
+            downloaded_attachment = doc.get("downloaded_attachment", "")
+            if not preview_url.startswith("/static/") or not downloaded_attachment:
+                continue
+
+            relative_path = preview_url.lstrip("/")
+            absolute_path = os.path.join(ROBOTAC_BASE_DIR, relative_path)
+            if not os.path.exists(absolute_path):
+                print(f"Robotac 本地文件不存在，跳过 FastGPT 上传: {absolute_path}")
+                continue
+
+            filename = normalize_robotac_filename(downloaded_attachment)
+            if not filename:
+                continue
+
+            candidates.append({
+                "filename": filename,
+                "absolute_path": absolute_path,
+                "title": doc.get("title", ""),
+                "date": doc.get("date", ""),
+                "source_url": doc.get("url", ""),
+                "doc_type": doc.get("type", ""),
+                "category": section_key,
+                "source": doc.get("source", ""),
+                "metadata_source": "robotac_official_monitor"
+            })
+
+    latest_by_track = {}
+    for candidate in candidates:
+        if not candidate.get("semantic_tags"):
+            semantic_info = extract_robotac_semantic_tags(
+                candidate["filename"],
+                candidate.get("title", ""),
+                candidate.get("doc_type", "")
+            )
+            candidate["semantic_tags"] = semantic_info["tags"]
+            candidate["version_text"] = semantic_info["version_text"]
+            candidate["version_parts"] = semantic_info["version_parts"]
+            candidate["track_key"] = f"ROBOTAC|{semantic_info['family_key'] or candidate['filename']}"
+        candidate["version_text"] = candidate.get("version_text")
+        candidate["version_parts"] = candidate.get("version_parts", ())
+        candidate["track_key"] = candidate.get("track_key") or f"ROBOTAC|{candidate['filename']}"
+        candidate["date_key"] = parse_robocon_date_key(candidate.get("date", ""))
+
+        track_key = candidate["track_key"]
+        current_best = latest_by_track.get(track_key)
+        candidate_score = (candidate["version_parts"], candidate["date_key"], candidate["filename"])
+        if current_best is None:
+            latest_by_track[track_key] = candidate
+            continue
+
+        best_score = (
+            current_best.get("version_parts", ()),
+            current_best.get("date_key", datetime.min),
+            current_best["filename"]
+        )
+        if candidate_score > best_score:
+            latest_by_track[track_key] = candidate
+
+    for candidate in candidates:
+        if "is_latest_version" not in candidate:
+            candidate["is_latest_version"] = latest_by_track.get(candidate["track_key"]) is candidate
+        if "recall_priority" not in candidate:
+            candidate["recall_priority"] = "latest" if candidate["is_latest_version"] else "history"
+        if not candidate.get("effective_tags"):
+            candidate["effective_tags"] = list(candidate.get("semantic_tags", []))
+            candidate["effective_tags"].append(candidate.get("doc_type", ""))
+            candidate["effective_tags"].append("最新版本" if candidate["is_latest_version"] else "历史版本")
+            candidate["effective_tags"] = [tag for tag in candidate["effective_tags"] if tag]
+
+    candidates.sort(key=lambda item: (item.get("date") or "", item["filename"]), reverse=True)
+    return candidates
+
+
+def upload_robotac_file_to_fastgpt(dataset_id, candidate):
+    # Robotac 先只保持与 Robocon 一致的 chunk 上传（PDF 增强解析会自动开启）
+    return upload_robocon_file_to_fastgpt_with_config(
+        dataset_id,
+        candidate,
+        collection_name=candidate["filename"],
+        training_type="chunk"
+    )
+
+
+def should_upload_robotac_rule_pdf_as_qa(candidate):
+    filename = (candidate or {}).get("filename", "") or ""
+    if detect_robocon_content_type(filename) != "application/pdf":
+        return False
+
+    title = normalize_text((candidate or {}).get("title", "") or "")
+    doc_type = normalize_text((candidate or {}).get("doc_type", "") or "")
+    return ("规则" in title) or ("规则" in doc_type)
+
+
+def upload_robotac_rule_pdf_to_fastgpt_as_qa(dataset_id, candidate):
+    filename = candidate["filename"]
+    collection_name = build_robocon_qa_collection_name(filename)
+    config_overrides = {
+        "trainingType": "qa",
+        "customPdfParse": True,
+        "indexPrefixTitle": True,
+        "chunkSettingMode": "custom",
+        "chunkSplitMode": "size",
+        "chunkSize": 8000,
+        "chunkSplitter": "\n\n",
+        "qaPrompt": ""
+    }
+    return upload_robocon_file_to_fastgpt_with_config(
+        dataset_id,
+        candidate,
+        collection_name=collection_name,
+        training_type="qa",
+        config_overrides=config_overrides
+    )
+
+
+def sync_robotac_resources_to_fastgpt(resources=None, force_upload=False):
+    api_key = get_robocon_fastgpt_api_key()
+    dataset_id = ROBOTAC_FASTGPT_DATASET_ID
+
+    if not api_key:
+        print("未配置 FASTGPT_API_KEY，跳过 Robotac FastGPT 自动同步")
+        return {"success": False, "skipped": True, "reason": "missing_api_key"}
+    if not dataset_id:
+        print("未配置 FASTGPT_ROBOTAC_DATASET_ID，跳过 Robotac FastGPT 自动同步")
+        return {"success": False, "skipped": True, "reason": "missing_dataset_id"}
+
+    resources = resources or load_robotac_resources_state() or get_robotac_resources(force_refresh=True)
+    candidates = build_robotac_fastgpt_upload_candidates(resources)
+    if not candidates:
+        print("Robotac FastGPT 同步：没有可上传的本地规则文件")
+        return {"success": True, "uploaded": 0, "skipped": 0, "total": 0}
+
+    print(f"开始同步 Robotac 规则到 FastGPT，候选文件 {len(candidates)} 个")
+    existing_names = list_fastgpt_collection_names(dataset_id)
+    print(f"FastGPT 知识库中已存在 {len(existing_names)} 个 collection 名称")
+
+    sync_state = load_robotac_fastgpt_sync_state()
+    sync_state["dataset_id"] = dataset_id
+    sync_state["items"] = [
+        item for item in sync_state.get("items", [])
+        if isinstance(item, dict)
+    ]
+
+    uploaded = []
+    skipped = []
+    errors = []
+
+    for candidate in candidates:
+        filename = candidate["filename"]
+        normalized_name = normalize_robotac_filename(filename)
+
+        if not force_upload and (
+            normalized_name in {
+                normalize_robotac_filename(item.get("filename", ""))
+                for item in sync_state["items"]
+            } or existing_robocon_name_matches(filename, existing_names)
+        ):
+            print(f"FastGPT 已存在，跳过上传: {filename}")
+            skipped.append(filename)
+            continue
+
+        try:
+            collection_id = upload_robotac_file_to_fastgpt(dataset_id, candidate)
+            existing_names.add(normalized_name)
+            uploaded.append(filename)
+            sync_state["items"] = [
+                item for item in sync_state["items"]
+                if normalize_robotac_filename(item.get("filename")) != normalized_name
+            ]
+            sync_state["items"].append({
+                "filename": filename,
+                "collection_id": collection_id,
+                "date": candidate.get("date", ""),
+                "title": candidate.get("title", ""),
+                "track_key": candidate.get("track_key", ""),
+                "version_text": candidate.get("version_text", ""),
+                "semantic_tags": candidate.get("semantic_tags", []),
+                "effective_tags": candidate.get("effective_tags", []),
+                "is_latest_version": candidate.get("is_latest_version", False),
+                "source_url": candidate.get("source_url", ""),
+                "training_type": "chunk",
+                "uploaded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            save_robotac_fastgpt_sync_state(sync_state)
+            print(f"Robotac FastGPT 上传成功: {filename} -> {collection_id}")
+
+            if should_upload_robotac_rule_pdf_as_qa(candidate):
+                qa_collection_name = build_robocon_qa_collection_name(filename)
+                qa_normalized_name = normalize_robotac_filename(qa_collection_name)
+                already_has_qa = (qa_normalized_name in existing_names) or existing_robocon_name_matches(
+                    qa_collection_name, existing_names
+                )
+                already_has_qa = already_has_qa or (
+                    qa_normalized_name in {
+                        normalize_robotac_filename(item.get("filename", ""))
+                        for item in sync_state["items"]
+                    }
+                )
+
+                if force_upload or not already_has_qa:
+                    qa_collection_id = upload_robotac_rule_pdf_to_fastgpt_as_qa(dataset_id, candidate)
+                    existing_names.add(qa_normalized_name)
+                    uploaded.append(qa_collection_name)
+                    sync_state["items"] = [
+                        item for item in sync_state["items"]
+                        if normalize_robotac_filename(item.get("filename")) != qa_normalized_name
+                    ]
+                    sync_state["items"].append({
+                        "filename": qa_collection_name,
+                        "source_filename": filename,
+                        "collection_id": qa_collection_id,
+                        "date": candidate.get("date", ""),
+                        "title": candidate.get("title", ""),
+                        "track_key": candidate.get("track_key", ""),
+                        "version_text": candidate.get("version_text", ""),
+                        "semantic_tags": candidate.get("semantic_tags", []),
+                        "effective_tags": (candidate.get("effective_tags", []) or []) + ["问答对提取"],
+                        "is_latest_version": candidate.get("is_latest_version", False),
+                        "source_url": candidate.get("source_url", ""),
+                        "training_type": "qa",
+                        "uploaded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    save_robotac_fastgpt_sync_state(sync_state)
+                    print(f"Robotac FastGPT QA 上传成功: {qa_collection_name} -> {qa_collection_id}")
+                else:
+                    print(f"FastGPT 已存在 QA 版本，跳过上传: {qa_collection_name}")
+        except Exception as exc:
+            error_text = f"{filename}: {exc}"
+            print(f"Robotac FastGPT 上传失败: {error_text}")
+            errors.append(error_text)
+
+    return {
+        "success": len(errors) == 0,
+        "uploaded": len(uploaded),
+        "skipped": len(skipped),
+        "total": len(candidates),
+        "uploaded_files": uploaded,
+        "errors": errors
+    }
 
 
 @app_comp.route('/dashboard/kd')

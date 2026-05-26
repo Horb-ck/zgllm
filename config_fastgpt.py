@@ -10,7 +10,7 @@ FastGPT 环境配置中心
 # ╚══════════════════════════════════════════╝
 import os
 
-FASTGPT_ENV = os.environ.get("FASTGPT_ENV", "test").strip().lower()
+FASTGPT_ENV = os.environ.get("FASTGPT_ENV", "prod").strip().lower()
 
 
 # ================== 环境配置 ==================
@@ -55,7 +55,7 @@ _PROFILES = {
         "FASTGPT_API_KEY":        "fastgpt-tMjkB9yYNKapQofGcRNCDWcaQIUATRlrs9jMRilk6OzaVq311PAhY9IY1m2",   # ← 第二步会生成，填到这里
         "FASTGPT_APP_KEY":        "fastgpt-tMjkB9yYNKapQofGcRNCDWcaQIUATRlrs9jMRilk6OzaVq311PAhY9IY1m2",   # ← 同上
         "FASTGPT_SHARE_ID":       "bie35ySquF21ALJrOrZ0CxBi",       # 测试版个人知识库 share
-        "FASTGPT_SHARE_BASE_URL": "http://180.85.206.21:3002",
+        "FASTGPT_SHARE_BASE_URL": "http://180.85.206.21:3000",
 
         "FASTGPT_SHARED_DATASET_ID": "69ee18ed087319f305dfc711",
         "FASTGPT_SHARED_DATASET_NAME": "共享知识库",

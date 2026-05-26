@@ -3,91 +3,26 @@
 {% block title %}个人知识库 - 明月科创教育大模型{% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <!-- 侧边导航栏 -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2 class="hh">
-                <img src="/static/img/logo.svg" alt="a" style="width:40px; height: 40px; margin-right: 16px;">
-                <div style="text-align: left"><span style="font-size: 0.8em;">明月科创</span><br>教育大模型</div>
-            </h2>
-        </div>
-        
-        <div class="user-info">
-            <div class="user-avatar">
-                <span>{{ username[0].upper() }}</span>
-            </div>
-            <div class="user-name">{{ username }}</div>
-            <div class="user-role">
-                {{ '教师' if role == 'teacher' else '学生' }}
-            </div>
-        </div>
-        
-        <nav class="sidebar-nav">
-            <ul>
-                <li class="{% if request.path == url_for('new_chat') %}active{% endif %}">
-                    <a href="{{ url_for('new_chat') }}">
-                        <span class="icon">💬</span>
-                        <span class="label">开启新对话</span>
-                    </a>
-                </li>
-                <li class="{% if request.path == url_for('course_agents') %}active{% endif %}">
-                    <a href="{{ url_for('course_agents') }}">
-                        <span class="icon">🤖</span>
-                        <span class="label">课程广场</span>
-                    </a>
-                </li>
-                <li class="{% if request.path == url_for('app_comp.course_kd') %}active{% endif %}">
-                    <a href="{{ url_for('app_comp.course_kd') }}">
-                        <span class="icon">🔍</span>
-                        <span class="label">智能体广场</span>
-                    </a>
-                </li>
-
-                <li class="{% if request.path == url_for('his') %}active{% endif %}">
-                    <a href="{{ url_for('his') }}">
-                        <span class="icon">📚</span>
-                        <span class="label">个人知识库</span>
-                    </a>
-                </li>
-                <li class="{% if request.path == url_for('chat') %}active{% endif %}">
-                    <a href="{{ url_for('chat') }}">
-                        <span class="icon">🎓</span>
-                        <span class="label">学情分析</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <a href="https://docs.qq.com/sheet/DRXZUZ1F1WGtOZ0dx?tab=BB08J2" 
-               class="logout-btn" 
-               target="_blank">
-                <span class="icon">📝</span>
-                <span class="label">意见反馈</span>
-            </a>
-        </div>
-        <div class="sidebar-footer">
-            <a href="{{ url_for('logout') }}" class="logout-btn">
-                <span class="icon">🚪</span>
-                <span class="label">退出登录</span>
-            </a>
-        </div>
-    </div>
-    
+<div class="spark-dashboard-page">
+    {% include "dashboard/_spark_topbar.html" %}
+    <main class="spark-dashboard-main">
+        <div class="dashboard-container">
     <!-- V3 主内容区域 -->
-    <div class="main-content">
+    <div class="main-content kb-main-content">
         <style>
-            /* ==================== V3 个人知识库样式 ==================== */
+            /* ==================== 个人知识库样式 ==================== */
             .kb-page-header {
                 margin-bottom: 24px;
                 flex-shrink: 0;
             }
+
             .kb-page-header h1 {
                 font-size: 26px;
                 color: #1a1a2e;
                 margin: 0 0 8px 0;
                 font-weight: 700;
             }
+
             .kb-page-header p {
                 color: #666;
                 margin: 0;
@@ -102,17 +37,85 @@
                 padding: 24px;
                 box-sizing: border-box;
             }
+
+            .spark-dashboard-page .kb-main-content {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                min-height: 0;
+                padding: 20px;
+                overflow: visible;
+                box-sizing: border-box;
+            }
             
             .kb-main-layout {
+                --kb-left-panel-width: 400px;
                 display: grid;
-                grid-template-columns: 340px 1fr;
-                gap: 24px;
-                flex: 1;
+                grid-template-columns: var(--kb-left-panel-width) 10px minmax(0, 1fr);
+                gap: 0;
+                flex: none;
+                height: calc(100vh - 150px);
                 min-height: 0;
                 overflow: hidden;
             }
+
+            .kb-left-panel {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                height: 100%;
+                min-height: 0;
+                overflow: hidden;
+                padding-right: 12px;
+                box-sizing: border-box;
+            }
+
+            .kb-right-panel {
+                height: 100%;
+                min-height: 0;
+                overflow: hidden;
+                padding-left: 12px;
+                box-sizing: border-box;
+            }
+
+            .kb-resize-handle {
+                position: relative;
+                cursor: col-resize;
+                user-select: none;
+                touch-action: none;
+                border-radius: 999px;
+                transition: background 0.2s;
+            }
+
+            .kb-resize-handle::before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                bottom: 8px;
+                left: 50%;
+                width: 3px;
+                transform: translateX(-50%);
+                border-radius: 999px;
+                background: #e5e7eb;
+                transition: all 0.2s;
+            }
+
+            .kb-resize-handle:hover::before,
+            .kb-resize-handle.active::before {
+                width: 5px;
+                background: linear-gradient(180deg, #7c3aed 0%, #a855f7 100%);
+                box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.08);
+            }
+
+            body.kb-resizing {
+                cursor: col-resize !important;
+                user-select: none !important;
+            }
+
+            body.kb-resizing iframe {
+                pointer-events: none;
+            }
             
-            /* 卡片样式 */
             .kb-card {
                 background: #fff;
                 border-radius: 16px;
@@ -165,7 +168,6 @@
             .kb-upload-text { color: #555; font-size: 13px; margin-bottom: 4px; }
             .kb-upload-hint { color: #999; font-size: 11px; line-height: 1.6; }
 
-            /* 上传限制提示 */
             .kb-upload-limit-tip {
                 display: block;
                 color: #7c3aed;
@@ -210,6 +212,7 @@
                 transition: all 0.2s;
                 position: relative;
             }
+
             .kb-format-tip:hover {
                 background: #7c3aed;
                 color: #fff;
@@ -233,6 +236,7 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
+                white-space: nowrap;
             }
             
             .kb-new-folder-btn:hover {
@@ -240,7 +244,6 @@
                 box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             }
             
-            /* 面包屑导航 */
             .kb-breadcrumb {
                 display: flex;
                 align-items: center;
@@ -258,6 +261,10 @@
                 padding: 2px 6px;
                 border-radius: 4px;
                 transition: all 0.2s;
+                max-width: 180px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             
             .kb-breadcrumb-item:hover {
@@ -279,7 +286,6 @@
                 color: #d1d5db;
             }
 
-            /* 面包屑拖放高亮 */
             .kb-breadcrumb-item.drop-target {
                 background: #dbeafe !important;
                 color: #2563eb !important;
@@ -290,7 +296,6 @@
                 transition: all 0.15s;
             }
             
-            /* 文件夹项 */
             .kb-folder-item {
                 display: flex;
                 align-items: center;
@@ -301,6 +306,7 @@
                 border-radius: 8px;
                 transition: all 0.2s;
                 cursor: pointer;
+                gap: 8px;
             }
             
             .kb-folder-item:hover {
@@ -308,7 +314,6 @@
                 transform: translateX(4px);
             }
 
-            /* 文件夹拖放高亮 */
             .kb-folder-item.drop-target {
                 background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%) !important;
                 outline: 2px dashed #16a34a;
@@ -329,6 +334,11 @@
                 font-size: 20px; 
                 flex-shrink: 0; 
             }
+
+            .kb-folder-main {
+                min-width: 0;
+                flex: 1;
+            }
             
             .kb-folder-name {
                 font-size: 13px;
@@ -343,6 +353,9 @@
                 font-size: 10px;
                 color: #b45309;
                 margin-top: 2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             
             .kb-folder-actions-inline {
@@ -351,6 +364,7 @@
                 gap: 4px;
                 opacity: 0;
                 transition: opacity 0.2s;
+                flex-shrink: 0;
             }
             
             .kb-folder-item:hover .kb-folder-actions-inline {
@@ -366,6 +380,7 @@
                 font-size: 10px;
                 cursor: pointer;
                 transition: all 0.2s;
+                white-space: nowrap;
             }
             
             .kb-folder-action-btn:hover {
@@ -388,7 +403,8 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 10px 12px;
+                gap: 8px;
+                padding: 10px 10px;
                 margin: 0 10px 6px;
                 background: #f9fafb;
                 border-radius: 8px;
@@ -403,7 +419,6 @@
                 transform: translateX(4px);
             }
 
-            /* 拖拽中的文档样式 */
             .kb-doc-item.dragging {
                 opacity: 0.4;
                 transform: scale(0.95) !important;
@@ -416,27 +431,77 @@
                 align-items: center;
                 gap: 10px;
                 min-width: 0;
-                flex: 1;
+                flex: 1 1 auto;
                 z-index: 2;
                 position: relative;
+                overflow: hidden;
             }
             
-            .kb-doc-icon { font-size: 18px; flex-shrink: 0; }
+            .kb-doc-icon {
+                font-size: 18px;
+                flex-shrink: 0;
+                display: inline-flex;
+                align-items: center;
+                gap: 2px;
+            }
+
+            .kb-doc-main {
+                min-width: 0;
+                flex: 1 1 auto;
+                overflow: hidden;
+            }
+
+            .kb-doc-title-row {
+                display: flex;
+                align-items: center;
+                min-width: 0;
+                width: 100%;
+            }
             
             .kb-doc-name {
                 font-size: 12px;
-                font-weight: 500;
+                font-weight: 600;
                 color: #333;
-                white-space: nowrap;
+                min-width: 0;
+                max-width: none;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .kb-doc-name-text,
+            .kb-doc-name-preview {
+                display: block;
+                min-width: 0;
+                max-width: 100%;
                 overflow: hidden;
+                white-space: nowrap;
                 text-overflow: ellipsis;
-                max-width: 140px;
+            }
+
+            .kb-doc-name-text {
+                flex: 1 1 auto;
+            }
+
+            .kb-doc-clickable {
+                cursor: pointer;
+                color: #374151;
+                transition: color 0.2s;
+            }
+
+            .kb-doc-clickable:hover {
+                color: #4f46e5;
+                text-decoration: underline;
             }
             
             .kb-doc-meta {
                 font-size: 10px;
                 color: #999;
                 margin-top: 2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             
             .kb-doc-actions {
@@ -457,6 +522,7 @@
                 font-size: 10px;
                 cursor: pointer;
                 transition: all 0.2s;
+                white-space: nowrap;
             }
             
             .kb-doc-delete:hover {
@@ -468,16 +534,6 @@
                 padding: 20px;
                 color: #999;
                 font-size: 13px;
-            }
-            
-            /* 左侧面板布局 */
-            .kb-left-panel {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-                height: 100%;
-                min-height: 0;
-                overflow: hidden;
             }
             
             .kb-left-panel > .kb-card { 
@@ -496,6 +552,7 @@
                 flex: 1;
                 overflow-y: auto;
                 max-height: none;
+                padding-top: 8px;
             }
             
             .kb-header-actions {
@@ -504,17 +561,10 @@
                 gap: 8px;
             }
 
-            /* 隐藏旧同步按钮 */
             .kb-sync-btn { display: none; }
             .kb-doc-sync { display: none; }
             
             /* ==================== 右侧 FastGPT 聊天面板 ==================== */
-            .kb-right-panel { 
-                height: 100%; 
-                min-height: 0;
-                overflow: hidden;
-            }
-            
             .kb-chat-card {
                 height: 100%;
                 display: flex;
@@ -623,7 +673,6 @@
             
             .kb-chat-tips .tip-icon { font-size: 14px; }
 
-            /* 处理中状态动画 */
             .processing-dot {
                 display: inline-block;
                 width: 6px; height: 6px;
@@ -669,7 +718,7 @@
                 font-size: 10px; font-weight: 600;
                 color: #d97706;
                 font-variant-numeric: tabular-nums;
-                margin-left: 6px; flex-shrink: 0;
+                margin-left: 2px; flex-shrink: 0;
                 z-index: 2; position: relative;
                 min-width: 32px; text-align: right;
             }
@@ -701,6 +750,7 @@
             .kb-share-label {
                 font-size: 10px; color: #9ca3af; font-weight: 500;
                 min-width: 20px; transition: color 0.2s;
+                white-space: nowrap;
             }
             .kb-share-toggle input:checked ~ .kb-share-label { color: #059669; }
 
@@ -714,6 +764,7 @@
                 display: flex; align-items: center; gap: 6px;
                 font-size: 10px; color: #7c3aed;
                 z-index: 2; position: relative; flex-shrink: 0;
+                white-space: nowrap;
             }
             .parsing-spinner {
                 display: inline-block; width: 12px; height: 12px;
@@ -729,26 +780,27 @@
             .kb-media-badge.video { background: #8b5cf6; }
             .kb-media-badge.ppt   { background: #f59e0b; }
 
-            /* 图片文件名可点击预览 */
             .kb-doc-name-preview {
                 cursor: pointer;
-                color: #6366f1;
+                color: #4f46e5;
                 transition: color 0.2s;
+                flex: 1 1 auto;
             }
             .kb-doc-name-preview:hover {
-                color: #4f46e5;
+                color: #3730a3;
                 text-decoration: underline;
             }
             .kb-preview-icon {
                 cursor: pointer;
                 font-size: 14px;
                 margin-left: 3px;
-                opacity: 0.6;
+                opacity: 0.65;
                 transition: opacity 0.2s;
+                flex-shrink: 0;
             }
             .kb-preview-icon:hover { opacity: 1; }
             
-            /* ==================== 弹窗样式 ==================== */
+            /* ==================== 通用弹窗样式 ==================== */
             .kb-modal-overlay {
                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
                 background: rgba(0, 0, 0, 0.5);
@@ -813,6 +865,334 @@
                 box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
             }
             .kb-modal-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+            /* ==================== 文档详情弹窗：交互优化版 ==================== */
+            .kb-detail-modal {
+                width: 620px;
+                max-width: 92vw;
+                max-height: 86vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                border-radius: 18px;
+            }
+
+            .kb-detail-modal .kb-modal-header {
+                padding: 18px 24px;
+                background: #fff;
+            }
+
+            .kb-detail-body {
+                padding: 22px 24px 24px;
+                overflow-y: auto;
+                background: linear-gradient(180deg, #fff 0%, #fbfbff 100%);
+            }
+
+            .kb-detail-file-head {
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+                padding: 18px;
+                border-radius: 18px;
+                background:
+                    radial-gradient(circle at top right, rgba(168, 85, 247, 0.18), transparent 36%),
+                    linear-gradient(135deg, #f8f7ff 0%, #f3e8ff 100%);
+                border: 1px solid #ede9fe;
+                margin-bottom: 18px;
+                position: relative;
+            }
+
+            .kb-detail-file-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 16px;
+                background: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 26px;
+                box-shadow: 0 6px 16px rgba(124, 58, 237, 0.14);
+                flex-shrink: 0;
+            }
+
+            .kb-detail-file-main {
+                min-width: 0;
+                flex: 1;
+                padding-right: 6px;
+            }
+
+            .kb-detail-name-wrap {
+                min-width: 0;
+                width: 100%;
+            }
+
+            .kb-detail-file-name-btn {
+                width: 100%;
+                border: none;
+                background: transparent;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+                color: #1f2937;
+                font-size: 16px;
+                font-weight: 800;
+                line-height: 1.5;
+                cursor: text;
+                word-break: break-all;
+                transition: color 0.2s;
+            }
+
+            .kb-detail-file-name-btn:hover {
+                color: #6d28d9;
+                text-decoration: underline;
+                text-decoration-style: dashed;
+                text-underline-offset: 4px;
+            }
+
+            .kb-detail-file-name-input {
+                width: 100%;
+                display: none;
+                border: 2px solid rgba(124, 58, 237, 0.35);
+                background: #fff;
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 15px;
+                font-weight: 700;
+                color: #111827;
+                outline: none;
+                box-sizing: border-box;
+                box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.08);
+            }
+
+            .kb-detail-name-wrap.editing .kb-detail-file-name-btn {
+                display: none;
+            }
+
+            .kb-detail-name-wrap.editing .kb-detail-file-name-input {
+                display: block;
+            }
+
+            .kb-detail-file-sub {
+                margin-top: 6px;
+                color: #7c3aed;
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            .kb-detail-file-hint {
+                margin-top: 8px;
+                color: #9ca3af;
+                font-size: 11px;
+            }
+
+            .kb-detail-top-actions {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 8px;
+                flex-shrink: 0;
+                margin-left: auto;
+            }
+
+            .kb-detail-icon-btn {
+                width: 34px;
+                height: 34px;
+                border: none;
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.86);
+                color: #4b5563;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                text-decoration: none;
+                font-size: 15px;
+                box-shadow: 0 4px 12px rgba(124, 58, 237, 0.10);
+                transition: all 0.18s ease;
+            }
+
+            .kb-detail-icon-btn:hover {
+                transform: translateY(-1px);
+                background: #fff;
+                color: #6d28d9;
+                box-shadow: 0 8px 18px rgba(124, 58, 237, 0.18);
+            }
+
+            .kb-detail-icon-btn.danger {
+                color: #dc2626;
+            }
+
+            .kb-detail-icon-btn.danger:hover {
+                background: #fee2e2;
+                color: #b91c1c;
+                box-shadow: 0 8px 18px rgba(220, 38, 38, 0.16);
+            }
+
+            .kb-detail-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+                border: 1px solid #eef0f4;
+                background: rgba(255,255,255,0.76);
+                border-radius: 16px;
+                overflow: hidden;
+            }
+
+            .kb-detail-row {
+                display: grid;
+                grid-template-columns: 108px minmax(0, 1fr);
+                gap: 14px;
+                align-items: center;
+                padding: 14px 16px;
+                border-bottom: 1px dashed #eef0f4;
+            }
+
+            .kb-detail-row:last-child {
+                border-bottom: none;
+            }
+
+            .kb-detail-label {
+                color: #6b7280;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .kb-detail-value {
+                color: #1f2937;
+                font-size: 13px;
+                word-break: break-all;
+                line-height: 1.6;
+                min-width: 0;
+            }
+
+            .kb-detail-inline-control {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                min-width: 0;
+            }
+
+            .kb-detail-inline-hint {
+                color: #9ca3af;
+                font-size: 12px;
+            }
+
+            .kb-detail-share-toggle .kb-share-slider {
+                width: 42px;
+                height: 22px;
+                border-radius: 999px;
+            }
+
+            .kb-detail-share-toggle .kb-share-slider::after {
+                width: 18px;
+                height: 18px;
+            }
+
+            .kb-detail-share-toggle input:checked + .kb-share-slider::after {
+                left: 22px;
+            }
+
+            .kb-detail-share-toggle .kb-share-label {
+                font-size: 13px;
+                min-width: 34px;
+            }
+
+            .kb-detail-folder-control {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+                min-width: 0;
+            }
+
+            .kb-detail-folder-select {
+                flex: 1;
+                min-width: 0;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                background: #fff;
+                color: #374151;
+                font-size: 13px;
+                padding: 9px 10px;
+                outline: none;
+                transition: all 0.2s;
+            }
+
+            .kb-detail-folder-select:focus {
+                border-color: #7c3aed;
+                box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.10);
+            }
+
+            .kb-detail-folder-select:disabled {
+                opacity: 0.65;
+                cursor: not-allowed;
+            }
+
+            .kb-detail-new-folder-inline-btn {
+                flex-shrink: 0;
+                border: none;
+                border-radius: 10px;
+                padding: 9px 12px;
+                background: #ecfdf5;
+                color: #047857;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+                white-space: nowrap;
+            }
+
+            .kb-detail-new-folder-inline-btn:hover {
+                background: #d1fae5;
+                transform: translateY(-1px);
+            }
+
+            .kb-detail-new-folder-inline-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .kb-detail-folder-hint {
+                margin-top: 6px;
+                color: #9ca3af;
+                font-size: 11px;
+            }
+
+            .kb-status-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .kb-status-ready {
+                color: #047857;
+                background: #d1fae5;
+            }
+
+            .kb-status-processing {
+                color: #b45309;
+                background: #fef3c7;
+            }
+
+            .kb-status-parsing {
+                color: #6d28d9;
+                background: #ede9fe;
+            }
+
+            .kb-status-failed {
+                color: #dc2626;
+                background: #fee2e2;
+            }
+
+            .kb-status-pending {
+                color: #4b5563;
+                background: #f3f4f6;
+            }
             
             .kb-folder-select-list {
                 max-height: 300px; overflow-y: auto;
@@ -846,7 +1226,7 @@
                 opacity: 1; transform: translateX(-50%) translateY(0);
             }
 
-            /* ==================== 媒体预览弹窗 ==================== */
+            /* ==================== 源文件预览弹窗 ==================== */
             .media-preview-overlay {
                 display: none;
                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -879,15 +1259,81 @@
                 max-width: 80%; text-align: center; word-break: break-all;
             }
 
-            .media-preview-img-wrap {
-                max-width: 90vw; max-height: 70vh;
-                overflow: auto; display: flex;
-                justify-content: center; align-items: center;
+            .media-preview-content-wrap {
+                max-width: 92vw;
+                max-height: 72vh;
+                width: min(980px, 92vw);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: auto;
             }
-            .media-preview-img-wrap img {
-                max-width: 100%; max-height: 70vh;
+
+            .media-preview-content-wrap img {
+                max-width: 100%;
+                max-height: 72vh;
                 border-radius: 8px;
                 box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            }
+
+            .media-preview-content-wrap video {
+                max-width: 100%;
+                max-height: 72vh;
+                background: #000;
+                border-radius: 8px;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            }
+
+            .media-preview-content-wrap iframe {
+                width: min(980px, 92vw);
+                height: 72vh;
+                border: none;
+                border-radius: 8px;
+                background: #fff;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            }
+
+            #mediaPreviewTextRaw {
+                width: min(900px, 90vw);
+                max-height: 72vh;
+                overflow: auto;
+                color: rgba(255,255,255,0.92);
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.16);
+                padding: 18px;
+                border-radius: 10px;
+                font-size: 13px;
+                line-height: 1.7;
+                white-space: pre-wrap;
+                word-break: break-word;
+                box-sizing: border-box;
+            }
+
+            .media-preview-fallback {
+                width: min(520px, 88vw);
+                padding: 34px 28px;
+                border-radius: 14px;
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.16);
+                color: #fff;
+                text-align: center;
+            }
+
+            .media-preview-fallback .fallback-icon {
+                font-size: 42px;
+                margin-bottom: 14px;
+            }
+
+            .media-preview-fallback .fallback-title {
+                font-size: 16px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+            .media-preview-fallback .fallback-desc {
+                font-size: 13px;
+                line-height: 1.7;
+                color: rgba(255,255,255,0.76);
             }
 
             .media-preview-text-section {
@@ -911,7 +1357,6 @@
             }
 
             /* ==================== 实时计时器样式 ==================== */
-
             .kb-upload-timer-bar {
                 position: fixed;
                 bottom: 80px;
@@ -975,7 +1420,8 @@
                 position: relative;
                 flex-shrink: 0;
                 font-variant-numeric: tabular-nums;
-                margin-left: 4px;
+                margin-left: 2px;
+                white-space: nowrap;
             }
             .kb-doc-timer .timer-icon {
                 font-size: 11px;
@@ -986,6 +1432,42 @@
                 min-width: 32px;
                 text-align: right;
             }
+
+            @media (max-width: 1100px) {
+                .kb-main-layout {
+                    grid-template-columns: minmax(320px, 38vw) 8px minmax(0, 1fr);
+                }
+
+                .kb-share-label {
+                    display: none;
+                }
+
+                .kb-doc-delete {
+                    padding: 3px 6px;
+                }
+
+                .kb-detail-row {
+                    grid-template-columns: 86px minmax(0, 1fr);
+                }
+
+                .kb-detail-file-head {
+                    flex-wrap: wrap;
+                }
+
+                .kb-detail-top-actions {
+                    width: 100%;
+                    justify-content: flex-start;
+                    margin-left: 66px;
+                }
+
+                .kb-detail-folder-control {
+                    flex-wrap: wrap;
+                }
+
+                .kb-detail-folder-select {
+                    min-width: 180px;
+                }
+            }
         </style>
         
         <!-- 页面头部 -->
@@ -995,14 +1477,14 @@
         </div>
         
         <!-- 主布局 -->
-        <div class="kb-main-layout">
+        <div class="kb-main-layout" id="kbMainLayout">
             <!-- 左侧面板 -->
             <div class="kb-left-panel">
                 <!-- 上传区域 -->
                 <div class="kb-card">
                     <div class="kb-upload-zone" id="uploadZone">
                         <input type="file" id="fileInput" hidden 
-                               accept=".pdf,.txt,.md,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.mp4,.avi,.mov,.mkv,.pptx,.ppt">
+                               accept=".pdf,.txt,.md,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.mp4,.avi,.mov,.mkv,.flv,.wmv,.webm,.pptx,.ppt">
                         <div class="kb-upload-icon">📄</div>
                         <div class="kb-upload-text">拖拽文件到此处，或点击上传</div>
                         <div class="kb-upload-hint">
@@ -1041,6 +1523,9 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- 拖拽调宽把手 -->
+            <div class="kb-resize-handle" id="kbResizeHandle" title="拖动调节文件栏宽度"></div>
             
             <!-- 右侧 FastGPT 聊天面板 -->
             <div class="kb-right-panel">
@@ -1091,7 +1576,7 @@
             </div>
         </div>
         
-        <!-- 重命名弹窗 -->
+        <!-- 重命名弹窗：主要保留给文件夹使用，文档详情内已改为点击文件名直接修改 -->
         <div class="kb-modal-overlay" id="renameModal">
             <div class="kb-modal">
                 <div class="kb-modal-header">
@@ -1109,7 +1594,7 @@
             </div>
         </div>
         
-        <!-- 移动文档弹窗 -->
+        <!-- 移动文档弹窗：列表行快捷移动仍保留；详情内改为所在文件夹下拉框 -->
         <div class="kb-modal-overlay" id="moveDocModal">
             <div class="kb-modal">
                 <div class="kb-modal-header">
@@ -1127,16 +1612,130 @@
             </div>
         </div>
 
-        <!-- 媒体预览弹窗 -->
+        <!-- 文档详情弹窗 -->
+        <div class="kb-modal-overlay" id="docDetailModal">
+            <div class="kb-modal kb-detail-modal">
+                <div class="kb-modal-header">
+                    <div class="kb-modal-title">
+                        <span id="detailTitleIcon">📄</span>
+                        <span>文档详情</span>
+                    </div>
+                    <button class="kb-modal-close" onclick="hideDocDetailModal()">&times;</button>
+                </div>
+
+                <div class="kb-detail-body">
+                    <div class="kb-detail-file-head">
+                        <div class="kb-detail-file-icon" id="detailLargeIcon">📄</div>
+
+                        <div class="kb-detail-file-main">
+                            <div class="kb-detail-name-wrap" id="detailNameWrap">
+                                <button type="button"
+                                        class="kb-detail-file-name-btn"
+                                        id="detailFileNameDisplay"
+                                        onclick="startDetailRename()"
+                                        title="点击文件名可直接重命名">-</button>
+                                <input type="text"
+                                       class="kb-detail-file-name-input"
+                                       id="detailFileNameInput"
+                                       maxlength="100"
+                                       autocomplete="off">
+                            </div>
+                            <div class="kb-detail-file-sub" id="detailFileSub">-</div>
+                            <div class="kb-detail-file-hint" id="detailRenameHint">点击文件名可直接修改，按 Enter 保存，Esc 取消</div>
+                        </div>
+
+                        <div class="kb-detail-top-actions">
+                            <button type="button"
+                                    class="kb-detail-icon-btn"
+                                    id="detailSourceIconBtn"
+                                    title="查看源文件"
+                                    style="display:none;">👁️</button>
+                            <a class="kb-detail-icon-btn"
+                               id="detailDownloadIconBtn"
+                               href="#"
+                               download
+                               title="下载源文件"
+                               style="display:none;">⬇️</a>
+                            <button type="button"
+                                    class="kb-detail-icon-btn"
+                                    id="detailEditIconBtn"
+                                    onclick="startDetailRename()"
+                                    title="重命名">✏️</button>
+                            <button type="button"
+                                    class="kb-detail-icon-btn danger"
+                                    id="detailDeleteIconBtn"
+                                    onclick="detailDeleteCurrentDoc()"
+                                    title="删除文档">🗑️</button>
+                        </div>
+                    </div>
+
+                    <div class="kb-detail-grid">
+                        <div class="kb-detail-row">
+                            <div class="kb-detail-label">上传时间</div>
+                            <div class="kb-detail-value" id="detailUploadTime">-</div>
+                        </div>
+                        <div class="kb-detail-row">
+                            <div class="kb-detail-label">文件大小</div>
+                            <div class="kb-detail-value" id="detailFileSize">-</div>
+                        </div>
+                        <div class="kb-detail-row">
+                            <div class="kb-detail-label">当前状态</div>
+                            <div class="kb-detail-value" id="detailStatus">-</div>
+                        </div>
+                        <div class="kb-detail-row">
+                            <div class="kb-detail-label">是否公开</div>
+                            <div class="kb-detail-value" id="detailShareStatus">-</div>
+                        </div>
+                        <div class="kb-detail-row">
+                            <div class="kb-detail-label">所在文件夹</div>
+                            <div class="kb-detail-value" id="detailFolder">
+                                <div class="kb-detail-folder-control">
+                                    <select class="kb-detail-folder-select"
+                                            id="detailFolderSelect"
+                                            onchange="detailFolderSelectChanged(this)"></select>
+                                    <button type="button"
+                                            class="kb-detail-new-folder-inline-btn"
+                                            id="detailNewFolderBtn"
+                                            onclick="detailCreateFolderAndMove()">➕ 新建</button>
+                                </div>
+                                <div class="kb-detail-folder-hint" id="detailFolderHint">选择文件夹后会立即移动</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 源文件预览弹窗 -->
         <div class="media-preview-overlay" id="mediaPreviewOverlay">
             <div class="media-preview-toolbar">
-                <a id="mediaPreviewDownload" href="#" download title="下载原始文件">⬇️ 下载</a>
+                <a id="mediaPreviewOpenNew" href="#" target="_blank" rel="noopener" title="新窗口打开源文件">↗️ 新窗口</a>
+                <a id="mediaPreviewDownload" href="#" download title="下载源文件">⬇️ 下载</a>
                 <button onclick="closeMediaPreview()">✕ 关闭</button>
             </div>
+
             <div class="media-preview-title" id="mediaPreviewTitle"></div>
-            <div class="media-preview-img-wrap">
-                <img id="mediaPreviewImg" src="" alt="预览" />
+
+            <div class="media-preview-content-wrap" id="mediaPreviewContentWrap">
+                <img id="mediaPreviewImg" src="" alt="预览" style="display:none;" />
+
+                <video id="mediaPreviewVideo" controls playsinline style="display:none;">
+                    当前浏览器不支持视频预览。
+                </video>
+
+                <iframe id="mediaPreviewFrame" src="about:blank" style="display:none;"></iframe>
+
+                <pre id="mediaPreviewTextRaw" style="display:none;"></pre>
+
+                <div class="media-preview-fallback" id="mediaPreviewFallback" style="display:none;">
+                    <div class="fallback-icon">📦</div>
+                    <div class="fallback-title">该类型文件可能无法在浏览器中直接预览</div>
+                    <div class="fallback-desc">
+                        您可以点击右上角「新窗口」尝试打开，或点击「下载」保存源文件。
+                    </div>
+                </div>
             </div>
+
             <details class="media-preview-text-section" id="mediaPreviewTextSection" style="display:none;">
                 <summary>📝 查看 AI 解析内容</summary>
                 <div class="media-preview-text-content" id="mediaPreviewText"></div>
@@ -1155,17 +1754,28 @@
         <div class="kb-drop-toast" id="dropToast"></div>
     </div>
 </div>
+    </main>
+</div>
 
 <script>
     // ==================== 全局状态 ====================
     let currentFolderId = null;
     let folderPath = [];
     let allFolders = [];
+    let currentDocuments = [];
+    let currentDocMap = {};
+    let currentDetailDocId = null;
+    let currentDetailDocSnapshot = null;
+
     let renameTarget = null;
     let moveDocId = null;
     let selectedMoveTarget = null;
     let draggedDocId = null;
     let draggedDocName = '';
+
+    let detailNameEditSaving = false;
+    let detailMoveSaving = false;
+    let detailFolderSelectLastValue = '';
     
     const currentUsername = '{{ username }}';
 
@@ -1176,7 +1786,6 @@
     const MEDIA_EXTENSIONS = [...IMAGE_EXTENSIONS, ...VIDEO_EXTENSIONS, ...PPT_EXTENSIONS];
     const ALL_EXTENSIONS   = [...TEXT_EXTENSIONS, ...MEDIA_EXTENSIONS];
 
-    // 上传限制，必须和后端 routes/kb_routes.py 保持一致
     const KB_MAX_DOCUMENTS_PER_USER = 200;
     const KB_MAX_TOTAL_STORAGE_LABEL = '5GB';
 
@@ -1222,6 +1831,73 @@
             maxBytes: KB_LIMITS.document,
             label: '该类型文件最大支持 100MB'
         };
+    }
+
+    // ==================== 左侧文件栏拖拽调宽 ====================
+    function initResizableKbLayout() {
+        const layout = document.getElementById('kbMainLayout');
+        const handle = document.getElementById('kbResizeHandle');
+        if (!layout || !handle) return;
+
+        const storageKey = `kb_left_panel_width_${currentUsername || 'default'}`;
+
+        function clampWidth(width) {
+            const viewportWidth = window.innerWidth || 1440;
+            const minWidth = 320;
+            const maxWidth = Math.min(680, Math.max(360, viewportWidth * 0.46));
+            return Math.max(minWidth, Math.min(maxWidth, width));
+        }
+
+        const savedWidth = parseInt(localStorage.getItem(storageKey), 10);
+        if (savedWidth && !isNaN(savedWidth)) {
+            layout.style.setProperty('--kb-left-panel-width', clampWidth(savedWidth) + 'px');
+        }
+
+        let dragging = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        handle.addEventListener('mousedown', function(e) {
+            dragging = true;
+            startX = e.clientX;
+
+            const currentValue = getComputedStyle(layout).getPropertyValue('--kb-left-panel-width').trim();
+            startWidth = parseInt(currentValue, 10) || 400;
+
+            handle.classList.add('active');
+            document.body.classList.add('kb-resizing');
+
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!dragging) return;
+
+            const delta = e.clientX - startX;
+            const nextWidth = clampWidth(startWidth + delta);
+
+            layout.style.setProperty('--kb-left-panel-width', nextWidth + 'px');
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (!dragging) return;
+
+            dragging = false;
+            handle.classList.remove('active');
+            document.body.classList.remove('kb-resizing');
+
+            const currentValue = getComputedStyle(layout).getPropertyValue('--kb-left-panel-width').trim();
+            const finalWidth = parseInt(currentValue, 10);
+            if (finalWidth && !isNaN(finalWidth)) {
+                localStorage.setItem(storageKey, String(finalWidth));
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            const currentValue = getComputedStyle(layout).getPropertyValue('--kb-left-panel-width').trim();
+            const currentWidth = parseInt(currentValue, 10) || 400;
+            layout.style.setProperty('--kb-left-panel-width', clampWidth(currentWidth) + 'px');
+        });
     }
 
     // ==================== 计时器全局变量与工具函数 ====================
@@ -1302,6 +1978,7 @@
 
     // ==================== 页面加载 ====================
     document.addEventListener('DOMContentLoaded', function() {
+        initResizableKbLayout();
         loadDocuments();
         initUploadZone();
         initFastGPTIframe();
@@ -1314,12 +1991,46 @@
             if (e.key === 'Enter') confirmRename();
         });
 
+        const detailNameInput = document.getElementById('detailFileNameInput');
+        if (detailNameInput) {
+            detailNameInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitDetailRename();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    cancelDetailRename();
+                }
+            });
+
+            detailNameInput.addEventListener('blur', function() {
+                const wrap = document.getElementById('detailNameWrap');
+                if (wrap && wrap.classList.contains('editing') && !detailNameEditSaving) {
+                    commitDetailRename();
+                }
+            });
+        }
+
         document.getElementById('mediaPreviewOverlay').addEventListener('click', function(e) {
             if (e.target === this) closeMediaPreview();
         });
 
+        document.getElementById('docDetailModal').addEventListener('click', function(e) {
+            if (e.target === this) hideDocDetailModal();
+        });
+
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeMediaPreview();
+            if (e.key === 'Escape') {
+                const wrap = document.getElementById('detailNameWrap');
+                if (wrap && wrap.classList.contains('editing')) {
+                    cancelDetailRename();
+                    return;
+                }
+
+                closeMediaPreview();
+                hideDocDetailModal();
+            }
         });
     });
     
@@ -1351,32 +2062,239 @@
         };
     }
 
-    // ==================== 媒体预览功能 ====================
-    function openMediaPreview(docId, mediaUrl) {
+    // ==================== 文档缓存工具 ====================
+    function getKnownDoc(docId) {
+        if (docId && currentDocMap[docId]) return currentDocMap[docId];
+
+        if (
+            docId &&
+            currentDetailDocSnapshot &&
+            currentDetailDocSnapshot.doc_id === docId
+        ) {
+            return currentDetailDocSnapshot;
+        }
+
+        return null;
+    }
+
+    function getCurrentDetailDoc() {
+        if (!currentDetailDocId) return null;
+        return getKnownDoc(currentDetailDocId);
+    }
+
+    function setKnownDocPatch(docId, patch) {
+        if (!docId || !patch) return;
+
+        if (currentDocMap[docId]) {
+            Object.assign(currentDocMap[docId], patch);
+        }
+
+        if (
+            currentDetailDocSnapshot &&
+            currentDetailDocSnapshot.doc_id === docId
+        ) {
+            Object.assign(currentDetailDocSnapshot, patch);
+        }
+    }
+
+    function isDocDetailModalOpen() {
+        const modal = document.getElementById('docDetailModal');
+        return !!(modal && modal.classList.contains('show'));
+    }
+
+    // ==================== 源文件预览 / 下载功能 ====================
+    function hasOriginalSource(doc) {
+        if (!doc || !doc.doc_id) return false;
+
+        /*
+         * 前端默认所有文档都可以查看源文件。
+         * 实际访问优先使用后端返回的原文件 URL；
+         * 如果后端未返回，则兜底访问：
+         * /api/kb/document/<doc_id>/original
+         * /api/kb/document/<doc_id>/original/download
+         */
+        return true;
+    }
+
+    function getOriginalFileUrl(doc) {
+        if (!doc || !doc.doc_id) return '#';
+
+        const docId = encodeURIComponent(doc.doc_id);
+
+        return doc.original_url ||
+               doc.original_file_url ||
+               doc.raw_source_url ||
+               doc.file_url ||
+               doc.media_url ||
+               `/api/kb/document/${docId}/original`;
+    }
+
+    function getOriginalDownloadUrl(doc) {
+        if (!doc || !doc.doc_id) return '#';
+
+        const docId = encodeURIComponent(doc.doc_id);
+
+        if (doc.original_download_url) return doc.original_download_url;
+        if (doc.download_url) return doc.download_url;
+        if (doc.raw_source_download_url) return doc.raw_source_download_url;
+
+        if (doc.media_url) return `${doc.media_url}/download`;
+
+        return `/api/kb/document/${docId}/original/download`;
+    }
+
+    function getDocExtension(doc) {
+        const filename = (doc && doc.filename) ? String(doc.filename) : '';
+        const fileType = (doc && doc.file_type) ? String(doc.file_type) : '';
+
+        if (fileType) return fileType.toLowerCase();
+
+        const parts = filename.split('.');
+        if (parts.length > 1) return parts.pop().toLowerCase();
+
+        return '';
+    }
+
+    function isTextPreviewExt(ext) {
+        return [
+            'txt', 'md', 'csv', 'json', 'log',
+            'py', 'js', 'ts', 'java', 'c', 'cpp', 'h',
+            'html', 'css', 'xml', 'yaml', 'yml'
+        ].includes(ext);
+    }
+
+    function resetSourcePreviewUI() {
+        const img = document.getElementById('mediaPreviewImg');
+        const video = document.getElementById('mediaPreviewVideo');
+        const frame = document.getElementById('mediaPreviewFrame');
+        const textRaw = document.getElementById('mediaPreviewTextRaw');
+        const fallback = document.getElementById('mediaPreviewFallback');
+
+        if (img) {
+            img.style.display = 'none';
+            img.src = '';
+        }
+
+        if (video) {
+            video.style.display = 'none';
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
+
+        if (frame) {
+            frame.style.display = 'none';
+            frame.src = 'about:blank';
+        }
+
+        if (textRaw) {
+            textRaw.style.display = 'none';
+            textRaw.textContent = '';
+        }
+
+        if (fallback) {
+            fallback.style.display = 'none';
+        }
+    }
+
+    function openSourcePreview(docId) {
+        const doc = getKnownDoc(docId);
+
+        if (!doc) {
+            alert('未找到文档信息，请刷新页面后重试');
+            return;
+        }
+
         const overlay  = document.getElementById('mediaPreviewOverlay');
-        const img      = document.getElementById('mediaPreviewImg');
         const title    = document.getElementById('mediaPreviewTitle');
         const dlBtn    = document.getElementById('mediaPreviewDownload');
+        const openBtn  = document.getElementById('mediaPreviewOpenNew');
         const textSec  = document.getElementById('mediaPreviewTextSection');
         const textDiv  = document.getElementById('mediaPreviewText');
 
-        const el = document.querySelector(`[data-preview-doc="${docId}"]`);
-        const filename = el ? el.getAttribute('data-filename') : docId;
+        const img      = document.getElementById('mediaPreviewImg');
+        const video    = document.getElementById('mediaPreviewVideo');
+        const frame    = document.getElementById('mediaPreviewFrame');
+        const textRaw  = document.getElementById('mediaPreviewTextRaw');
+        const fallback = document.getElementById('mediaPreviewFallback');
+
+        const filename = doc.filename || docId;
+        const ext = getDocExtension(doc);
+        const sourceUrl = getOriginalFileUrl(doc);
+        const downloadUrl = getOriginalDownloadUrl(doc);
+
+        resetSourcePreviewUI();
 
         title.textContent = filename;
-        img.src = mediaUrl;
-        img.alt = filename;
-        img.style.display = 'block';
-        img.onerror = function() {
-            this.style.display = 'none';
-            title.textContent = filename + '（原始文件加载失败）';
-        };
 
-        dlBtn.href = mediaUrl + '/download';
+        dlBtn.href = downloadUrl;
+        dlBtn.setAttribute('download', filename);
+
+        openBtn.href = sourceUrl;
 
         textSec.style.display = 'none';
         textSec.removeAttribute('open');
-        fetch(`/api/kb/document/${docId}/content`)
+        textDiv.textContent = '';
+
+        if (IMAGE_EXTENSIONS.includes(ext) || doc.media_type === 'image') {
+            img.src = sourceUrl;
+            img.alt = filename;
+            img.style.display = 'block';
+
+            img.onerror = function() {
+                img.style.display = 'none';
+                fallback.style.display = 'block';
+            };
+        }
+        else if (VIDEO_EXTENSIONS.includes(ext) || doc.media_type === 'video') {
+            video.src = sourceUrl;
+            video.style.display = 'block';
+
+            video.onerror = function() {
+                video.style.display = 'none';
+                fallback.style.display = 'block';
+            };
+        }
+        else if (ext === 'pdf') {
+            frame.src = sourceUrl;
+            frame.style.display = 'block';
+        }
+        else if (isTextPreviewExt(ext)) {
+            textRaw.style.display = 'block';
+            textRaw.textContent = '正在加载源文件内容...';
+
+            fetch(sourceUrl)
+                .then(r => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.text();
+                })
+                .then(text => {
+                    textRaw.textContent = text || '源文件内容为空';
+                })
+                .catch(() => {
+                    fetch(`/api/kb/document/${encodeURIComponent(docId)}/content`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success && data.parsed_text) {
+                                textRaw.textContent =
+                                    '注意：当前显示的是 AI 解析内容，不一定等同于原始文件。\n\n' +
+                                    data.parsed_text;
+                            } else {
+                                textRaw.style.display = 'none';
+                                fallback.style.display = 'block';
+                            }
+                        })
+                        .catch(() => {
+                            textRaw.style.display = 'none';
+                            fallback.style.display = 'block';
+                        });
+                });
+        }
+        else {
+            fallback.style.display = 'block';
+        }
+
+        fetch(`/api/kb/document/${encodeURIComponent(docId)}/content`)
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.parsed_text) {
@@ -1389,10 +2307,42 @@
         overlay.classList.add('show');
     }
 
+    // 兼容旧函数名，避免历史 onclick 调用失效
+    function openMediaPreview(docId, mediaUrl) {
+        if (getKnownDoc(docId)) {
+            openSourcePreview(docId);
+            return;
+        }
+
+        const overlay  = document.getElementById('mediaPreviewOverlay');
+        const title    = document.getElementById('mediaPreviewTitle');
+        const dlBtn    = document.getElementById('mediaPreviewDownload');
+        const openBtn  = document.getElementById('mediaPreviewOpenNew');
+        const img      = document.getElementById('mediaPreviewImg');
+        const fallback = document.getElementById('mediaPreviewFallback');
+
+        resetSourcePreviewUI();
+
+        title.textContent = docId;
+        img.src = mediaUrl;
+        img.alt = docId;
+        img.style.display = 'block';
+
+        openBtn.href = mediaUrl;
+        dlBtn.href = mediaUrl + '/download';
+
+        img.onerror = function() {
+            img.style.display = 'none';
+            fallback.style.display = 'block';
+        };
+
+        overlay.classList.add('show');
+    }
+
     function closeMediaPreview() {
         const overlay = document.getElementById('mediaPreviewOverlay');
         overlay.classList.remove('show');
-        document.getElementById('mediaPreviewImg').src = '';
+        resetSourcePreviewUI();
     }
     
     // ==================== 上传功能 ====================
@@ -1430,8 +2380,6 @@
             return;
         }
 
-        // 前端单文件大小校验
-        // 注意：用户总文件数/总容量仍以后端 routes/kb_routes.py 校验为准。
         const limit = getUploadLimit(file.name);
         if (file.size > limit.maxBytes) {
             alert(`文件过大：当前文件 ${formatFileSize(file.size)}，${limit.label}`);
@@ -1502,10 +2450,10 @@
     // ==================== 文档和文件夹加载 ====================
     function loadDocuments() {
         const folderUrl = currentFolderId 
-            ? `/api/kb/folders?parent_id=${currentFolderId}`
+            ? `/api/kb/folders?parent_id=${encodeURIComponent(currentFolderId)}`
             : '/api/kb/folders';
         const docUrl = currentFolderId
-            ? `/api/kb/folder/${currentFolderId}/documents`
+            ? `/api/kb/folder/${encodeURIComponent(currentFolderId)}/documents`
             : '/api/kb/folder/root/documents';
         
         Promise.all([
@@ -1516,9 +2464,22 @@
         .then(([folderData, docData, treeData]) => {
             const folders = folderData.folders || [];
             const documents = docData.documents || [];
+
+            currentDocuments = documents;
+            currentDocMap = {};
+            currentDocuments.forEach(d => {
+                if (d && d.doc_id) currentDocMap[d.doc_id] = d;
+            });
+
             allFolders = flattenFolderTree(treeData.tree || []);
             renderList(folders, documents);
             updateBreadcrumb();
+
+            if (currentDetailDocId && isDocDetailModalOpen()) {
+                const doc = getKnownDoc(currentDetailDocId);
+                if (doc) fillDocDetailModal(doc);
+                else hideDocDetailModal();
+            }
         })
         .catch(err => {
             console.error('加载失败:', err);
@@ -1536,6 +2497,23 @@
         }
         return result;
     }
+
+    function getDocMetaText(doc, size, isParsing, isProcessing, isReady, isFailed) {
+        if (isParsing) return `${size} · 正在解析`;
+        if (isProcessing) return `${size} · 正在索引`;
+        if (isReady) return `${size}`;
+        if (isFailed) return `${size} · 处理失败`;
+        return `${size} · 等待处理`;
+    }
+
+    function getDocFileSizeBytes(doc) {
+        return Number(
+            doc.raw_source_size ||
+            doc.file_size ||
+            doc.parsed_text_size ||
+            0
+        );
+    }
     
     function renderList(folders, documents) {
         const list = document.getElementById('docList');
@@ -1549,31 +2527,36 @@
         let hasTimerDocs = false;
         
         for (const folder of folders) {
+            const safeFolderName = escapeHtml(folder.name);
+            const jsFolderName = escapeJsAttr(folder.name);
+            const jsFolderId = escapeJsAttr(folder.folder_id);
+
             html += `
                 <li class="kb-folder-item" 
-                    data-folder-id="${folder.folder_id}"
-                    onclick="enterFolder('${folder.folder_id}', '${escapeHtml(folder.name)}')"
+                    data-folder-id="${safeFolderName}"
+                    title="${safeFolderName}"
+                    onclick="enterFolder('${jsFolderId}', '${jsFolderName}')"
                     ondragover="onFolderDragOver(event)"
                     ondragenter="onFolderDragEnter(event)"
                     ondragleave="onFolderDragLeave(event)"
-                    ondrop="onFolderDrop(event, '${folder.folder_id}', '${escapeHtml(folder.name)}')">
+                    ondrop="onFolderDrop(event, '${jsFolderId}', '${jsFolderName}')">
                     <div class="kb-folder-info">
                         <span class="kb-folder-icon">📁</span>
-                        <div>
-                            <div class="kb-folder-name">${escapeHtml(folder.name)}</div>
+                        <div class="kb-folder-main">
+                            <div class="kb-folder-name" title="${safeFolderName}">${safeFolderName}</div>
                             <div class="kb-folder-meta">${folder.document_count || 0} 个文档 · ${folder.subfolder_count || 0} 个子文件夹</div>
                         </div>
                     </div>
                     <div class="kb-folder-actions-inline" onclick="event.stopPropagation()">
-                        <button class="kb-folder-action-btn" onclick="showRenameFolderModal('${folder.folder_id}', '${escapeHtml(folder.name)}')">✏️</button>
-                        <button class="kb-folder-action-btn delete" onclick="deleteFolder('${folder.folder_id}', '${escapeHtml(folder.name)}')">🗑️</button>
+                        <button class="kb-folder-action-btn" onclick="showRenameFolderModal('${jsFolderId}', '${jsFolderName}')" title="重命名">✏️</button>
+                        <button class="kb-folder-action-btn delete" onclick="deleteFolder('${jsFolderId}', '${jsFolderName}')" title="删除">🗑️</button>
                     </div>
                 </li>`;
         }
         
         for (const doc of documents) {
             const icon = getFileIcon(doc.file_type);
-            const size = formatFileSize(doc.file_size);
+            const size = formatFileSize(getDocFileSizeBytes(doc));
             const isParsing    = (doc.status === 'parsing');
             const isProcessing = (doc.status === 'processing');
             const isReady      = (doc.status === 'ready');
@@ -1589,9 +2572,7 @@
                 progressPct = Math.round(dataCount / totalCount * 100);
             }
 
-            let metaText = `${size} · ${doc.chunk_count || 0} 块`;
-            if (isParsing) metaText = `${size} · 正在解析...`;
-            else if (isProcessing && totalCount > 0) metaText = `${size} · 已索引 ${dataCount}/${totalCount}`;
+            const metaText = getDocMetaText(doc, size, isParsing, isProcessing, isReady, isFailed);
 
             let mediaBadge = '';
             if (mediaType) {
@@ -1599,19 +2580,23 @@
                 mediaBadge = `<span class="kb-media-badge ${mediaType}">${badgeLabels[mediaType] || mediaType}</span>`;
             }
 
-            const canPreview = (mediaType === 'image') && doc.has_original_file && doc.media_url;
+            const hasSource = hasOriginalSource(doc);
+            const safeFilename = escapeHtml(doc.filename);
+            const jsFilename = escapeJsAttr(doc.filename);
+            const jsDocId = escapeJsAttr(doc.doc_id);
 
-            let nameInnerHtml;
-            if (canPreview) {
-                nameInnerHtml = `<span class="kb-doc-name-preview"
-                                       data-preview-doc="${doc.doc_id}"
-                                       data-filename="${escapeHtml(doc.filename)}"
-                                       onclick="event.stopPropagation();openMediaPreview('${doc.doc_id}','${doc.media_url}')"
-                                       title="${escapeHtml(doc.filename)}">${escapeHtml(doc.filename)}</span><span class="kb-preview-icon"
-                                       onclick="event.stopPropagation();openMediaPreview('${doc.doc_id}','${doc.media_url}')"
-                                       title="查看原图">🔍</span>`;
-            } else {
-                nameInnerHtml = escapeHtml(doc.filename);
+            let nameInnerHtml = `
+                <span class="kb-doc-name-text kb-doc-clickable"
+                      onclick="event.stopPropagation(); openDocDetail('${jsDocId}')"
+                      title="点击查看详情：${safeFilename}">${safeFilename}</span>`;
+
+            if (hasSource) {
+                nameInnerHtml += `
+                    <span class="kb-preview-icon"
+                          data-preview-doc="${jsDocId}"
+                          data-filename="${safeFilename}"
+                          onclick="event.stopPropagation();openSourcePreview('${jsDocId}')"
+                          title="查看源文件">👁️</span>`;
             }
 
             let progressHtml = '';
@@ -1628,7 +2613,7 @@
 
             let pctHtml = '';
             if (isProcessing && totalCount > 0) {
-                pctHtml = `<span class="kb-progress-pct">${progressPct}%</span>`;
+                pctHtml = `<span class="kb-progress-pct" title="处理进度">${progressPct}%</span>`;
             }
 
             let shareOrStatusHtml = '';
@@ -1636,7 +2621,7 @@
                 shareOrStatusHtml = `
                     <label class="kb-share-toggle" onclick="event.stopPropagation()">
                         <input type="checkbox" ${isShared ? 'checked' : ''}
-                               onchange="toggleShare('${doc.doc_id}', this.checked)">
+                               onchange="toggleShare('${jsDocId}', this.checked)">
                         <span class="kb-share-slider"></span>
                         <span class="kb-share-label">${isShared ? '公开' : '私有'}</span>
                     </label>`;
@@ -1660,7 +2645,7 @@
                     const elapsed = (Date.now() - startMs) / 1000;
                     if (elapsed > 0 && elapsed < 86400) {
                         hasTimerDocs = true;
-                        timerHtml = `<span class="kb-doc-timer" data-start-ms="${startMs}">
+                        timerHtml = `<span class="kb-doc-timer" data-start-ms="${startMs}" title="处理耗时">
                             <span class="timer-icon">⏱️</span>
                             <span class="timer-value">${formatElapsedTime(elapsed)}</span>
                         </span>`;
@@ -1670,24 +2655,28 @@
 
             html += `
                 <li class="kb-doc-item" 
-                    data-doc-id="${doc.doc_id}"
+                    data-doc-id="${jsDocId}"
+                    title="${safeFilename}"
                     draggable="true"
-                    ondragstart="onDocDragStart(event, '${doc.doc_id}', '${escapeHtml(doc.filename)}')"
+                    ondblclick="openDocDetail('${jsDocId}')"
+                    ondragstart="onDocDragStart(event, '${jsDocId}', '${jsFilename}')"
                     ondragend="onDocDragEnd(event)">
                     ${progressHtml}
                     <div class="kb-doc-info">
                         <span class="kb-doc-icon">${icon}${mediaBadge}</span>
-                        <div>
-                            <div class="kb-doc-name" title="${escapeHtml(doc.filename)}">${nameInnerHtml}</div>
-                            <div class="kb-doc-meta">${metaText}</div>
+                        <div class="kb-doc-main">
+                            <div class="kb-doc-title-row">
+                                <div class="kb-doc-name" title="${safeFilename}">${nameInnerHtml}</div>
+                            </div>
+                            <div class="kb-doc-meta" title="${metaText}">${metaText}</div>
                         </div>
                     </div>
                     ${shareOrStatusHtml}
                     ${timerHtml}
                     ${pctHtml}
                     <div class="kb-doc-actions">
-                        <button class="kb-folder-action-btn" onclick="event.stopPropagation(); showMoveDocModal('${doc.doc_id}', '${escapeHtml(doc.filename)}')" title="移动">📦</button>
-                        <button class="kb-doc-delete" onclick="event.stopPropagation(); deleteDoc('${doc.doc_id}')">删除</button>
+                        <button class="kb-folder-action-btn" onclick="event.stopPropagation(); showMoveDocModal('${jsDocId}', '${jsFilename}')" title="移动">📦</button>
+                        <button class="kb-doc-delete" onclick="event.stopPropagation(); deleteDoc('${jsDocId}')" title="删除文档">删除</button>
                     </div>
                 </li>`;
         }
@@ -1698,37 +2687,662 @@
             ensureDocTimerLoop();
         }
     }
+
+    // ==================== 文档详情弹窗 ====================
+    function openDocDetail(docId) {
+        const doc = getKnownDoc(docId);
+        if (!doc) {
+            alert('文档信息已刷新，请稍后重试');
+            return;
+        }
+
+        currentDetailDocId = docId;
+        currentDetailDocSnapshot = { ...doc };
+        fillDocDetailModal(doc);
+        document.getElementById('docDetailModal').classList.add('show');
+    }
+
+    function hideDocDetailModal() {
+        const modal = document.getElementById('docDetailModal');
+        if (modal) modal.classList.remove('show');
+
+        cancelDetailRename(true);
+
+        currentDetailDocId = null;
+        currentDetailDocSnapshot = null;
+        detailFolderSelectLastValue = '';
+    }
+
+    function fillDocDetailModal(doc) {
+        if (!doc) return;
+
+        currentDetailDocSnapshot = {
+            ...(currentDetailDocSnapshot || {}),
+            ...doc
+        };
+
+        const icon = getFileIcon(doc.file_type || getDocExtension(doc));
+        const filename = doc.filename || '未命名文档';
+        const fileSize = formatFileSize(getDocFileSizeBytes(doc));
+        const typeLabel = getFileTypeLabel(doc);
+        const statusInfo = getStatusInfo(doc.status);
+        const uploadTime = formatDateTime(doc.upload_time || doc.uploaded_at || doc.created_at || '');
+
+        document.getElementById('detailTitleIcon').textContent = icon;
+        document.getElementById('detailLargeIcon').textContent = icon;
+
+        const nameWrap = document.getElementById('detailNameWrap');
+        const display = document.getElementById('detailFileNameDisplay');
+        const input = document.getElementById('detailFileNameInput');
+
+        if (!nameWrap.classList.contains('editing')) {
+            display.textContent = filename;
+            display.title = '点击文件名可直接重命名：' + filename;
+            input.value = filename;
+            input.disabled = false;
+        }
+
+        document.getElementById('detailFileSub').textContent = `${typeLabel} · ${fileSize}`;
+        document.getElementById('detailUploadTime').textContent = uploadTime;
+        document.getElementById('detailFileSize').textContent = fileSize;
+
+        document.getElementById('detailStatus').innerHTML =
+            `<span class="kb-status-badge ${statusInfo.className}">${statusInfo.icon} ${statusInfo.label}</span>`;
+
+        renderDetailShareControl(doc);
+        renderDetailFolderSelector(doc);
+        renderDetailTopActions(doc);
+    }
+
+    function renderDetailTopActions(doc) {
+        const sourceBtn = document.getElementById('detailSourceIconBtn');
+        const downloadBtn = document.getElementById('detailDownloadIconBtn');
+        const filename = doc.filename || doc.doc_id || '源文件';
+
+        if (hasOriginalSource(doc)) {
+            sourceBtn.style.display = 'inline-flex';
+            sourceBtn.onclick = function() {
+                openSourcePreview(doc.doc_id);
+            };
+
+            downloadBtn.style.display = 'inline-flex';
+            downloadBtn.href = getOriginalDownloadUrl(doc);
+            downloadBtn.setAttribute('download', filename);
+        } else {
+            sourceBtn.style.display = 'none';
+            sourceBtn.onclick = null;
+
+            downloadBtn.style.display = 'none';
+            downloadBtn.href = '#';
+        }
+    }
+
+    function renderDetailShareControl(doc) {
+        const isReady = doc.status === 'ready';
+        const isShared = !!doc.shared;
+
+        const statusText = isReady
+            ? (isShared ? '公开' : '私有')
+            : '处理完成后可设置';
+
+        const hintText = isReady
+            ? (isShared ? '公开后所有人可检索该文档' : '仅自己可见')
+            : '文档仍在处理，暂不可公开';
+
+        document.getElementById('detailShareStatus').innerHTML = `
+            <div class="kb-detail-inline-control">
+                <label class="kb-share-toggle kb-detail-share-toggle">
+                    <input id="detailShareToggleInput"
+                           type="checkbox"
+                           ${isShared ? 'checked' : ''}
+                           ${isReady ? '' : 'disabled'}
+                           onchange="detailShareToggleChanged(this)">
+                    <span class="kb-share-slider"></span>
+                    <span class="kb-share-label" id="detailShareToggleLabel">${statusText}</span>
+                </label>
+                <span class="kb-detail-inline-hint">${hintText}</span>
+            </div>`;
+    }
+
+    function buildDetailFolderOptions(selectedFolderId) {
+        const selected = selectedFolderId || '';
+        let html = `<option value="">📂 根目录</option>`;
+
+        const exists = !selected || allFolders.some(f => f.folder_id === selected);
+        if (selected && !exists) {
+            html += `<option value="${escapeHtml(selected)}">${escapeHtml(getFolderDisplayName(selected))}</option>`;
+        }
+
+        for (const folder of allFolders) {
+            const indent = '　'.repeat(folder.level || 0);
+            html += `<option value="${escapeHtml(folder.folder_id)}">${indent}📁 ${escapeHtml(folder.name || '未命名文件夹')}</option>`;
+        }
+
+        html += `<option value="__new__">➕ 新建文件夹并移动到其中...</option>`;
+        return html;
+    }
+
+    function renderDetailFolderSelector(doc) {
+        const select = document.getElementById('detailFolderSelect');
+        const btn = document.getElementById('detailNewFolderBtn');
+        const hint = document.getElementById('detailFolderHint');
+
+        if (!select) return;
+
+        const folderId = doc.folder_id || '';
+        select.innerHTML = buildDetailFolderOptions(folderId);
+        select.value = folderId;
+
+        if (select.value !== folderId) {
+            select.value = '';
+        }
+
+        select.disabled = false;
+        if (btn) btn.disabled = false;
+
+        detailFolderSelectLastValue = select.value || '';
+
+        if (hint) {
+            hint.textContent = `当前：${getFolderDisplayName(folderId, doc)}；选择其他文件夹后会立即移动`;
+        }
+    }
+
+    function startDetailRename() {
+        const doc = getCurrentDetailDoc();
+        if (!doc) return;
+
+        const wrap = document.getElementById('detailNameWrap');
+        const input = document.getElementById('detailFileNameInput');
+
+        if (!wrap || !input) return;
+
+        input.value = doc.filename || '';
+        input.disabled = false;
+        wrap.classList.add('editing');
+
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 0);
+    }
+
+    function commitDetailRename() {
+        if (detailNameEditSaving) return;
+
+        const doc = getCurrentDetailDoc();
+        if (!doc || !currentDetailDocId) return;
+
+        const wrap = document.getElementById('detailNameWrap');
+        const input = document.getElementById('detailFileNameInput');
+        const display = document.getElementById('detailFileNameDisplay');
+
+        if (!wrap || !input || !wrap.classList.contains('editing')) return;
+
+        const oldName = doc.filename || '';
+        const newName = input.value.trim();
+
+        if (!newName) {
+            alert('文件名不能为空');
+            input.focus();
+            return;
+        }
+
+        if (newName === oldName) {
+            cancelDetailRename();
+            return;
+        }
+
+        detailNameEditSaving = true;
+        input.disabled = true;
+
+        fetch(`/api/kb/rename/${encodeURIComponent(doc.doc_id)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_name: newName })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                setKnownDocPatch(doc.doc_id, { filename: newName });
+                if (display) display.textContent = newName;
+
+                wrap.classList.remove('editing');
+                input.disabled = false;
+
+                showDropToast('✅ 文件名已更新');
+                setTimeout(() => hideDropToast(), 1800);
+
+                loadDocuments();
+            } else {
+                input.disabled = false;
+                input.focus();
+                alert('重命名失败: ' + (data.error || '未知错误'));
+            }
+        })
+        .catch(err => {
+            input.disabled = false;
+            input.focus();
+            alert('重命名出错: ' + err.message);
+        })
+        .finally(() => {
+            detailNameEditSaving = false;
+        });
+    }
+
+    function cancelDetailRename(force) {
+        if (detailNameEditSaving && !force) return;
+
+        const doc = getCurrentDetailDoc();
+        const wrap = document.getElementById('detailNameWrap');
+        const input = document.getElementById('detailFileNameInput');
+
+        if (wrap) wrap.classList.remove('editing');
+        if (input) {
+            input.disabled = false;
+            input.value = doc ? (doc.filename || '') : '';
+        }
+    }
+
+    function detailShareToggleChanged(input) {
+        if (!currentDetailDocId) return;
+        const doc = getCurrentDetailDoc();
+
+        if (!doc || doc.status !== 'ready') {
+            input.checked = !!(doc && doc.shared);
+            return;
+        }
+
+        input.disabled = true;
+        toggleShare(currentDetailDocId, input.checked);
+    }
+
+    function detailFolderSelectChanged(select) {
+        if (!select) return;
+
+        if (select.value === '__new__') {
+            select.value = detailFolderSelectLastValue || '';
+            detailCreateFolderAndMove();
+            return;
+        }
+
+        detailMoveFromSelect(select.value || null);
+    }
+
+    function moveDocumentToFolder(docId, targetFolderId) {
+        return fetch(`/api/kb/document/${encodeURIComponent(docId)}/move`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folder_id: targetFolderId || null })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || '未知错误');
+            }
+            return data;
+        });
+    }
+
+    function detailMoveFromSelect(targetFolderId) {
+        if (detailMoveSaving) return;
+
+        const doc = getCurrentDetailDoc();
+        if (!doc) return;
+
+        const select = document.getElementById('detailFolderSelect');
+        const btn = document.getElementById('detailNewFolderBtn');
+
+        const oldFolderId = doc.folder_id || '';
+        const nextFolderId = targetFolderId || '';
+
+        if (oldFolderId === nextFolderId) {
+            detailFolderSelectLastValue = nextFolderId;
+            return;
+        }
+
+        detailMoveSaving = true;
+        if (select) select.disabled = true;
+        if (btn) btn.disabled = true;
+
+        moveDocumentToFolder(doc.doc_id, nextFolderId || null)
+            .then(() => {
+                setKnownDocPatch(doc.doc_id, { folder_id: nextFolderId || null });
+                detailFolderSelectLastValue = nextFolderId;
+
+                showDropToast(`✅ 已移动到${getFolderDisplayName(nextFolderId || null, getCurrentDetailDoc())}`);
+                setTimeout(() => hideDropToast(), 1800);
+
+                loadDocuments();
+            })
+            .catch(err => {
+                if (select) select.value = oldFolderId;
+                detailFolderSelectLastValue = oldFolderId;
+                alert('移动失败: ' + err.message);
+            })
+            .finally(() => {
+                detailMoveSaving = false;
+                if (select) select.disabled = false;
+                if (btn) btn.disabled = false;
+            });
+    }
+
+    function detailCreateFolderAndMove() {
+        if (detailMoveSaving) return;
+
+        const doc = getCurrentDetailDoc();
+        if (!doc) return;
+
+        const select = document.getElementById('detailFolderSelect');
+        const btn = document.getElementById('detailNewFolderBtn');
+
+        const parentId = select && select.value && select.value !== '__new__'
+            ? select.value
+            : null;
+
+        const parentName = getFolderDisplayName(parentId, doc);
+        const name = prompt(`在「${parentName}」下新建文件夹，并将「${doc.filename || '当前文档'}」移动进去：`, '');
+
+        if (name === null) return;
+
+        const folderName = name.trim();
+        if (!folderName) {
+            alert('请输入文件夹名称');
+            return;
+        }
+
+        detailMoveSaving = true;
+        if (select) select.disabled = true;
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '创建中...';
+        }
+
+        fetch('/api/kb/folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: folderName, parent_id: parentId || null })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || '未知错误');
+            }
+
+            const newFolderId =
+                data.folder_id ||
+                data.id ||
+                (data.folder && (data.folder.folder_id || data.folder.id)) ||
+                (data.data && (data.data.folder_id || data.data.id));
+
+            if (!newFolderId) {
+                showDropToast('✅ 文件夹已创建，请在下拉框中选择新文件夹');
+                setTimeout(() => hideDropToast(), 2600);
+                loadDocuments();
+                return null;
+            }
+
+            return moveDocumentToFolder(doc.doc_id, newFolderId)
+                .then(() => {
+                    setKnownDocPatch(doc.doc_id, { folder_id: newFolderId });
+                    detailFolderSelectLastValue = newFolderId;
+
+                    showDropToast(`✅ 已新建文件夹「${folderName}」并移动文档`);
+                    setTimeout(() => hideDropToast(), 2400);
+
+                    loadDocuments();
+                });
+        })
+        .catch(err => {
+            alert('新建或移动失败: ' + err.message);
+            if (select) select.value = detailFolderSelectLastValue || '';
+        })
+        .finally(() => {
+            detailMoveSaving = false;
+            if (select) select.disabled = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '➕ 新建';
+            }
+        });
+    }
+
+    function detailRenameCurrentDoc() {
+        startDetailRename();
+    }
+
+    function detailMoveCurrentDoc() {
+        const select = document.getElementById('detailFolderSelect');
+        if (select) {
+            select.focus();
+            showDropToast('请选择“所在文件夹”下拉框中的目标文件夹');
+            setTimeout(() => hideDropToast(), 2200);
+        }
+    }
+
+    function detailDeleteCurrentDoc() {
+        if (!currentDetailDocId) return;
+
+        const doc = getCurrentDetailDoc();
+        const docId = currentDetailDocId;
+        const filename = doc && doc.filename ? `「${doc.filename}」` : '这个文档';
+
+        if (!confirm(`确定要删除${filename}吗？`)) return;
+
+        fetch(`/api/kb/document/${encodeURIComponent(docId)}`, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    hideDocDetailModal();
+                    loadDocuments();
+                    showDropToast('🗑️ 文档已删除');
+                    setTimeout(() => hideDropToast(), 1800);
+                } else {
+                    alert('删除失败: ' + (data.error || '未知错误'));
+                }
+            })
+            .catch(err => alert('删除出错: ' + err.message));
+    }
+
+    function detailToggleShare() {
+        const doc = getCurrentDetailDoc();
+        if (!doc || doc.status !== 'ready') return;
+        toggleShare(doc.doc_id, !doc.shared);
+    }
+
+    function getFileTypeLabel(doc) {
+        if (doc.media_type === 'image') return '图片文件';
+        if (doc.media_type === 'video') return '视频文件';
+        if (doc.media_type === 'ppt') return 'PPT 文件';
+
+        const ext = (doc.file_type || getDocExtension(doc) || '').toLowerCase();
+        if (!ext) return '普通文件';
+
+        const map = {
+            pdf: 'PDF 文档',
+            txt: '文本文件',
+            md: 'Markdown 文档',
+            doc: 'Word 文档',
+            docx: 'Word 文档',
+            jpg: '图片文件',
+            jpeg: '图片文件',
+            png: '图片文件',
+            gif: '图片文件',
+            bmp: '图片文件',
+            webp: '图片文件',
+            mp4: '视频文件',
+            avi: '视频文件',
+            mov: '视频文件',
+            mkv: '视频文件',
+            flv: '视频文件',
+            wmv: '视频文件',
+            webm: '视频文件',
+            ppt: 'PPT 文件',
+            pptx: 'PPT 文件',
+        };
+
+        return map[ext] || `${ext.toUpperCase()} 文件`;
+    }
+
+    function getStatusInfo(status) {
+        const s = status || 'pending';
+
+        const map = {
+            ready: {
+                label: '已就绪',
+                icon: '✅',
+                className: 'kb-status-ready'
+            },
+            processing: {
+                label: '正在索引',
+                icon: '⏳',
+                className: 'kb-status-processing'
+            },
+            parsing: {
+                label: '正在解析',
+                icon: '🔄',
+                className: 'kb-status-parsing'
+            },
+            failed: {
+                label: '处理失败',
+                icon: '❌',
+                className: 'kb-status-failed'
+            },
+            uploading: {
+                label: '上传中',
+                icon: '⬆️',
+                className: 'kb-status-processing'
+            },
+            pending: {
+                label: '等待处理',
+                icon: '⏱️',
+                className: 'kb-status-pending'
+            }
+        };
+
+        return map[s] || {
+            label: s,
+            icon: 'ℹ️',
+            className: 'kb-status-pending'
+        };
+    }
+
+    function getFolderDisplayName(folderId, doc) {
+        if (!folderId) return '根目录';
+
+        const byId = {};
+        allFolders.forEach(f => {
+            if (f.folder_id) byId[f.folder_id] = f;
+        });
+
+        const names = [];
+        let cursor = folderId;
+        let guard = 0;
+
+        while (cursor && byId[cursor] && guard < 20) {
+            const f = byId[cursor];
+            names.unshift(f.name || '未命名文件夹');
+            cursor = f.parent_id || null;
+            guard += 1;
+        }
+
+        if (names.length > 0) return names.join(' / ');
+
+        if (doc && doc.folder_name) return doc.folder_name;
+
+        if (currentFolderId === folderId && folderPath.length > 0) {
+            return folderPath.map(x => x.name).join(' / ');
+        }
+
+        return '未知文件夹';
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '-';
+
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return String(value);
+
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const h = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        const sec = String(d.getSeconds()).padStart(2, '0');
+
+        return `${y}-${m}-${day} ${h}:${min}:${sec}`;
+    }
     
     // ==================== 公开/取消公开 ====================
     function toggleShare(docId, isShared) {
-        const toggle = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"] .kb-share-toggle input`);
-        const label = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"] .kb-share-label`);
+        const attrDocId = cssAttrEscape(docId);
+
+        const toggle = document.querySelector(`.kb-doc-item[data-doc-id="${attrDocId}"] .kb-share-toggle input`);
+        const label = document.querySelector(`.kb-doc-item[data-doc-id="${attrDocId}"] .kb-share-label`);
+
+        const detailToggle = currentDetailDocId === docId
+            ? document.getElementById('detailShareToggleInput')
+            : null;
+        const detailLabel = currentDetailDocId === docId
+            ? document.getElementById('detailShareToggleLabel')
+            : null;
         
         if (toggle) toggle.disabled = true;
+        if (detailToggle) detailToggle.disabled = true;
+
         if (label) label.textContent = isShared ? '共享中…' : '取消中…';
+        if (detailLabel) detailLabel.textContent = isShared ? '共享中…' : '取消中…';
         
         const url = isShared
-            ? `/api/kb/document/${docId}/share`
-            : `/api/kb/document/${docId}/unshare`;
+            ? `/api/kb/document/${encodeURIComponent(docId)}/share`
+            : `/api/kb/document/${encodeURIComponent(docId)}/unshare`;
         
-        fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
         .then(r => r.json())
         .then(data => {
             if (toggle) toggle.disabled = false;
+
             if (data.success) {
+                if (toggle) toggle.checked = isShared;
                 if (label) label.textContent = isShared ? '公开' : '私有';
+
+                setKnownDocPatch(docId, { shared: isShared });
+
+                if (currentDetailDocId === docId && isDocDetailModalOpen()) {
+                    const doc = getKnownDoc(docId);
+                    if (doc) fillDocDetailModal(doc);
+                }
+
                 showDropToast(isShared ? '✅ 已公开到共享知识库' : '🔒 已取消公开');
                 setTimeout(() => hideDropToast(), 2000);
             } else {
-                if (toggle) toggle.checked = !isShared;
+                if (toggle) {
+                    toggle.checked = !isShared;
+                    toggle.disabled = false;
+                }
                 if (label) label.textContent = !isShared ? '公开' : '私有';
+
+                if (detailToggle) {
+                    detailToggle.checked = !isShared;
+                    detailToggle.disabled = false;
+                }
+                if (detailLabel) detailLabel.textContent = !isShared ? '公开' : '私有';
+
                 alert('操作失败: ' + (data.error || '未知错误'));
             }
         })
         .catch(err => {
-            if (toggle) toggle.disabled = false;
-            if (toggle) toggle.checked = !isShared;
+            if (toggle) {
+                toggle.disabled = false;
+                toggle.checked = !isShared;
+            }
             if (label) label.textContent = !isShared ? '公开' : '私有';
+
+            if (detailToggle) {
+                detailToggle.disabled = false;
+                detailToggle.checked = !isShared;
+            }
+            if (detailLabel) detailLabel.textContent = !isShared ? '公开' : '私有';
+
             alert('操作出错: ' + err.message);
         });
     }
@@ -1739,6 +3353,7 @@
         
         let html = `<span class="kb-breadcrumb-item ${folderPath.length === 0 ? 'active' : ''}" 
                          data-folder-id=""
+                         title="根目录"
                          onclick="navigateToRoot()"
                          ondragover="onBreadcrumbDragOver(event)"
                          ondragenter="onBreadcrumbDragEnter(event)"
@@ -1748,14 +3363,18 @@
         for (let i = 0; i < folderPath.length; i++) {
             const isLast = i === folderPath.length - 1;
             const fid = folderPath[i].id;
+            const safeName = escapeHtml(folderPath[i].name);
+            const jsFid = escapeJsAttr(fid);
+
             html += `<span class="kb-breadcrumb-separator">/</span>`;
             html += `<span class="kb-breadcrumb-item ${isLast ? 'active' : ''}" 
-                          data-folder-id="${fid}"
+                          data-folder-id="${safeName}"
+                          title="${safeName}"
                           onclick="navigateToPath(${i})"
                           ondragover="onBreadcrumbDragOver(event)"
                           ondragenter="onBreadcrumbDragEnter(event)"
                           ondragleave="onBreadcrumbDragLeave(event)"
-                          ondrop="onBreadcrumbDrop(event, '${fid}')">${escapeHtml(folderPath[i].name)}</span>`;
+                          ondrop="onBreadcrumbDrop(event, '${jsFid}')">${safeName}</span>`;
         }
         
         breadcrumb.innerHTML = html;
@@ -1825,28 +3444,17 @@
     }
     
     function executeDragMove(docId, targetFolderId, targetLabel) {
-        const docEl = document.querySelector(`.kb-doc-item[data-doc-id="${docId}"]`);
+        const docEl = document.querySelector(`.kb-doc-item[data-doc-id="${cssAttrEscape(docId)}"]`);
         if (docEl) { docEl.style.transition = 'all 0.3s'; docEl.style.opacity = '0.3'; docEl.style.transform = 'translateX(40px)'; }
         
-        fetch(`/api/kb/document/${docId}/move`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ folder_id: targetFolderId || null })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                showDropToast(`✅ 已移动到${targetLabel}`);
-                setTimeout(() => hideDropToast(), 1500);
-                loadDocuments();
-            } else {
-                showDropToast(`❌ 移动失败: ${data.error || '未知错误'}`);
-                setTimeout(() => hideDropToast(), 2000);
-                if (docEl) { docEl.style.opacity = '1'; docEl.style.transform = ''; }
-            }
+        moveDocumentToFolder(docId, targetFolderId || null)
+        .then(() => {
+            showDropToast(`✅ 已移动到${targetLabel}`);
+            setTimeout(() => hideDropToast(), 1500);
+            loadDocuments();
         })
         .catch(err => {
-            showDropToast(`❌ 移动出错: ${err.message}`);
+            showDropToast(`❌ 移动失败: ${err.message}`);
             setTimeout(() => hideDropToast(), 2000);
             if (docEl) { docEl.style.opacity = '1'; docEl.style.transform = ''; }
         });
@@ -1885,7 +3493,7 @@
     
     function deleteFolder(folderId, folderName) {
         if (!confirm(`确定要删除文件夹「${folderName}」吗？\n\n注意：如果文件夹内有内容，将一并删除！`)) return;
-        fetch(`/api/kb/folder/${folderId}?recursive=true`, { method: 'DELETE' })
+        fetch(`/api/kb/folder/${encodeURIComponent(folderId)}?recursive=true`, { method: 'DELETE' })
             .then(r => r.json())
             .then(data => { if (data.success) loadDocuments(); else alert('删除失败: ' + (data.error || '未知错误')); })
             .catch(err => alert('删除出错: ' + err.message));
@@ -1898,6 +3506,15 @@
         document.getElementById('renameInput').focus();
         document.getElementById('renameInput').select();
     }
+
+    function showRenameDocModal(docId, currentName) {
+        renameTarget = { type: 'doc', id: docId };
+        document.getElementById('renameInput').value = currentName || '';
+        document.getElementById('renameModal').classList.add('show');
+        document.getElementById('renameInput').focus();
+        document.getElementById('renameInput').select();
+    }
+
     function hideRenameModal() { document.getElementById('renameModal').classList.remove('show'); renameTarget = null; }
     
     function confirmRename() {
@@ -1908,8 +3525,8 @@
         btn.disabled = true; btn.textContent = '保存中...';
         
         let url, body;
-        if (renameTarget.type === 'folder') { url = `/api/kb/folder/${renameTarget.id}/rename`; body = { name: newName }; }
-        else { url = `/api/kb/rename/${renameTarget.id}`; body = { new_name: newName }; }
+        if (renameTarget.type === 'folder') { url = `/api/kb/folder/${encodeURIComponent(renameTarget.id)}/rename`; body = { name: newName }; }
+        else { url = `/api/kb/rename/${encodeURIComponent(renameTarget.id)}`; body = { new_name: newName }; }
         
         fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         .then(r => r.json())
@@ -1924,7 +3541,7 @@
     // ==================== 文档操作 ====================
     function deleteDoc(docId) {
         if (!confirm('确定要删除这个文档吗？')) return;
-        fetch(`/api/kb/document/${docId}`, { method: 'DELETE' })
+        fetch(`/api/kb/document/${encodeURIComponent(docId)}`, { method: 'DELETE' })
             .then(r => r.json())
             .then(data => { if (data.success) loadDocuments(); else alert('删除失败: ' + (data.error || '未知错误')); })
             .catch(err => alert('删除出错: ' + err.message));
@@ -1941,9 +3558,10 @@
             </div>`;
         for (const folder of allFolders) {
             const indent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(folder.level);
+            const jsFolderId = escapeJsAttr(folder.folder_id);
             html += `
-                <div class="kb-folder-select-item" data-folder-id="${folder.folder_id}" 
-                     onclick="selectMoveTarget(this, '${folder.folder_id}')">
+                <div class="kb-folder-select-item" data-folder-id="${escapeHtml(folder.folder_id)}" 
+                     onclick="selectMoveTarget(this, '${jsFolderId}')">
                     <span class="folder-icon">${indent}📁</span>
                     <span class="folder-name">${escapeHtml(folder.name)}</span>
                 </div>`;
@@ -1964,18 +3582,16 @@
         const btn = document.getElementById('confirmMoveDoc');
         btn.disabled = true; btn.textContent = '移动中...';
         
-        fetch(`/api/kb/document/${moveDocId}/move`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ folder_id: selectedMoveTarget })
-        })
-        .then(r => r.json())
-        .then(data => {
+        moveDocumentToFolder(moveDocId, selectedMoveTarget)
+        .then(() => {
             btn.disabled = false; btn.textContent = '移动';
-            if (data.success) { hideMoveDocModal(); loadDocuments(); }
-            else alert('移动失败: ' + (data.error || '未知错误'));
+            hideMoveDocModal();
+            loadDocuments();
         })
-        .catch(err => { btn.disabled = false; btn.textContent = '移动'; alert('移动出错: ' + err.message); });
+        .catch(err => {
+            btn.disabled = false; btn.textContent = '移动';
+            alert('移动失败: ' + err.message);
+        });
     }
     
     // ==================== 处理状态轮询 ====================
@@ -1988,6 +3604,16 @@
                 const docs = data.documents || [];
                 const hasProcessing = data.has_processing || false;
                 const hasParsing = docs.some(d => d.status === 'parsing');
+
+                if (currentDetailDocId && currentDetailDocSnapshot) {
+                    const latestDetailDoc = docs.find(d => d.doc_id === currentDetailDocId);
+                    if (latestDetailDoc) {
+                        currentDetailDocSnapshot = {
+                            ...currentDetailDocSnapshot,
+                            ...latestDetailDoc
+                        };
+                    }
+                }
 
                 if (hasProcessing || hasParsing) {
                     _hadProcessing = true;
@@ -2060,10 +3686,27 @@
     }
     
     function escapeHtml(text) {
-        if (!text) return '';
+        if (text === null || text === undefined) return '';
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = String(text);
         return div.innerHTML;
+    }
+
+    function escapeJsAttr(text) {
+        const s = String(text ?? '')
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/\r/g, '\\r')
+            .replace(/\n/g, '\\n');
+        return escapeHtml(s);
+    }
+
+    function cssAttrEscape(value) {
+        return String(value ?? '')
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\A ')
+            .replace(/\r/g, '\\D ');
     }
 </script>
 {% endblock %}
