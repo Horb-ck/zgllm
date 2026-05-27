@@ -718,7 +718,7 @@ def login():
                 user_courses, current_course, success = process_user_courses(session['username'], session['role'],session['sis_id'])
                 if not success:
                     flash('获取课程信息失败，请联系管理员', 'danger')
-                    # return render_template('auth/login.html') 注释确保可以登录
+                    return render_template('auth/login.html') //注释确保可以登录
                 session['user_courses'] = user_courses
                 session['current_course'] = current_course
                 flash('登录成功', 'success')
@@ -937,7 +937,7 @@ def register():
             user_courses, current_course, success = process_user_courses(session['username'], session['role'],session['sis_id'])
             if not success:
                 flash('获取课程信息失败，请联系管理员', 'danger')
-                # return render_template('auth/login.html') 注释确保可以登录
+                return render_template('auth/login.html')
             session['user_courses'] = user_courses
             session['current_course'] = current_course
             track_event(
