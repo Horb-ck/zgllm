@@ -5,7 +5,7 @@
     "description": "全国大学生机器人大赛 ROBOCON 主赛官方规则资料。",
     "official_url": "https://robocon.org.cn/",
     "updated_at": "2026-04-23",
-    "update_note": "后台定时任务已在 2026-05-25 03:00:20 完成最近一次官网同步，当前仅对规则、图册、FAQ 等规则资产下载附件，通知类内容只记录详情。",
+    "update_note": "后台定时任务已在 2026-05-27 03:00:23 完成最近一次官网同步，当前仅对规则、图册、FAQ 等规则资产下载附件，通知类内容只记录详情。",
     "docs": [
       {
         "title": "关于举办第二十五届全国大学生机器人大赛 ROBOCON 交流赛的通知",
@@ -194,7 +194,8 @@
         "download_policy": "download",
         "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V.1.pdf"
       }
-    ]
+    ],
+    "synced_at": "2026-05-27 03:00:23"
   },
   "international": {
     "key": "international",
@@ -236,6 +237,7 @@
         "preview_url": "https://aburobocon2025.mnb.mn/uploads/file/Appendix-2.pdf",
         "source": "ABU Robocon 2025 官网"
       }
-    ]
+    ],
+    "synced_at": "2025-08-05"
   }
 }

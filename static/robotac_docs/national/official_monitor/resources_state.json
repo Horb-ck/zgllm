@@ -2,29 +2,41 @@
   "notices": {
     "key": "notices",
     "label": "通知公告",
-    "description": "ROBOTAC 官网通知公告页抓取的规则、章程与相关附件。",
+    "description": "ROBOTAC 官网实时抓取的通知、规则与章程。",
     "official_url": "https://www.robotac.cn/h-col-104.html",
-    "updated_at": "2026-04-13",
-    "update_note": "当前页面数据已按 Robocon 同步策略落盘：规则/章程优先下载本地副本。",
+    "updated_at": "2026-05-01",
+    "synced_at": "2026-05-27 02:59:59",
+    "update_note": "当前页面数据由服务端定期从 ROBOTAC 官网抓取，并带缓存兜底。",
     "docs": [
       {
-        "title": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则",
-        "type": "创新挑战赛规则",
-        "date": "2026-04-13",
+        "title": "第二十五届全国大学生机器人大赛ROBOTAC三维数字设计赛-作品原创性承诺书",
+        "type": "官网资料",
+        "date": "2026-05-01",
+        "url": "https://www.robotac.cn/sys-nd/1378.html",
+        "preview_url": "https://www.robotac.cn/sys-nd/1378.html",
+        "source": "ROBOTAC 官网动态页",
+        "category": "notices",
+        "download_policy": "metadata_only",
+        "downloaded_attachment": ""
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则（v1.1）",
+        "type": "挑战赛规则",
+        "date": "2026-04-24",
         "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgvPiszwYopPrs1QI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%20AIROBOTIC%E5%88%9B%E6%96%B0%E6%8C%91%E6%88%98%E8%B5%9B%E8%A7%84%E5%88%99%EF%BC%88v1.1%EF%BC%89.pdf&v=1777024060",
         "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC_AIROBOTIC创新挑战赛规则（v1.1）_ec95e098d3f6.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
+        "source": "ROBOTAC 官网动态页 / 本地副本",
         "category": "notices",
         "download_policy": "download",
         "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC AIROBOTIC创新挑战赛规则（v1.1）.pdf"
       },
       {
         "title": "第二十五届全国大学生机器人大赛 ROBOTAC 数字仿真挑战赛比赛规则——智能驾驶仿真（V1.0）",
-        "type": "数字仿真挑战赛规则",
+        "type": "挑战赛规则",
         "date": "2026-03-31",
         "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgouuszgYogPqblQQ.pdf?f=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%20ROBOTAC%20%E6%95%B0%E5%AD%97%E4%BB%BF%E7%9C%9F%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99.pdf&v=1774925218",
         "preview_url": "/static/robotac_docs/national/official_monitor/全国大学生机器人大赛_ROBOTAC_数字仿真挑战赛比赛规则_71da8c2fbca8.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
+        "source": "ROBOTAC 官网动态页 / 本地副本",
         "category": "notices",
         "download_policy": "download",
         "downloaded_attachment": "全国大学生机器人大赛 ROBOTAC 数字仿真挑战赛比赛规则.pdf"
@@ -35,7 +47,7 @@
         "date": "2026-01-10",
         "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg8MuHywYo752lpgM.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%20%E4%BE%A6%E5%AF%9F%E4%BB%BB%E5%8A%A1%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%EF%BC%881.0%29.pdf&v=1768023536",
         "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC_侦察任务挑战赛比赛规则（1.0)_3a7f149c6b34.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
+        "source": "ROBOTAC 官网动态页 / 本地副本",
         "category": "notices",
         "download_policy": "download",
         "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC 侦察任务挑战赛比赛规则（1.0).pdf"
@@ -46,18 +58,18 @@
         "date": "2026-01-07",
         "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgqp-2ygYox7aOGw.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E6%8C%91%E6%88%98%E8%B5%9B%E8%A7%84%E5%88%99-%E8%83%BD%E9%87%8F%E7%90%83%E7%81%8C%E7%AF%AE%E6%8C%91%E6%88%98%E8%B5%9B%28V1.0%29.pdf&v=1767739306",
         "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC挑战赛规则-能量球灌篮挑战赛(V1.0)_884ab6a8157e.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
+        "source": "ROBOTAC 官网动态页 / 本地副本",
         "category": "notices",
         "download_policy": "download",
         "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛规则-能量球灌篮挑战赛(V1.0).pdf"
       },
       {
-        "title": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则——足式机器人挑战赛（V1.0）",
+        "title": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则——足式机器人挑战赛（V1.1）",
         "type": "挑战赛规则",
-        "date": "2026-01-06",
-        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg0vmszwYotKDyaQ.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E8%B6%B3%E5%BC%8F%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%8C%91%E6%88%98%E8%B5%9B%28V1.1%29.pdf&v=1777024210",
-        "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则足式机器人挑战赛(V1.1)_83ff968ad5be.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
+        "date": "2026-04-24",
+        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgh9PQ0AYo28q-3AY.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E6%8C%91%E6%88%98%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E8%B6%B3%E5%BC%8F%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%8C%91%E6%88%98%E8%B5%9B%28V1.1%29.pdf&v=1779706247",
+        "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则足式机器人挑战赛(V1.1)_b3d8544b5508.pdf",
+        "source": "ROBOTAC 官网动态页 / 本地副本",
         "category": "notices",
         "download_policy": "download",
         "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC挑战赛比赛规则足式机器人挑战赛(V1.1).pdf"
@@ -68,106 +80,33 @@
         "date": "2025-12-30",
         "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg6fHMygYo7vHQsQY.pdf?f=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E7%AB%A0%E7%A8%8B.pdf&v=1767061737",
         "preview_url": "/static/robotac_docs/national/official_monitor/全国大学生机器人大赛ROBOTAC章程_1977c699a910.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
+        "source": "ROBOTAC 官网动态页 / 本地副本",
         "category": "notices",
         "download_policy": "download",
         "downloaded_attachment": "全国大学生机器人大赛ROBOTAC章程.pdf"
       },
       {
-        "title": "第二十五届全国大学生机器人大赛ROBOTAC设计赛比赛规则——三维数字设计赛",
-        "type": "设计赛规则",
-        "date": "2025-12-08",
+        "title": "第二十五届全国大学生机器人大赛ROBOTAC设计赛比赛规则——三维数字设计赛（v1.1）",
+        "type": "规则",
+        "date": "2026-04-24",
         "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg0PeszwYopYnMnwE.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E4%B8%89%E7%BB%B4%E6%95%B0%E5%AD%97%E8%AE%BE%E8%AE%A1%E8%B5%9B%E8%A7%84%E5%88%99%28v1.1%29.pdf&v=1777023953",
         "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC三维数字设计赛规则(v1.1)_a5f5638dab2b.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
+        "source": "ROBOTAC 官网动态页 / 本地副本",
         "category": "notices",
         "download_policy": "download",
         "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC三维数字设计赛规则(v1.1).pdf"
-      },
-      {
-        "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（大型组）（v1.0）",
-        "type": "对抗赛规则",
-        "date": "2025-11-17",
-        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgi-mszwYo7MeVYw.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E4%BA%BA%E5%BD%A2%E5%8A%9F%E5%A4%AB%E6%90%8F%E5%87%BB%E8%B5%9B%EF%BC%88%E5%A4%A7%E5%9E%8B%E7%BB%84%EF%BC%89%28v2.0%29.pdf&v=1777024139",
-        "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则人形功夫搏击赛（大型组）(v2.0)_e5fe450283ca.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
-        "category": "notices",
-        "download_policy": "download",
-        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则人形功夫搏击赛（大型组）(v2.0).pdf"
-      },
-      {
-        "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0)",
-        "type": "对抗赛规则",
-        "date": "2025-11-17",
-        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAg9P-qyAYotObCogc.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99-%E4%BA%BA%E5%BD%A2%E5%8A%9F%E5%A4%AB%E6%90%8F%E5%87%BB%E8%B5%9B%EF%BC%88%E5%B0%8F%E5%9E%8B%E7%BB%84%EF%BC%89%EF%BC%88v1.0%29.pdf&v=1763360756",
-        "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0)_a820e0ca77af.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
-        "category": "notices",
-        "download_policy": "download",
-        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-人形功夫搏击赛（小型组）（v1.0).pdf"
-      },
-      {
-        "title": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则-深蓝使命（1.01)",
-        "type": "对抗赛规则",
-        "date": "2025-11-17",
-        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgxLC1yQYo7PyooQI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E5%AF%B9%E6%8A%97%E8%B5%9B%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99%E3%80%90%E6%B7%B1%E8%93%9D%E4%BD%BF%E5%91%BDv1.01%E3%80%91.pdf&v=1764579397",
-        "preview_url": "/static/robotac_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则【深蓝使命v1.01】_1dcad9d6c64f.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
-        "category": "notices",
-        "download_policy": "download",
-        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOTAC对抗赛比赛规则【深蓝使命v1.01】.pdf"
-      },
-      {
-        "title": "第二十四届全国大学生机器人大赛 ROBOTAC 设计赛——竞技机器人方案设计赛规则",
-        "type": "设计赛规则",
-        "date": "2025-03-31",
-        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgl-mrvwYokuaYrwI.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E5%9B%9B%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%20ROBOTAC%20%E8%AE%BE%E8%AE%A1%E8%B5%9B%E2%80%94%E2%80%94%E7%AB%9E%E6%8A%80%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1%E8%B5%9B%E8%A7%84%E5%88%9920250331.pdf&v=1743453335",
-        "preview_url": "/static/robotac_docs/national/official_monitor/第二十四届全国大学生机器人大赛_ROBOTAC_设计赛——竞技机器人方案设计赛规则20250331_943f4cdb51a8.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
-        "category": "notices",
-        "download_policy": "download",
-        "downloaded_attachment": "第二十四届全国大学生机器人大赛 ROBOTAC 设计赛——竞技机器人方案设计赛规则20250331.pdf"
-      },
-      {
-        "title": "第二十四届全国大学生机器人大赛ROBOTAC比赛规则V1.02",
-        "type": "规则",
-        "date": "2025-03-04",
-        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAgv_OZvgYo3pWNuwE.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E5%9B%9B%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOTAC%E2%80%9C%E9%95%BF%E5%9F%8E%E7%83%BD%E7%81%AB%E2%80%9D%E6%AF%94%E8%B5%9B%E8%A7%84%E5%88%99V1.02.pdf&v=1741058495",
-        "preview_url": "/static/robotac_docs/national/official_monitor/第二十四届全国大学生机器人大赛ROBOTAC“长城烽火”比赛规则V1.02_9ab9aa43be49.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
-        "category": "notices",
-        "download_policy": "download",
-        "downloaded_attachment": "第二十四届全国大学生机器人大赛ROBOTAC“长城烽火”比赛规则V1.02.pdf"
-      },
-      {
-        "title": "【比赛章程】全国大学生机器人大赛章程",
-        "type": "章程",
-        "date": "2022-09-30",
-        "url": "https://download.s21i.co99.net/27794517/0/6/ABUIABA9GAAghJG1nQYo_6njCw.pdf?f=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9B%E7%AB%A0%E7%A8%8B.pdf&v=1703483327",
-        "preview_url": "/static/robotac_docs/national/official_monitor/全国大学生机器人大赛章程_9f90eb4e72be.pdf",
-        "source": "ROBOTAC 官网通知公告 / 本地副本",
-        "category": "notices",
-        "download_policy": "download",
-        "downloaded_attachment": "全国大学生机器人大赛章程.pdf"
       }
     ]
   },
   "competition": {
     "key": "competition",
     "label": "赛事说明",
-    "description": "ROBOTAC 官方赛事介绍与办赛动态。",
+    "description": "ROBOTAC 官网实时抓取的赛事介绍与办赛动态。",
     "official_url": "https://www.robotac.cn/",
-    "updated_at": "2025-11-14",
-    "update_note": "保留赛事介绍入口，规则附件已归档到通知公告。",
+    "updated_at": "2026-04-13",
+    "synced_at": "2026-05-27 02:59:59",
+    "update_note": "当前页面数据由服务端定期从 ROBOTAC 官网抓取，并带缓存兜底。",
     "docs": [
-      {
-        "title": "关于举办第二十五届全国大学生机器人大赛ROBOTAC的通知",
-        "type": "办赛通知",
-        "date": "2025-11-14",
-        "url": "https://www.robotac.cn/sys-nd/1307.html",
-        "preview_url": "https://www.robotac.cn/sys-nd/1307.html",
-        "source": "ROBOTAC 官网赛事动态"
-      },
       {
         "title": "ROBOTAC 大赛简介",
         "type": "赛事介绍",
@@ -175,6 +114,61 @@
         "url": "https://www.robotac.cn/h-col-141.html",
         "preview_url": "https://www.robotac.cn/h-col-141.html",
         "source": "ROBOTAC 官网"
+      },
+      {
+        "title": "关于举办“2026第19届全国三维数字化创新设计大赛”之 “CURC机器人+”创新设计大赛的通知",
+        "type": "办赛通知",
+        "date": "2026-04-13",
+        "url": "https://www.robotac.cn/sys-nd/1375.html",
+        "preview_url": "https://www.robotac.cn/sys-nd/1375.html",
+        "source": "ROBOTAC 官网动态页",
+        "category": "competition",
+        "download_policy": "metadata_only",
+        "downloaded_attachment": ""
+      },
+      {
+        "title": "关于举办第二十五届全国大学生机器人大赛ROBOTAC的通知",
+        "type": "办赛通知",
+        "date": "2025-11-14",
+        "url": "https://www.robotac.cn/sys-nd/1299.html",
+        "preview_url": "https://www.robotac.cn/sys-nd/1299.html",
+        "source": "ROBOTAC 官网动态页",
+        "category": "competition",
+        "download_policy": "metadata_only",
+        "downloaded_attachment": ""
+      },
+      {
+        "title": "第二十四届全国大学生机器人大赛ROBOTAC获奖名单",
+        "type": "官网资料",
+        "date": "2025-06-26",
+        "url": "https://www.robotac.cn/sys-nd/1260.html",
+        "preview_url": "https://www.robotac.cn/sys-nd/1260.html",
+        "source": "ROBOTAC 官网动态页",
+        "category": "competition",
+        "download_policy": "metadata_only",
+        "downloaded_attachment": ""
+      },
+      {
+        "title": "ROBOTAC机器人大赛省赛举办管理办法",
+        "type": "官网资料",
+        "date": "2025-10-21",
+        "url": "https://www.robotac.cn/sys-nd/1377.html",
+        "preview_url": "https://www.robotac.cn/sys-nd/1377.html",
+        "source": "ROBOTAC 官网动态页",
+        "category": "competition",
+        "download_policy": "metadata_only",
+        "downloaded_attachment": ""
+      },
+      {
+        "title": "全国大学生机器人大赛ROBOTAC比赛申诉表",
+        "type": "官网资料",
+        "date": "2025-06-22",
+        "url": "https://www.robotac.cn/sys-nd/1259.html",
+        "preview_url": "https://www.robotac.cn/sys-nd/1259.html",
+        "source": "ROBOTAC 官网动态页",
+        "category": "competition",
+        "download_policy": "metadata_only",
+        "downloaded_attachment": ""
       }
     ]
   }
