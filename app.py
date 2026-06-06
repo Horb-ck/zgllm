@@ -165,6 +165,7 @@ rb_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=d15Fr
 pd_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=jwv1RfhutIzIxvM8o6Ubgij3&studentUid="
 pm_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=pgTOHEGASrW4VgImEp9dtX1c&studentUid="
 lmpa_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=hP0Nptl04DfkZQFLTrKhjGjU&studentUid="
+mnhi_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=bvWovJML1LO7n2sKFMhygEqi&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
 
@@ -324,6 +325,13 @@ agents = [
         "description": "系统掌握大模型构建、微调与智能体开发核心技术。",
         "url": lmpa_agent_class_url,
         "image_url": "/static/img/lmpa.png"
+    },
+    {
+        "id": 21,
+        "name": "运动神经生理与人机交互",
+        "description": "理解神经机制，掌握脑机接口与智能康复核心技术。",
+        "url": mnhi_agent_class_url,
+        "image_url": "/static/img/mnhi.png"
     }
 ]
 
@@ -337,7 +345,7 @@ COURSES_LIST = [
     "机器人动力学与控制", "无人机飞控技术", "信号与系统", 
     "工程原理", "工程设计", "工效学", 
     "机器人基础", "产品设计",
-    "产品制造", "大模型原理及应用"
+    "产品制造", "大模型原理及应用","运动神经生理与人机交互"
 ]
 
 # 允许的学期ID列表
