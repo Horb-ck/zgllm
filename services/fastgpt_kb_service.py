@@ -316,6 +316,256 @@ class FastGPTKBService:
 
         return source_name or "共享文档"
 
+    def _is_shared_source_name(self, source: str) -> bool:
+        """
+        判断一个来源名是否明显是共享知识库结果。
+        用于兜底过滤，避免共享结果被误判为个人知识库结果。
+        """
+        source = (source or '').strip()
+        if not source:
+            return False
+
+        tag = (getattr(self, 'shared_filename_tag', '') or '【用户共享】').strip()
+
+        return (
+            source.startswith(tag)
+            or source.startswith('[用户共享]')
+            or source.startswith('用户共享')
+            or source.startswith('【用户共享】')
+            or source.startswith('《【用户共享】')
+            or (tag and tag in source[:50])
+        )
+
+
+    def _collection_belongs_to_user_personal_kb(
+        self,
+        username: str,
+        collection_id: str
+    ) -> bool:
+        """
+        判断 collection_id 是否属于当前用户个人知识库。
+
+        注意：
+        - 用户把自己的文档共享后，原始 collection_id 仍属于个人库；
+        - 共享副本 collection_id 存在 shared_collection_id 字段，不应被认为是个人库结果。
+        """
+        if not username or not collection_id:
+            return False
+
+        try:
+            doc = self.db.kb_documents.find_one(
+                {
+                    'username': username,
+                    'collection_id': collection_id,
+                    'status': {'$ne': 'deleted'}
+                },
+                {
+                    '_id': 1,
+                    'doc_id': 1,
+                    'filename': 1,
+                    'collection_id': 1
+                }
+            )
+
+            return bool(doc)
+
+        except Exception as e:
+            print(
+                f"⚠️ 判断 collection 是否属于个人库失败: "
+                f"user={username}, collection={collection_id}, error={e}"
+            )
+            return False
+
+    def _collection_is_shared_copy(self, collection_id: str) -> bool:
+        """
+        判断 collection_id 是否是共享知识库中的共享副本。
+        """
+        if not collection_id:
+            return False
+
+        collection_id = str(collection_id or '').strip()
+        if not collection_id:
+            return False
+
+        try:
+            doc = self.db.kb_documents.find_one(
+                {
+                    'shared_collection_id': collection_id,
+                    'status': {'$ne': 'deleted'}
+                },
+                {
+                    '_id': 1,
+                    'doc_id': 1,
+                    'username': 1,
+                    'filename': 1,
+                    'shared_collection_id': 1
+                }
+            )
+
+            return bool(doc)
+
+        except Exception as e:
+            print(
+                f"⚠️ 判断 collection 是否为共享副本失败: "
+                f"collection={collection_id}, error={e}"
+            )
+            return False
+
+
+    def filter_personal_only_results(
+        self,
+        username: str,
+        results: List[Dict],
+        personal_dataset_id: str = None
+    ) -> List[Dict]:
+        """
+        对搜索结果做强制个人库过滤。
+
+        注意：
+        - 明确 shared 的结果必须丢弃；
+        - dataset_id 明确不是个人库的结果必须丢弃；
+        - dataset_id 已确认是个人库时，不再因为 MongoDB collection 映射缺失而误删；
+        - dataset_id 缺失时，用 collection_id 辅助判断，但未知归属不直接丢弃，避免误伤个人库。
+        """
+        if not results:
+            return []
+
+        if not personal_dataset_id:
+            personal_dataset_id = self.get_or_create_user_dataset(username)
+
+        personal_dataset_id = str(personal_dataset_id or '').strip()
+
+        kept = []
+        dropped = []
+
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+
+            source_type = str(item.get('source_type') or '').strip().lower()
+
+            source = (
+                item.get('source')
+                or item.get('sourceName')
+                or item.get('filename')
+                or ''
+            )
+            source = str(source or '').strip()
+
+            dataset_id = (
+                item.get('dataset_id')
+                or item.get('datasetId')
+                or ''
+            )
+            dataset_id = str(dataset_id or '').strip()
+
+            collection_id = (
+                item.get('collection_id')
+                or item.get('collectionId')
+                or ''
+            )
+            collection_id = str(collection_id or '').strip()
+
+            dataset_is_personal = bool(
+                dataset_id
+                and personal_dataset_id
+                and dataset_id == personal_dataset_id
+            )
+
+            reason = ''
+
+            if source_type == 'shared':
+                reason = 'source_type=shared'
+
+            elif self._is_shared_source_name(source):
+                reason = f'来源名带共享标记: {source}'
+
+            elif dataset_id and personal_dataset_id and dataset_id != personal_dataset_id:
+                reason = f'dataset_id 不属于个人库: {dataset_id} != {personal_dataset_id}'
+
+            elif dataset_is_personal:
+                reason = ''
+
+            elif collection_id:
+                if self._collection_belongs_to_user_personal_kb(
+                    username,
+                    collection_id
+                ):
+                    reason = ''
+
+                elif self._collection_is_shared_copy(collection_id):
+                    reason = f'collection_id 是共享副本: {collection_id}'
+
+                else:
+                    print(
+                        f"⚠️ 无法确认 collection 归属，暂保留以避免误伤个人库: "
+                        f"user={username}, source={source}, "
+                        f"dataset_id={dataset_id}, collection_id={collection_id}"
+                    )
+                    reason = ''
+
+            if reason:
+                dropped.append({
+                    'source': source,
+                    'source_type': source_type,
+                    'dataset_id': dataset_id,
+                    'collection_id': collection_id,
+                    'reason': reason
+                })
+                continue
+
+            item['source_type'] = 'personal'
+            kept.append(item)
+
+        if dropped:
+            print(f"🚫 已过滤非个人库搜索结果: {len(dropped)} 条")
+            for d in dropped[:10]:
+                print(
+                    f"   - source={d.get('source')}, "
+                    f"source_type={d.get('source_type')}, "
+                    f"dataset_id={d.get('dataset_id')}, "
+                    f"collection_id={d.get('collection_id')}, "
+                    f"reason={d.get('reason')}"
+                )
+
+        return kept
+
+    def search_personal_only(
+        self,
+        username: str,
+        query: str,
+        top_k: int = 5
+    ) -> Dict[str, Any]:
+        """
+        强制只搜索个人知识库。
+
+        这个方法专门给 /api/kb/workflow-search 使用。
+        共享知识库由 FastGPT 工作流里的原生“知识库搜索”节点负责。
+        """
+        personal_dataset_id = self.get_or_create_user_dataset(username)
+
+        result = self.search(
+            username=username,
+            query=query,
+            top_k=top_k,
+            include_shared=False
+        )
+
+        if result.get('success') and result.get('results'):
+            filtered = self.filter_personal_only_results(
+                username=username,
+                results=result.get('results', []),
+                personal_dataset_id=personal_dataset_id
+            )
+
+            result['results'] = filtered
+            result['total'] = len(filtered)
+            result['personal_only'] = True
+            result['include_shared'] = False
+
+        return result
+
+
     # ================== 从 FastGPT 同步文档到 MongoDB ==================
 
     def _should_sync(self, username: str, interval: int = 60) -> bool:
@@ -3432,19 +3682,34 @@ class FastGPTKBService:
         include_shared: bool = True
     ) -> Dict[str, Any]:
         """
-        搜索用户知识库
-        ★ 增加文件名匹配回退：当用户按文件名搜索时也能命中
+        搜索知识库。
+
+        重要约定：
+        - 默认 include_shared=True，让用户体验到完整的功能；
+        - include_shared=False：只搜索个人知识库；
+        - include_shared=True：搜索个人知识库 + 共享知识库；
+        - workflow-search 必须调用 include_shared=False 或 search_personal_only()；
+        - FastGPT 原生共享知识库搜索节点由工作流单独控制。
         """
+        include_shared = bool(include_shared)
         all_results = []
 
-        # ★★★ 新增：文件名模糊匹配（覆盖历史文档） ★★★
+        personal_count = 0
+        shared_count = 0
+        filename_count = 0
+
+        # ① 文件名模糊匹配，只查当前用户 MongoDB 文档，因此一定是个人库
         filename_results = self._search_by_filename(username, query)
         if filename_results:
-            print(f"🔍 文件名匹配: {len(filename_results)} 条结果")
+            filename_count = len(filename_results)
+            print(f"🔍 文件名匹配: {filename_count} 条结果")
+            for r in filename_results:
+                r['source_type'] = 'personal'
             all_results.extend(filename_results)
 
-        # ① 搜索个人知识库
+        # ② 搜索个人知识库
         dataset_id = self.get_or_create_user_dataset(username)
+
         if dataset_id:
             personal = self._search_single_dataset(
                 dataset_id,
@@ -3453,15 +3718,20 @@ class FastGPTKBService:
                 top_k,
                 is_shared=False
             )
+
             for r in personal:
                 r['source_type'] = 'personal'
-            all_results.extend(personal)
-            if personal:
-                print(f"🔍 个人知识库: {len(personal)} 条结果")
 
-        # ② 搜索共享知识库（使用隐私保护）
+            personal_count = len(personal)
+            all_results.extend(personal)
+
+            if personal:
+                print(f"🔍 个人知识库: {personal_count} 条结果")
+
+        # ③ 只有显式 include_shared=True 时才搜索共享知识库
         if include_shared:
             shared_dataset_id = self._get_shared_dataset_id_cached()
+
             if shared_dataset_id and shared_dataset_id != dataset_id:
                 shared = self._search_single_dataset(
                     shared_dataset_id,
@@ -3470,47 +3740,84 @@ class FastGPTKBService:
                     top_k,
                     is_shared=True
                 )
+
                 for r in shared:
                     r['source_type'] = 'shared'
+
+                shared_count = len(shared)
                 all_results.extend(shared)
+
                 if shared:
-                    print(f"🔍 共享知识库: {len(shared)} 条结果")
+                    print(f"🔍 共享知识库: {shared_count} 条结果")
+        else:
+            print("🔒 共享知识库搜索已关闭，本次仅搜索个人知识库")
 
         if not all_results:
-            return {'success': True, 'results': [], 'total': 0}
+            return {
+                'success': True,
+                'results': [],
+                'total': 0,
+                'include_shared': include_shared,
+                'personal_count': personal_count,
+                'shared_count': shared_count,
+                'filename_count': filename_count
+            }
 
-        # ③ 按分数排序
-        all_results.sort(key=lambda x: x.get('score', 0), reverse=True)
+        # ④ 按分数排序
+        all_results.sort(
+            key=lambda x: x.get('score', 0),
+            reverse=True
+        )
 
-        # ④ 去重
+        # ⑤ 去重
+        # 重要修复：
+        # 之前的逻辑是：个人库和共享库内容重复时，用共享库覆盖个人库。
+        # 这会导致共享资料更容易被展示成主要引用。
+        # 现在改为：重复内容优先保留个人库。
         seen = {}
         deduped = []
+
         for r in all_results:
-            key = r.get('content', '')[:100].strip()
-            if not key:
+            content_key = r.get('content', '')[:100].strip()
+
+            if not content_key:
                 deduped.append(r)
                 continue
 
-            if key in seen:
-                existing = seen[key]
+            if content_key in seen:
+                existing = seen[content_key]
+
+                # 如果已有的是共享库，当前是个人库，则用个人库替换共享库
                 if (
-                    existing.get('source_type') == 'personal'
-                    and r.get('source_type') == 'shared'
+                    existing.get('source_type') == 'shared'
+                    and r.get('source_type') == 'personal'
                 ):
-                    idx = deduped.index(existing)
-                    deduped[idx] = r
-                    seen[key] = r
-            else:
-                seen[key] = r
-                deduped.append(r)
+                    try:
+                        idx = deduped.index(existing)
+                        deduped[idx] = r
+                    except ValueError:
+                        deduped.append(r)
+
+                    seen[content_key] = r
+
+                # 其他情况保留已有结果
+                continue
+
+            seen[content_key] = r
+            deduped.append(r)
 
         final = deduped[:top_k]
 
         return {
             'success': True,
             'results': final,
-            'total': len(final)
+            'total': len(final),
+            'include_shared': include_shared,
+            'personal_count': personal_count,
+            'shared_count': shared_count,
+            'filename_count': filename_count
         }
+
 
     def _search_by_filename(
         self,
@@ -3593,11 +3900,17 @@ class FastGPTKBService:
         username: str,
         question: str,
         top_k: int = 5,
-        chat_id: str = None
+        chat_id: str = None,
+        include_shared: bool = True
     ) -> Dict[str, Any]:
         start_time = time.time()
 
-        search_result = self.search(username, question, top_k)
+        search_result = self.search(
+            username=username,
+            query=question,
+            top_k=top_k,
+            include_shared=include_shared
+        )
 
         if not search_result.get('success') or not search_result.get('results'):
             doc_count = self.db.kb_documents.count_documents({

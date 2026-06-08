@@ -119,7 +119,7 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
     _fastgpt_api_url = os.environ.get('FASTGPT_API_URL', '').rstrip('/')
     _fastgpt_api_key = os.environ.get('FASTGPT_API_KEY', '')
 
-    if _fastgpt_kb_service:
+    if _fastgpt_kb_service is not None:
         if not _fastgpt_api_url:
             _fastgpt_api_url = (
                 getattr(_fastgpt_kb_service, 'api_url', '')
@@ -2257,7 +2257,7 @@ def _get_user_dataset_id(username):
         if user_kb and user_kb.get('dataset_id'):
             return user_kb['dataset_id']
 
-        if _fastgpt_kb_service:
+        if _fastgpt_kb_service is not None:
             if hasattr(_fastgpt_kb_service, 'get_or_create_user_dataset'):
                 return _fastgpt_kb_service.get_or_create_user_dataset(username)
 
@@ -2996,7 +2996,23 @@ def api_kb_chat():
         })
 
     try:
-        result = _fastgpt_kb_service.chat(username, query, top_k)
+        raw_include_shared = data.get('include_shared', None)
+
+        if raw_include_shared is None:
+            include_shared = _get_include_shared_preference(username)
+        else:
+            include_shared = _parse_bool_flag(
+                raw_include_shared,
+                default=_get_include_shared_preference(username)
+            )
+
+        result = _fastgpt_kb_service.chat(
+            username=username,
+            question=query,
+            top_k=top_k,
+            include_shared=include_shared
+        )
+
         return jsonify(result)
 
     except Exception as e:
@@ -3029,7 +3045,23 @@ def api_kb_search():
         })
 
     try:
-        result = _fastgpt_kb_service.search(username, query, top_k)
+        raw_include_shared = data.get('include_shared', None)
+
+        if raw_include_shared is None:
+            include_shared = _get_include_shared_preference(username)
+        else:
+            include_shared = _parse_bool_flag(
+                raw_include_shared,
+                default=_get_include_shared_preference(username)
+            )
+
+        result = _fastgpt_kb_service.search(
+            username=username,
+            query=query,
+            top_k=top_k,
+            include_shared=include_shared
+        )
+
         return jsonify(result)
 
     except Exception as e:
@@ -3065,7 +3097,7 @@ def api_kb_get_dataset_id():
                 'dataset_name': f'个人知识库_{student_id}'
             })
 
-        if _fastgpt_kb_service:
+        if _fastgpt_kb_service is not None:
             dataset_id = None
 
             if hasattr(_fastgpt_kb_service, '_find_existing_user_dataset'):
@@ -3155,7 +3187,23 @@ def api_kb_smart_chat():
         })
 
     try:
-        result = _fastgpt_kb_service.chat(username, query, top_k=5)
+        raw_include_shared = data.get('include_shared', None)
+
+        if raw_include_shared is None:
+            include_shared = _get_include_shared_preference(username)
+        else:
+            include_shared = _parse_bool_flag(
+                raw_include_shared,
+                default=_get_include_shared_preference(username)
+            )
+
+        result = _fastgpt_kb_service.chat(
+            username=username,
+            question=query,
+            top_k=5,
+            include_shared=include_shared
+        )
+
         return jsonify(result)
 
     except Exception as e:
@@ -3618,6 +3666,258 @@ def _build_workflow_answer_context(query, quote_list):
 
     return "\n".join(lines)
 
+# /=========================强过滤函数==开始====================/
+def _workflow_extract_dataset_id(item):
+    if not isinstance(item, dict):
+        return ''
+
+    for key in ('dataset_id', 'datasetId', 'datasetID'):
+        val = item.get(key)
+        if val:
+            return str(val).strip()
+
+    metadata = item.get('metadata')
+    if isinstance(metadata, dict):
+        for key in ('dataset_id', 'datasetId', 'datasetID'):
+            val = metadata.get(key)
+            if val:
+                return str(val).strip()
+
+    return ''
+
+
+def _workflow_extract_collection_id(item):
+    if not isinstance(item, dict):
+        return ''
+
+    for key in ('collection_id', 'collectionId', 'collectionID'):
+        val = item.get(key)
+        if val:
+            return str(val).strip()
+
+    metadata = item.get('metadata')
+    if isinstance(metadata, dict):
+        for key in ('collection_id', 'collectionId', 'collectionID'):
+            val = metadata.get(key)
+            if val:
+                return str(val).strip()
+
+    return ''
+
+
+def _workflow_is_shared_source_name(source):
+    source = _clean_quote_text(source or '').strip()
+
+    if not source:
+        return False
+
+    tag = '【用户共享】'
+
+    try:
+        if _fastgpt_kb_service is not None:
+            tag = getattr(
+                _fastgpt_kb_service,
+                'shared_filename_tag',
+                tag
+            ) or tag
+    except Exception:
+        pass
+
+    return (
+        source.startswith(tag)
+        or source.startswith('[用户共享]')
+        or source.startswith('用户共享')
+        or source.startswith('【用户共享】')
+        or source.startswith('《【用户共享】')
+        or (tag and tag in source[:50])
+    )
+
+
+def _workflow_collection_belongs_to_user_personal_kb(student_id, collection_id):
+    """
+    判断 collection_id 是否属于当前学生的个人知识库。
+
+    注意：
+    PyMongo Database 对象不能写 if not _db，
+    必须使用 _db is None 判断。
+    """
+    if _db is None or not student_id or not collection_id:
+        return False
+
+    collection_id = str(collection_id or '').strip()
+    if not collection_id:
+        return False
+
+    try:
+        doc = _db.kb_documents.find_one(
+            {
+                'username': student_id,
+                'collection_id': collection_id,
+                'status': {'$ne': 'deleted'}
+            },
+            {
+                '_id': 1,
+                'doc_id': 1,
+                'filename': 1,
+                'collection_id': 1
+            }
+        )
+
+        return bool(doc)
+
+    except Exception as e:
+        print(
+            f"   ⚠️ workflow 判断 collection 归属失败: "
+            f"student_id={student_id}, collection_id={collection_id}, error={e}"
+        )
+        return False
+
+def _workflow_collection_is_shared_copy(collection_id):
+    """
+    判断 collection_id 是否是共享知识库里的共享副本。
+    """
+    if _db is None or not collection_id:
+        return False
+
+    collection_id = str(collection_id or '').strip()
+    if not collection_id:
+        return False
+
+    try:
+        doc = _db.kb_documents.find_one(
+            {
+                'shared_collection_id': collection_id,
+                'status': {'$ne': 'deleted'}
+            },
+            {
+                '_id': 1,
+                'doc_id': 1,
+                'username': 1,
+                'filename': 1,
+                'shared_collection_id': 1
+            }
+        )
+
+        return bool(doc)
+
+    except Exception as e:
+        print(
+            f"   ⚠️ workflow 判断共享 collection 失败: "
+            f"collection_id={collection_id}, error={e}"
+        )
+        return False
+
+
+def _filter_workflow_personal_only_results(student_id, raw_results, personal_dataset_id):
+    """
+    workflow-search 专用过滤器。
+
+    目标：
+    - /api/kb/workflow-search 永远只返回个人知识库结果；
+    - 共享知识库引用由 FastGPT 原生“知识库搜索”节点负责；
+    - 防止共享结果被包装成“个人知识库参考”；
+    - 但不要因为 MongoDB collection 映射短暂不完整而误删个人库结果。
+    """
+    kept = []
+    dropped = []
+
+    personal_dataset_id = str(personal_dataset_id or '').strip()
+
+    for item in raw_results or []:
+        if not isinstance(item, dict):
+            continue
+
+        source_type = str(item.get('source_type') or '').strip().lower()
+
+        source = (
+            item.get('source')
+            or item.get('sourceName')
+            or item.get('filename')
+            or ''
+        )
+        source = _clean_quote_text(source).strip()
+
+        dataset_id = _workflow_extract_dataset_id(item)
+        collection_id = _workflow_extract_collection_id(item)
+
+        dataset_id = str(dataset_id or '').strip()
+        collection_id = str(collection_id or '').strip()
+
+        reason = ''
+
+        dataset_is_personal = bool(
+            dataset_id
+            and personal_dataset_id
+            and dataset_id == personal_dataset_id
+        )
+
+        # 1. 明确标记为 shared，直接丢弃
+        if source_type == 'shared':
+            reason = 'source_type=shared'
+
+        # 2. 文件名带共享标记，直接丢弃
+        elif _workflow_is_shared_source_name(source):
+            reason = f'来源名带共享标记: {source}'
+
+        # 3. dataset_id 明确不是个人库，直接丢弃
+        elif dataset_id and personal_dataset_id and dataset_id != personal_dataset_id:
+            reason = f'dataset_id 不属于个人库: {dataset_id} != {personal_dataset_id}'
+
+        # 4. 如果 dataset_id 已经确认是个人库，不再用 collection_id 误伤
+        elif dataset_is_personal:
+            reason = ''
+
+        # 5. dataset_id 缺失时，再用 collection_id 辅助判断
+        elif collection_id:
+            if _workflow_collection_belongs_to_user_personal_kb(
+                student_id,
+                collection_id
+            ):
+                reason = ''
+
+            elif _workflow_collection_is_shared_copy(collection_id):
+                reason = f'collection_id 是共享副本: {collection_id}'
+
+            else:
+                # 重要：
+                # 这里不要直接丢弃。
+                # FastGPT 有时返回的 collectionId 和 MongoDB 同步有延迟，
+                # 如果直接丢弃，就会出现“个人库明明搜到了但被过滤没了”。
+                print(
+                    f"   ⚠️ workflow-search 无法确认 collection 归属，暂保留以避免误伤个人库: "
+                    f"source={source}, dataset_id={dataset_id}, collection_id={collection_id}"
+                )
+                reason = ''
+
+        if reason:
+            dropped.append({
+                'source': source,
+                'source_type': source_type,
+                'dataset_id': dataset_id,
+                'collection_id': collection_id,
+                'reason': reason
+            })
+            continue
+
+        item['source_type'] = 'personal'
+        kept.append(item)
+
+    if dropped:
+        print(f"   🚫 workflow-search 已过滤非个人库结果: {len(dropped)} 条")
+        for d in dropped[:10]:
+            print(
+                f"      - source={d.get('source')}, "
+                f"source_type={d.get('source_type')}, "
+                f"dataset_id={d.get('dataset_id')}, "
+                f"collection_id={d.get('collection_id')}, "
+                f"reason={d.get('reason')}"
+            )
+
+    return kept, dropped
+
+
+# /=========================强过滤函数==结束====================/
+
 @kb_bp.route('/api/kb/include-shared', methods=['GET'])
 @_require_login
 def api_kb_get_include_shared():
@@ -3748,19 +4048,48 @@ def api_kb_workflow_search():
     print(f"🔍 [workflow-search] student_id={student_id}")
     print(f"   当前共享开关: {effective_include_shared} "
           f"({'开启' if effective_include_shared else '关闭'})")
-    print(f"   本端点检索范围: 仅个人库（不查共享库）")
-    print(f"   共享内容来源: FastGPT 原生「知识库搜索」节点（本端点管不到）")
-
-
+    print(f"   本端点检索范围: 强制仅个人库 include_shared=False")
+    print(f"   共享开关用途: 返回给工作流，用于控制 FastGPT 原生共享知识库搜索节点")
 
     try:
         dataset_id = _fastgpt_kb_service.get_or_create_user_dataset(student_id)
-        result = _fastgpt_kb_service.search(student_id, query, top_k)
+
+        # ★ 核心修复：
+        # workflow-search 必须只查个人知识库。
+        # 共享知识库由 FastGPT 工作流里的原生“知识库搜索”节点负责，
+        # 这样才能保留 FastGPT 底部引用文件显示能力。
+        if hasattr(_fastgpt_kb_service, 'search_personal_only'):
+            result = _fastgpt_kb_service.search_personal_only(
+                username=student_id,
+                query=query,
+                top_k=top_k
+            )
+        else:
+            result = _fastgpt_kb_service.search(
+                username=student_id,
+                query=query,
+                top_k=top_k,
+                include_shared=False
+            )
 
         raw_results = []
 
         if result.get('success') and result.get('results'):
             raw_results = result.get('results', [])
+
+        raw_results_before_filter = len(raw_results)
+
+        raw_results, dropped_non_personal = _filter_workflow_personal_only_results(
+            student_id=student_id,
+            raw_results=raw_results,
+            personal_dataset_id=dataset_id
+        )
+
+        if raw_results_before_filter != len(raw_results):
+            print(
+                f"   🔒 workflow-search 个人库强过滤: "
+                f"{raw_results_before_filter} -> {len(raw_results)}"
+            )
 
         quote_list = []
 
@@ -3803,9 +4132,13 @@ def api_kb_workflow_search():
             item_dataset_id = (
                 item.get('dataset_id')
                 or item.get('datasetId')
-                or dataset_id
                 or ''
             )
+
+            # 注意：
+            # 只有经过个人库强过滤后，才允许补个人 dataset_id。
+            if not item_dataset_id:
+                item_dataset_id = dataset_id or ''
 
             score_val = _normalize_workflow_score(score)
 
@@ -3944,9 +4277,15 @@ def api_kb_workflow_search():
             'quoteList': quote_list,
             'student_id': student_id,
             'query': query,
+
+            # 这个开关只给 FastGPT 工作流控制共享原生知识库搜索节点使用
             'include_shared': effective_include_shared,
             'include_shared_str': 'true' if effective_include_shared else 'false',
 
+            # 调试字段
+            'personal_only': True,
+            'raw_results_before_filter': raw_results_before_filter,
+            'dropped_non_personal_count': len(dropped_non_personal),
         }
 
         return jsonify(response_data)
@@ -3987,12 +4326,32 @@ def api_kb_workflow_search_get():
 
     try:
         top_k = int(request.args.get('top_k', 5))
-        result = _fastgpt_kb_service.search(student_id, query, top_k)
+        dataset_id = _fastgpt_kb_service.get_or_create_user_dataset(student_id)
+
+        if hasattr(_fastgpt_kb_service, 'search_personal_only'):
+            result = _fastgpt_kb_service.search_personal_only(
+                username=student_id,
+                query=query,
+                top_k=top_k
+            )
+        else:
+            result = _fastgpt_kb_service.search(
+                username=student_id,
+                query=query,
+                top_k=top_k,
+                include_shared=False
+            )
 
         if result.get('success') and result.get('results'):
+            raw_results, dropped_non_personal = _filter_workflow_personal_only_results(
+                student_id=student_id,
+                raw_results=result.get('results', []),
+                personal_dataset_id=dataset_id
+            )
+
             context_parts = []
 
-            for i, item in enumerate(result['results']):
+            for i, item in enumerate(raw_results):
                 content = _clean_quote_text(item.get('content', '')).strip()
                 source = _clean_quote_text(item.get('source', ''))
 
@@ -4003,7 +4362,9 @@ def api_kb_workflow_search_get():
                 'success': True,
                 'searchResult': '\n\n'.join(context_parts),
                 'total': len(context_parts),
-                'student_id': student_id
+                'student_id': student_id,
+                'personal_only': True,
+                'dropped_non_personal_count': len(dropped_non_personal)
             })
 
         return jsonify({
@@ -5633,7 +5994,7 @@ def api_kb_debug_test_image_upload():
 def api_kb_health():
     kb_ready = False
 
-    if _fastgpt_kb_service:
+    if _fastgpt_kb_service is not None:
         try:
             kb_ready = _fastgpt_kb_service.is_ready()
         except Exception:
