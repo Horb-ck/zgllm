@@ -2,6 +2,8 @@ from flask import request, Blueprint,jsonify,session
 import os
 import json
 import concurrent.futures
+import re
+from html import unescape
 from datetime import datetime, timedelta, timezone
 from utils.canvas_utils import get_courses_by_teacher_id,get_courses_by_student_id,get_course_assignments,get_assignment_submissions,get_assignment_submission_summary,get_gradeable_students,get_course_enrollments,get_course_quizzes,get_course_modules,get_module_items,get_quiz_submissions,get_student_assignment_submission,get_student_quiz_submissions
 study_situation_canvas = Blueprint('study_situation_canvas', __name__)
@@ -651,6 +653,62 @@ def get_student_by_sis_id_in_course(sis_user_id, course_id):
             }
     return None
 
+
+def extract_grading_criteria(description_html, points_possible):
+    """
+    智能防御性解析器：从作业描述HTML中抓取不同档次验收标准，保证绝对不崩溃。
+    """
+    # 建立标准的百分制映射标准与通用兜底文本
+    criteria = {
+        "thresholds": {"pass": 60, "medium": 70, "good": 80, "excellent": 90},
+        "requirements": {
+            "pass": "满足作业大纲基础及格标准要求。",
+            "medium": "完成基础要求并撰写完备的接口文档说明。",
+            "good": "引入安全保障机制（包含加密及鉴权等安全验证功能）。",
+            "excellent": "具备重传容错、高并发高负载表现或压力测试报告。"
+        }
+    }
+    
+    if not description_html:
+        return criteria
+
+    try:
+        # 1. 清洗 HTML 标签，转化为纯文本进行分行处理
+        clean_text = re.sub(r'<[^>]+>', '\n', description_html)
+        clean_text = unescape(clean_text) # 还原可能存在的转移字符如 &nbsp; 等
+        lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
+        
+        # 2. 正则状态机扫描，抓取可能匹配到的档次和分值条件
+        for line in lines:
+            # 捕获 及格 / 60分段要求
+            if re.search(r'(及格|合格|60分|６０分|60)', line, re.I):
+                match = re.search(r'(?:及格|合格|60分|官方推荐分|６０分)[:：\s]*(.*)', line)
+                if match and match.group(1).strip():
+                    criteria["requirements"]["pass"] = match.group(1).strip()
+            
+            # 捕获 中等 / 70分段要求
+            elif re.search(r'(中|中等?|70分|７０分|70)', line, re.I):
+                match = re.search(r'(?:中等?|中|70分|７０分)[:：\s]*(.*)', line)
+                if match and match.group(1).strip():
+                    criteria["requirements"]["medium"] = match.group(1).strip()
+            
+            # 捕获 良好 / 80分段要求
+            elif re.search(r'(良|良好?|80分|８０分|80)', line, re.I):
+                match = re.search(r'(?:良好?|良|80分|８０分)[:：\s]*(.*)', line)
+                if match and match.group(1).strip():
+                    criteria["requirements"]["good"] = match.group(1).strip()
+            
+            # 捕获 优秀 / 90分段要求
+            elif re.search(r'(优|优秀?|卓越|优|90分|９ cracks|９０分|90)', line, re.I):
+                match = re.search(r'(?:优秀?|卓越|优|90分|９０分)[:：\s]*(.*)', line)
+                if match and match.group(1).strip():
+                    criteria["requirements"]["excellent"] = match.group(1).strip()
+                    
+    except Exception as e:
+        # 即使提取过程中发生任何意外（如遇到畸形HTML代码），也将直接交由兜底标准接管，严防API抛500错误
+        print(f"解析作业标准异常，已启用防崩兜底引擎: {str(e)}")
+        
+    return criteria
 def analyze_student_assignments(sis_user_id, course_id, assignments):
     """分析学生作业完成情况 (并发优化版)"""
     student_assignments = {
@@ -681,7 +739,9 @@ def analyze_student_assignments(sis_user_id, course_id, assignments):
         assignment_name = assignment.get('name')
         points_possible = assignment.get('points_possible', 0)
         due_at = assignment.get('due_at')
-        
+        description = assignment.get('description')
+        # ★【核心注入点】：为每一个发布的作业赋予清洗完备的多维判定分档条件
+        grading_criteria = extract_grading_criteria(description, points_possible)
         assignment_data = {
             "assignment_id": assignment_id,
             "assignment_name": assignment_name,
@@ -692,7 +752,9 @@ def analyze_student_assignments(sis_user_id, course_id, assignments):
             "grade": submission.get('grade'),
             "submitted_at": submission.get('submitted_at'),
             "late": submission.get('late', False),
-            "missing": submission.get('missing', False)
+            "missing": submission.get('missing', False),
+            # ★ 包含清洗对齐后的条件，稳定传送至前端
+            "grading_criteria": grading_criteria
         }
         
         wf_state = submission.get('workflow_state')

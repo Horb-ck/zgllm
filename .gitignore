@@ -17,6 +17,7 @@ KG/
 
 kb_raw_sources/
 # 配置信息，需要在不同的机器上灵活配置
+agents_config.py
 config.py
 
 # python 环境，只有在主服务器上才有

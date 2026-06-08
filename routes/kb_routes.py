@@ -67,6 +67,13 @@ _MAX_DOCUMENT_BYTES = _mb(_MAX_DOCUMENT_MB)
 _MAX_IMAGE_BYTES = _mb(_MAX_IMAGE_MB)
 _MAX_PPT_BYTES = _mb(_MAX_PPT_MB)
 
+# ★ workflow-search 召回配置：默认 top_k 从 5 提到 20，缓解"检索文献少"
+_WORKFLOW_SEARCH_TOP_K = _env_int('KB_WORKFLOW_SEARCH_TOP_K', 20)
+_WORKFLOW_SEARCH_MAX_TOP_K = _env_int('KB_WORKFLOW_SEARCH_MAX_TOP_K', 50)
+# 文件名命中时回查的正文 chunk 数量上限，从 5 提到 10
+_FILENAME_HIT_CHUNK_LIMIT = _env_int('KB_FILENAME_HIT_CHUNK_LIMIT', 10)
+
+
 _TEXT_EXTS = {'pdf', 'txt', 'md', 'doc', 'docx'}
 _IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'}
 _VIDEO_EXTS = {'mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'webm'}
@@ -159,6 +166,17 @@ def init_kb_blueprint(app, db, fastgpt_kb_service, login_required_func,
     except Exception as e:
         print(f"   ⚠️ 创建 kb_sort_orders 排序索引失败: {e}")
 
+    # 「包含共享知识库」偏好索引（必须放在 _db = db 之后）
+    try:
+        if _db is not None:
+            _db.kb_user_preferences.create_index(
+                'username',
+                unique=True,
+                background=True
+            )
+            print("   ★ 已启用：包含共享知识库偏好持久化")
+    except Exception as e:
+        print(f"   ⚠️ 创建 kb_user_preferences 偏好索引失败: {e}")
 
 
 # ================== FastGPT 图片上传 ==================
@@ -1918,6 +1936,71 @@ def _normalize_sort_item_type(item_type):
 
     return ''
 
+# ================== 「包含共享知识库」开关：服务端持久化 ==================
+# FastGPT 分享对话的全局变量只在"新建对话"时由 URL query 注入一次，
+# 历史对话沿用创建时的旧变量值，URL 再传也不更新。
+# 这正是"新对话能关、旧对话关不掉"的根因。
+# 解决：把 include_shared 作为用户级偏好存进 MongoDB，
+# 工作流每条消息实时读取，绕开 FastGPT 变量冻结。
+
+def _parse_bool_flag(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    s = str(value).strip().lower()
+    if s in ('1', 'true', 'yes', 'y', 'on', '开', '是', 'open'):
+        return True
+    if s in ('0', 'false', 'no', 'n', 'off', '关', '否', 'close',
+             '', 'null', 'undefined', 'none'):
+        return False
+    return default
+
+
+def _get_include_shared_preference(username):
+    """读取用户"包含共享知识库"偏好。
+    默认 True（默认开启）；只有用户显式保存为 False 时才返回 False。"""
+    if _db is None or not username:
+        return True  # 兜底也按默认开启
+    try:
+        rec = _db.kb_user_preferences.find_one(
+            {'username': username},
+            {'_id': 0, 'include_shared': 1}
+        )
+        # 只有存在记录且明确存了 include_shared 字段时，才用存的值
+        if rec is not None and 'include_shared' in rec:
+            return bool(rec.get('include_shared'))
+    except Exception as e:
+        print(f"⚠️ 读取 include_shared 偏好失败: username={username}, error={e}")
+    # 从未设置过 = 默认开启
+    return True
+
+def _set_include_shared_preference(username, include_shared):
+    """保存用户"包含共享知识库"偏好。"""
+    if _db is None or not username:
+        return False
+    try:
+        _db.kb_user_preferences.update_one(
+            {'username': username},
+            {
+                '$set': {
+                    'username': username,
+                    'include_shared': bool(include_shared),
+                    'updated_at': datetime.now()
+                },
+                '$setOnInsert': {
+                    'created_at': datetime.now()
+                }
+            },
+            upsert=True
+        )
+        return True
+    except Exception as e:
+        print(f"⚠️ 保存 include_shared 偏好失败: username={username}, error={e}")
+        return False
+
 
 
 def _require_login(f):
@@ -3286,7 +3369,7 @@ def _extract_list_from_fastgpt_response(body):
     return []
 
 
-def _fetch_collection_chunks_from_fastgpt(collection_id, dataset_id='', limit=5):
+def _fetch_collection_chunks_from_fastgpt(collection_id, dataset_id='', limit=10):
     if not collection_id or not _fastgpt_api_url or not _fastgpt_api_key:
         return []
 
@@ -3423,7 +3506,7 @@ def _enrich_filename_hit_content(student_id, source, collection_id, dataset_id, 
     chunks = _fetch_collection_chunks_from_fastgpt(
         collection_id=collection_id,
         dataset_id=dataset_id,
-        limit=5
+        limit=_FILENAME_HIT_CHUNK_LIMIT
     )
 
     if chunks:
@@ -3535,13 +3618,108 @@ def _build_workflow_answer_context(query, quote_list):
 
     return "\n".join(lines)
 
+@kb_bp.route('/api/kb/include-shared', methods=['GET'])
+@_require_login
+def api_kb_get_include_shared():
+    username, _, _ = _get_user_info()
+    return jsonify({
+        'success': True,
+        'username': username,
+        'include_shared': _get_include_shared_preference(username)
+    })
+
+
+@kb_bp.route('/api/kb/include-shared', methods=['POST'])
+@_require_login
+def api_kb_set_include_shared():
+    username, _, _ = _get_user_info()
+    data = request.get_json(silent=True) or {}
+
+    # ★ 日志1：前端原始 payload 和解析结果
+    raw_val = data.get('include_shared', data.get('value'))
+    include_shared = _parse_bool_flag(raw_val, default=True)
+    print(
+        f"📥 [include-shared POST] 前端传入: user={username}, "
+        f"raw={raw_val!r}, 解析后={include_shared}"
+    )
+
+    ok = _set_include_shared_preference(username, include_shared)
+
+    # ★ 日志2：写库后立刻回读，确认持久化成功
+    readback = _get_include_shared_preference(username)
+    print(
+        f"💾 [include-shared POST] 写库 ok={ok}, "
+        f"回读={readback} (应与解析后一致)"
+    )
+
+    return jsonify({
+        'success': bool(ok),
+        'username': username,
+        'include_shared': include_shared
+    })
+
+
+
+@kb_bp.route('/api/kb/include-shared-flag', methods=['GET', 'POST'])
+def api_kb_include_shared_flag():
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or {}
+        student_id = (data.get('student_id') or data.get('username') or '').strip()
+    else:
+        student_id = (request.args.get('student_id')
+                      or request.args.get('username') or '').strip()
+
+    # ★ 日志3：FastGPT 到底传了什么 student_id
+    print(f"🤖 [include-shared-flag] FastGPT 请求: method={request.method}, student_id={student_id!r}")
+
+    if student_id in ('', 'null', 'undefined', 'None'):
+        print("   ⚠️ student_id 无效 → 按默认开启(true)返回")
+        return jsonify({
+            'success': False,
+            'include_shared': True,
+            'include_shared_str': 'true',
+            'error': 'student_id 无效，按默认开启共享处理'
+        })
+
+    include_shared = _get_include_shared_preference(student_id)
+
+    # ★ 日志4：本次返回给工作流的开关值
+    print(
+        f"   ➡️ 返回工作流: include_shared={include_shared}, "
+        f"include_shared_str={'true' if include_shared else 'false'}"
+    )
+
+    return jsonify({
+        'success': True,
+        'student_id': student_id,
+        'include_shared': include_shared,
+        'include_shared_str': 'true' if include_shared else 'false'
+    })
+
+
+
 
 @kb_bp.route('/api/kb/workflow-search', methods=['POST'])
 def api_kb_workflow_search():
     data = request.get_json() or {}
     student_id = (data.get('student_id') or '').strip()
     query = (data.get('query') or '').strip()
-    top_k = data.get('top_k', 5)
+
+    # ★ 召回增强：即使工作流传了较小的 top_k，也至少取 _WORKFLOW_SEARCH_TOP_K 条，
+    #    上限 _WORKFLOW_SEARCH_MAX_TOP_K，避免"检索文献过少"。
+    try:
+        requested_top_k = int(data.get('top_k', _WORKFLOW_SEARCH_TOP_K))
+    except Exception:
+        requested_top_k = _WORKFLOW_SEARCH_TOP_K
+
+    if requested_top_k <= 0:
+        requested_top_k = _WORKFLOW_SEARCH_TOP_K
+
+    top_k = min(
+        max(requested_top_k, _WORKFLOW_SEARCH_TOP_K),
+        _WORKFLOW_SEARCH_MAX_TOP_K
+    )
+
 
     if student_id in ('null', 'undefined', 'None', ''):
         student_id = ''
@@ -3556,11 +3734,24 @@ def api_kb_workflow_search():
             'message': '参数不足或知识库服务未初始化',
             'answer_context': '',
             'results': [],
-            'quoteList': []
+            'quoteList': [],
+            'include_shared': False,
+            'include_shared_str': 'false',
         }
         return jsonify(response_data)
 
     query = _clean_quote_text(query).strip()
+    effective_include_shared = _get_include_shared_preference(student_id)
+
+    # ★ 日志5：本次 workflow-search 的关键状态
+    print("=" * 50)
+    print(f"🔍 [workflow-search] student_id={student_id}")
+    print(f"   当前共享开关: {effective_include_shared} "
+          f"({'开启' if effective_include_shared else '关闭'})")
+    print(f"   本端点检索范围: 仅个人库（不查共享库）")
+    print(f"   共享内容来源: FastGPT 原生「知识库搜索」节点（本端点管不到）")
+
+
 
     try:
         dataset_id = _fastgpt_kb_service.get_or_create_user_dataset(student_id)
@@ -3722,6 +3913,18 @@ def api_kb_workflow_search():
             print(f"   🧹 workflow-search 引用去重: {before_dedupe_count} -> {after_dedupe_count}")
 
         found = len(quote_list) > 0
+
+        # ★ 日志6：个人库实际命中情况
+        _hit_files = []
+        for _q in quote_list:
+            _n = _q.get('sourceName') or _q.get('source') or ''
+            if _n and _n not in _hit_files:
+                _hit_files.append(_n)
+        print(f"   个人库命中片段数: {len(quote_list)}")
+        print(f"   个人库命中文件: {_hit_files or '无'}")
+        print(f"   注意: 若回答里出现以上文件之外的内容，即为共享库(原生节点)所致")
+        print("=" * 50)
+
         answer_context = _clean_quote_text(
             _build_workflow_answer_context(query, quote_list)
         )
@@ -3740,7 +3943,10 @@ def api_kb_workflow_search():
             'results': quote_list,
             'quoteList': quote_list,
             'student_id': student_id,
-            'query': query
+            'query': query,
+            'include_shared': effective_include_shared,
+            'include_shared_str': 'true' if effective_include_shared else 'false',
+
         }
 
         return jsonify(response_data)
@@ -3758,7 +3964,10 @@ def api_kb_workflow_search():
             'results': [],
             'quoteList': [],
             'student_id': student_id,
-            'query': query
+            'query': query,
+            'include_shared': _get_include_shared_preference(student_id) if student_id else False,
+            'include_shared_str': 'true' if effective_include_shared else 'false',
+
         }
 
         return jsonify(response_data)

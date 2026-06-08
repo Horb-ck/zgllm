@@ -168,172 +168,173 @@ lmpa_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=hP0
 mnhi_agent_class_url = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=bvWovJML1LO7n2sKFMhygEqi&studentUid="
 
 test_chat_url="http://180.85.206.21:3000/chat/share?shareId=akmo1p609wd6bbdaux0rj1rs&studentUid="
+from agents_config import agents
 
 # 智能体数据
-agents = [
-    { 
-        "id": 1,
-        "name": "定量工程设计方法",
-        "description": "学习定量工程设计方法，掌握机器人控制、优化决策与自主导航等核心技能。",
-        "url": qea_agent_class_url,
-        # "url": test_chat_url,
-        "image_url": "/static/img/qea.jpg"
-    },
-    { 
-        "id": 2,
-        "name": "自动控制原理",
-        "description": "深入学习控制理论的核心知识，掌握控制系统分析与设计的关键技能。",
-        "url": poac_agent_class_url,
-        "image_url": "/static/img/poac.jpg"
-    },
-    {
-        "id": 3,
-        "name": "程序设计实践",
-        "description": "掌握C++工程化开发，培养高效编程与系统设计能力。",
-        "url": pp_agent_class_url,
-        "image_url": "/static/img/pp.jpg"
-    },
-    { 
-        "id": 4,
-        "name": "软件设计",
-        "description": "掌握全栈软件设计，构建高可用、可扩展的工业级应用。",
-        "url": sd_agent_class_url,
-        "image_url": "/static/img/sd.jpg"
-    },
-    # { 
-    #     "id": 5,
-    #     "name": "车辆软件开发基础",
-    #     "description": "掌握车载软件开发全流程，打造符合车规级标准的可靠系统。",
-    #     "url": vsdf_agent_class_url,
-    #     "image_url": "/static/img/vsdf.jpg"
-    # },
-    # {
-    #     "id": 6,
-    #     "name": "汽车操作系统及应用",
-    #     "description": "深入学习控制理论的核心知识，掌握控制系统分析与设计的关键技能。",
-    #     "url": aosaa_agent_class_url,
-    #     "image_url": "/static/img/aosaa.jpg"
-    # },
-    { 
-        "id": 5,
-        "name": "移动机器人应用与开发",
-        "description": "学习运用工程原理解决工程设计中的实际问题，掌握科学决策的核心技能。",
-        "url": mraad_agent_class_url,
-        "image_url": "/static/img/mraad.jpg"
-    },
-    { 
-        "id": 6,
-        "name": "线性代数",
-        "description": "掌握线性代数的核心理论与方法，学会用矩阵和线性变换解决实际问题。",
-        "url": la_agent_class_url,
-        "image_url": "/static/img/la.jpg"
-    },
-    { 
-        "id": 7,
-        "name": "机器人数学基础",
-        "description": "掌握机器人数学核心理论，实现算法设计与工程落地的全链路应用。",
-        "url": rm_agent_class_url,
-        "image_url": "/static/img/rm.jpg"
-    },
-    { 
-        "id": 8,
-        "name": "概率论与数理统计",
-        "description": "掌握概率统计核心方法，培养数据驱动的工程决策能力。",
-        "url": ptams_agent_class_url,
-        "image_url": "/static/img/ptams.jpg"
-    },
-    { 
-        "id": 9,
-        "name": "人类文明史",
-        "description": "掌握人类文明演进规律，培养历史洞察与系统设计的跨学科思维。",
-        "url": hohc_agent_class_url,
-        "image_url": "/static/img/hohc.jpg"
-    },
-    {
-        "id": 10,
-        "name": "科技发展史",
-        "description": "理解科技发展脉络，培养历史洞察与未来设计的系统性思维。",
-        "url": hotd_agent_class_url,
-        "image_url": "/static/img/hotd.jpg"
-    },
-    {
-        "id": 11,
-        "name": "机器人动力学与控制",
-        "description": "学习运动学、轨迹规划、动力学与运动控制，掌握建模与控制核心技能。",
-        "url": rdac_agent_class_url,
-        "image_url": "/static/img/rdac.png"
-    },
-    {
-        "id": 12,
-        "name": "无人机飞控技术",
-        "description": "深入学习无人机状态估计与飞行控制，掌握自主导航系统全栈开发能力。",
-        "url": ufct_agent_class_url,
-        "image_url": "/static/img/ufct.png"
-    },
-    {
-        "id": 13,
-        "name": "信号与系统",
-        "description": "从电路设计到嵌入式开发，融合感知与路径规划，打造智能机器人系统。",
-        "url": sas_agent_class_url,
-        "image_url": "/static/img/sas.png"
-    },
-    {
-        "id": 14,
-        "name": "工程原理",
-        "description": "以电子琴项目为载体，培养电路系统设计思维与工程实践能力。",
-        "url": ep_agent_class_url,
-        "image_url": "/static/img/ep.png"
-    },
-    {
-        "id": 15,
-        "name": "工程设计",
-        "description": "以斯特林发动机为牵引，完成从理论计算到样机制造的全流程。",
-        "url": ed_agent_class_url,
-        "image_url": "/static/img/ed.png"
-    },
-    {
-        "id": 16,
-        "name": "工效学",
-        "description": "理解人的感知、认知与反应规律，掌握以用户为中心的设计评估方法。",
-        "url": he_agent_class_url,
-        "image_url": "/static/img/he.png"
-    },
-    {
-        "id": 17,
-        "name": "机器人基础",
-        "description": "学习机器人机构与感知技术，掌握机器人设计与系统集成的核心能力。",
-        "url": rb_agent_class_url,
-        "image_url": "/static/img/rb.png"
-    },
-    {
-        "id": 18,
-        "name": "产品设计",
-        "description": "经历完整产品创新流程，培养设计思维与原型制作综合能力。",
-        "url": pd_agent_class_url,
-        "image_url": "/static/img/pd.png"
-    },
-    {
-        "id": 19,
-        "name": "产品制造",
-        "description": "聚焦齿轮全流程制造，系统学习材料选择、成形工艺等核心技术。",
-        "url": pm_agent_class_url,
-        "image_url": "/static/img/pm.png"
-    },
-    {
-        "id": 20,
-        "name": "大模型原理及应用",
-        "description": "系统掌握大模型构建、微调与智能体开发核心技术。",
-        "url": lmpa_agent_class_url,
-        "image_url": "/static/img/lmpa.png"
-    },
-    {
-        "id": 21,
-        "name": "运动神经生理与人机交互",
-        "description": "理解神经机制，掌握脑机接口与智能康复核心技术。",
-        "url": mnhi_agent_class_url,
-        "image_url": "/static/img/mnhi.png"
-    }
-]
+# agents = [
+#     { 
+#         "id": 1,
+#         "name": "定量工程设计方法",
+#         "description": "学习定量工程设计方法，掌握机器人控制、优化决策与自主导航等核心技能。",
+#         "url": qea_agent_class_url,
+#         # "url": test_chat_url,
+#         "image_url": "/static/img/qea.jpg"
+#     },
+#     { 
+#         "id": 2,
+#         "name": "自动控制原理",
+#         "description": "深入学习控制理论的核心知识，掌握控制系统分析与设计的关键技能。",
+#         "url": poac_agent_class_url,
+#         "image_url": "/static/img/poac.jpg"
+#     },
+#     {
+#         "id": 3,
+#         "name": "程序设计实践",
+#         "description": "掌握C++工程化开发，培养高效编程与系统设计能力。",
+#         "url": pp_agent_class_url,
+#         "image_url": "/static/img/pp.jpg"
+#     },
+#     { 
+#         "id": 4,
+#         "name": "软件设计",
+#         "description": "掌握全栈软件设计，构建高可用、可扩展的工业级应用。",
+#         "url": sd_agent_class_url,
+#         "image_url": "/static/img/sd.jpg"
+#     },
+#     # { 
+#     #     "id": 5,
+#     #     "name": "车辆软件开发基础",
+#     #     "description": "掌握车载软件开发全流程，打造符合车规级标准的可靠系统。",
+#     #     "url": vsdf_agent_class_url,
+#     #     "image_url": "/static/img/vsdf.jpg"
+#     # },
+#     # {
+#     #     "id": 6,
+#     #     "name": "汽车操作系统及应用",
+#     #     "description": "深入学习控制理论的核心知识，掌握控制系统分析与设计的关键技能。",
+#     #     "url": aosaa_agent_class_url,
+#     #     "image_url": "/static/img/aosaa.jpg"
+#     # },
+#     { 
+#         "id": 5,
+#         "name": "移动机器人应用与开发",
+#         "description": "学习运用工程原理解决工程设计中的实际问题，掌握科学决策的核心技能。",
+#         "url": mraad_agent_class_url,
+#         "image_url": "/static/img/mraad.jpg"
+#     },
+#     { 
+#         "id": 6,
+#         "name": "线性代数",
+#         "description": "掌握线性代数的核心理论与方法，学会用矩阵和线性变换解决实际问题。",
+#         "url": la_agent_class_url,
+#         "image_url": "/static/img/la.jpg"
+#     },
+#     { 
+#         "id": 7,
+#         "name": "机器人数学基础",
+#         "description": "掌握机器人数学核心理论，实现算法设计与工程落地的全链路应用。",
+#         "url": rm_agent_class_url,
+#         "image_url": "/static/img/rm.jpg"
+#     },
+#     { 
+#         "id": 8,
+#         "name": "概率论与数理统计",
+#         "description": "掌握概率统计核心方法，培养数据驱动的工程决策能力。",
+#         "url": ptams_agent_class_url,
+#         "image_url": "/static/img/ptams.jpg"
+#     },
+#     { 
+#         "id": 9,
+#         "name": "人类文明史",
+#         "description": "掌握人类文明演进规律，培养历史洞察与系统设计的跨学科思维。",
+#         "url": hohc_agent_class_url,
+#         "image_url": "/static/img/hohc.jpg"
+#     },
+#     {
+#         "id": 10,
+#         "name": "科技发展史",
+#         "description": "理解科技发展脉络，培养历史洞察与未来设计的系统性思维。",
+#         "url": hotd_agent_class_url,
+#         "image_url": "/static/img/hotd.jpg"
+#     },
+#     {
+#         "id": 11,
+#         "name": "机器人动力学与控制",
+#         "description": "学习运动学、轨迹规划、动力学与运动控制，掌握建模与控制核心技能。",
+#         "url": rdac_agent_class_url,
+#         "image_url": "/static/img/rdac.png"
+#     },
+#     {
+#         "id": 12,
+#         "name": "无人机飞控技术",
+#         "description": "深入学习无人机状态估计与飞行控制，掌握自主导航系统全栈开发能力。",
+#         "url": ufct_agent_class_url,
+#         "image_url": "/static/img/ufct.png"
+#     },
+#     {
+#         "id": 13,
+#         "name": "信号与系统",
+#         "description": "从电路设计到嵌入式开发，融合感知与路径规划，打造智能机器人系统。",
+#         "url": sas_agent_class_url,
+#         "image_url": "/static/img/sas.png"
+#     },
+#     {
+#         "id": 14,
+#         "name": "工程原理",
+#         "description": "以电子琴项目为载体，培养电路系统设计思维与工程实践能力。",
+#         "url": ep_agent_class_url,
+#         "image_url": "/static/img/ep.png"
+#     },
+#     {
+#         "id": 15,
+#         "name": "工程设计",
+#         "description": "以斯特林发动机为牵引，完成从理论计算到样机制造的全流程。",
+#         "url": ed_agent_class_url,
+#         "image_url": "/static/img/ed.png"
+#     },
+#     {
+#         "id": 16,
+#         "name": "工效学",
+#         "description": "理解人的感知、认知与反应规律，掌握以用户为中心的设计评估方法。",
+#         "url": he_agent_class_url,
+#         "image_url": "/static/img/he.png"
+#     },
+#     {
+#         "id": 17,
+#         "name": "机器人基础",
+#         "description": "学习机器人机构与感知技术，掌握机器人设计与系统集成的核心能力。",
+#         "url": rb_agent_class_url,
+#         "image_url": "/static/img/rb.png"
+#     },
+#     {
+#         "id": 18,
+#         "name": "产品设计",
+#         "description": "经历完整产品创新流程，培养设计思维与原型制作综合能力。",
+#         "url": pd_agent_class_url,
+#         "image_url": "/static/img/pd.png"
+#     },
+#     {
+#         "id": 19,
+#         "name": "产品制造",
+#         "description": "聚焦齿轮全流程制造，系统学习材料选择、成形工艺等核心技术。",
+#         "url": pm_agent_class_url,
+#         "image_url": "/static/img/pm.png"
+#     },
+#     {
+#         "id": 20,
+#         "name": "大模型原理及应用",
+#         "description": "系统掌握大模型构建、微调与智能体开发核心技术。",
+#         "url": lmpa_agent_class_url,
+#         "image_url": "/static/img/lmpa.png"
+#     },
+#     {
+#         "id": 21,
+#         "name": "运动神经生理与人机交互",
+#         "description": "理解神经机制，掌握脑机接口与智能康复核心技术。",
+#         "url": mnhi_agent_class_url,
+#         "image_url": "/static/img/mnhi.png"
+#     }
+# ]
 
 
 # 定义课程白名单
@@ -726,7 +727,7 @@ def login():
                 user_courses, current_course, success = process_user_courses(session['username'], session['role'],session['sis_id'])
                 if not success:
                     flash('获取课程信息失败，请联系管理员', 'danger')
-                    return render_template('auth/login.html') //注释确保可以登录
+                    # return render_template('auth/login.html')
                 session['user_courses'] = user_courses
                 session['current_course'] = current_course
                 flash('登录成功', 'success')
@@ -945,7 +946,7 @@ def register():
             user_courses, current_course, success = process_user_courses(session['username'], session['role'],session['sis_id'])
             if not success:
                 flash('获取课程信息失败，请联系管理员', 'danger')
-                return render_template('auth/login.html')
+                # return render_template('auth/login.html')
             session['user_courses'] = user_courses
             session['current_course'] = current_course
             track_event(

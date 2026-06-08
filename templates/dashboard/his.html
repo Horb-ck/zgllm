@@ -47,22 +47,26 @@
                         height: auto !important;
                         max-height: none !important;
                         overflow: hidden !important;
-                        padding: 0 0 8px !important;
+                        padding: 0 !important;
                         box-sizing: border-box;
                     }
 
+                    /* 关键修复：去掉最外层白框，容器铺满视口、背景透明。
+                       这样浏览器缩小（布局视口被放大）时，容器不会被
+                       min(1920px,...) 限成中间窄列，右侧 FastGPT 始终能拿到
+                       足够宽度，对话框不再被裁剪。两侧卡片各自保留圆角与阴影。 */
                     .kb-page-shell .kb-dashboard-container {
-                        width: min(1920px, calc(100vw - 128px)) !important;
+                        width: 100% !important;
                         max-width: none !important;
                         height: 100% !important;
                         min-height: 0 !important;
                         max-height: 100% !important;
-                        margin: 0 auto !important;
-                        border-radius: 24px;
-                        background: rgba(255, 255, 255, 0.80);
-                        border: 1px solid rgba(222, 231, 251, 0.92);
-                        box-shadow: 0 20px 62px rgba(57, 80, 150, 0.11);
-                        backdrop-filter: blur(18px);
+                        margin: 0 !important;
+                        border-radius: 0;
+                        background: transparent;
+                        border: none;
+                        box-shadow: none;
+                        backdrop-filter: none;
                         overflow: hidden !important;
                         box-sizing: border-box;
                         display: flex !important;
@@ -774,6 +778,57 @@
                     .kb-chat-tips,
                     .kb-chat-header-badge {
                         display: none !important;
+                    }
+
+                    /* 右侧聊天区顶部的「包含共享知识库」开关条 */
+                    .kb-chat-control-bar {
+                        flex: 0 0 auto;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                        gap: 8px;
+                        height: 40px;
+                        padding: 0 14px;
+                        border-bottom: 1px solid rgba(226, 232, 246, 0.88);
+                        background: rgba(255, 255, 255, 0.86);
+                        box-sizing: border-box;
+                    }
+
+                    .kb-chat-share-toggle {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 7px;
+                        cursor: pointer;
+                        user-select: none;
+                        font-size: 11.5px;
+                        font-weight: 850;
+                        color: #6b7894;
+                    }
+
+                    .kb-chat-share-toggle input {
+                        display: none;
+                    }
+
+                    .kb-chat-share-toggle .kb-share-slider {
+                        width: 36px;
+                        height: 19px;
+                    }
+
+                    .kb-chat-share-toggle .kb-share-slider::after {
+                        width: 15px;
+                        height: 15px;
+                    }
+
+                    .kb-chat-share-toggle input:checked + .kb-share-slider {
+                        background: linear-gradient(135deg, #14c8a8 0%, #18b9d7 100%);
+                    }
+
+                    .kb-chat-share-toggle input:checked + .kb-share-slider::after {
+                        left: 19px;
+                    }
+
+                    .kb-chat-share-toggle input:checked ~ .kb-chat-share-text {
+                        color: #059669;
                     }
 
                     .kb-fastgpt-container {
@@ -1875,13 +1930,13 @@
                             min-height: 32px;
                             padding: 5px 10px;
                         }
+
+                        .kb-chat-control-bar {
+                            height: 36px;
+                        }
                     }
 
                     @media (max-width: 1280px) {
-                        .kb-page-shell .kb-dashboard-container {
-                            width: calc(100% - 44px) !important;
-                        }
-
                         .kb-main-layout {
                             --kb-left-panel-width: 390px;
                             padding: 10px;
@@ -1889,13 +1944,8 @@
                     }
 
                     @media (max-width: 1100px) {
-                        .kb-page-shell .kb-dashboard-container {
-                            width: calc(100% - 24px) !important;
-                            border-radius: 21px;
-                        }
-
                         .kb-main-layout {
-                            grid-template-columns: minmax(320px, 39vw) 8px minmax(0, 1fr);
+                            grid-template-columns: minmax(300px, 38vw) 8px minmax(0, 1fr);
                             padding: 9px;
                         }
 
@@ -1990,6 +2040,14 @@
 
                     <div class="kb-right-panel">
                         <div class="kb-chat-card">
+                            <div class="kb-chat-control-bar">
+                                <label class="kb-chat-share-toggle"
+                                       title="开启后，问答助手会同时检索共享知识库；关闭则只检索你个人的知识库">
+                                    <input type="checkbox" id="includeSharedToggle" onchange="onIncludeSharedToggle(this)">
+                                    <span class="kb-share-slider"></span>
+                                    <span class="kb-chat-share-text">包含共享知识库</span>
+                                </label>
+                            </div>
                             <div class="kb-fastgpt-container">
                                 <div class="kb-iframe-loading" id="iframeLoading">
                                     <div class="kb-loading-spinner"></div>
@@ -2226,6 +2284,11 @@
 
     const currentUsername = '{{ username }}';
 
+    // 「包含共享知识库」开关：状态记忆在本地，传给 FastGPT 的全局变量 include_shared
+    const includeSharedStorageKey = `kb_include_shared_${currentUsername || 'default'}`;
+    let kbIncludeShared = localStorage.getItem(includeSharedStorageKey) === 'true';
+    let kbChatBaseUrl = '';
+
     const TEXT_EXTENSIONS  = ['pdf', 'txt', 'md', 'doc', 'docx'];
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
     const VIDEO_EXTENSIONS = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'webm'];
@@ -2269,51 +2332,18 @@
         });
     }
 
+    // 宽度完全交给 CSS 控制：容器 width:100% 铺满，无限宽白框，
+    // 不再用 getBoundingClientRect 测量同步——那种测量会随浏览器缩放
+    // 失真，导致缩小时容器变窄、右侧 FastGPT 对话框被裁剪。
+    // 这里只清除可能残留的内联宽度，确保 CSS 规则生效。
     function syncKbContainerWidthWithTopbar() {
         const container = document.querySelector('.kb-dashboard-container');
-        const shell = document.querySelector('.kb-page-shell');
-        if (!container || !shell) return;
+        if (!container) return;
 
-        const viewportW = window.innerWidth || document.documentElement.clientWidth || 1440;
-        const topbar = Array.from(shell.children).find(el => !el.classList.contains('kb-page-main'));
-        let bestRect = null;
-
-        if (topbar) {
-            const candidates = [topbar, ...Array.from(topbar.querySelectorAll('*'))];
-
-            for (const el of candidates) {
-                const rect = el.getBoundingClientRect();
-                if (!rect || rect.width <= 0) continue;
-
-                const looksLikeTopNav =
-                    rect.width >= Math.min(520, viewportW * 0.45) &&
-                    rect.width <= viewportW - 20 &&
-                    rect.height >= 40 &&
-                    rect.top >= -5 &&
-                    rect.top < 260;
-
-                if (!looksLikeTopNav) continue;
-
-                if (!bestRect || rect.width > bestRect.width) {
-                    bestRect = rect;
-                }
-            }
-        }
-
-        if (bestRect && bestRect.width > 300) {
-            const w = Math.round(bestRect.width);
-            container.style.width = w + 'px';
-            container.style.maxWidth = w + 'px';
-            container.style.marginLeft = 'auto';
-            container.style.marginRight = 'auto';
-        } else {
-            const fallbackGap = viewportW >= 1280 ? 128 : (viewportW >= 1100 ? 44 : 24);
-            const fallbackW = Math.max(320, Math.min(1920, viewportW - fallbackGap));
-            container.style.width = fallbackW + 'px';
-            container.style.maxWidth = fallbackW + 'px';
-            container.style.marginLeft = 'auto';
-            container.style.marginRight = 'auto';
-        }
+        container.style.width = '';
+        container.style.maxWidth = '';
+        container.style.marginLeft = '';
+        container.style.marginRight = '';
     }
 
     function updateKbViewportHeight() {
@@ -2324,6 +2354,7 @@
         document.body.style.height = viewportH + 'px';
         document.body.style.overflow = 'hidden';
 
+        // 清掉内联宽度，让 CSS 接管（缩放下稳定可预测）
         syncKbContainerWidthWithTopbar();
 
         const shell = document.querySelector('.kb-page-shell');
@@ -2645,15 +2676,80 @@
         });
     });
 
+    // 把 include_shared 的当前值拼到 FastGPT 对话链接里
+    function buildChatUrl(baseUrl) {
+        if (!baseUrl) return 'about:blank';
+
+        try {
+            const url = new URL(baseUrl, window.location.origin);
+            url.searchParams.set('include_shared', kbIncludeShared ? 'true' : 'false');
+            return url.toString();
+        } catch (e) {
+            // baseUrl 不是标准绝对地址时，退化为手动拼接
+            const sep = baseUrl.includes('?') ? '&' : '?';
+            return `${baseUrl}${sep}include_shared=${kbIncludeShared ? 'true' : 'false'}`;
+        }
+    }
+
+    function persistIncludeSharedToServer(value) {
+        return fetch('/api/kb/include-shared', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ include_shared: !!value })
+        })
+        .then(r => r.json())
+        .catch(() => ({ success: false }));
+    }
+
+    function onIncludeSharedToggle(input) {
+        kbIncludeShared = !!input.checked;
+        localStorage.setItem(includeSharedStorageKey, kbIncludeShared ? 'true' : 'false');
+
+        // 关键修复：把开关写到后端（用户级偏好）。
+        // 历史对话也会读到最新值，不再受 FastGPT 变量冻结影响。
+        persistIncludeSharedToServer(kbIncludeShared);
+
+        if (kbChatBaseUrl) {
+            const iframe = document.getElementById('fastgptIframe');
+            const loading = document.getElementById('iframeLoading');
+            if (loading) loading.classList.remove('hidden');
+            iframe.src = buildChatUrl(kbChatBaseUrl);
+        }
+
+        showDropToast(kbIncludeShared
+            ? '✅ 已开启：问答将检索共享知识库'
+            : '🔒 已关闭：问答仅检索个人知识库');
+        setTimeout(() => hideDropToast(), 2000);
+    }
+
+
     function initFastGPTIframe() {
         const iframe = document.getElementById('fastgptIframe');
         const loading = document.getElementById('iframeLoading');
+
+        // 同步开关初始状态（从 localStorage 读到的值）
+        const toggle = document.getElementById('includeSharedToggle');
+        if (toggle) toggle.checked = kbIncludeShared;
+
+        // 以服务端保存的偏好为准（多端/历史对话保持一致）
+        fetch('/api/kb/include-shared')
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.success) {
+                    kbIncludeShared = !!data.include_shared;
+                    localStorage.setItem(includeSharedStorageKey,
+                        kbIncludeShared ? 'true' : 'false');
+                    if (toggle) toggle.checked = kbIncludeShared;
+                }
+            })
+            .catch(() => {});
 
         fetch('/api/kb/chat-url')
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.chat_url) {
-                    iframe.src = data.chat_url;
+                    kbChatBaseUrl = data.chat_url;
+                    iframe.src = buildChatUrl(kbChatBaseUrl);
                 } else {
                     iframe.src = 'about:blank';
                     loading.innerHTML = `
@@ -4971,21 +5067,28 @@
     }
 
     function escapeJsAttr(text) {
-        const s = String(text ?? '')
+        if (text === null || text === undefined) return '';
+
+        return String(text)
             .replace(/\\/g, '\\\\')
             .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
             .replace(/\r/g, '\\r')
-            .replace(/\n/g, '\\n');
-
-        return escapeHtml(s);
+            .replace(/</g, '\\x3C')
+            .replace(/>/g, '\\x3E');
     }
 
     function cssAttrEscape(value) {
-        return String(value ?? '')
-            .replace(/\\/g, '\\\\')
-            .replace(/"/g, '\\"')
-            .replace(/\n/g, '\\A ')
-            .replace(/\r/g, '\\D ');
+        if (value === null || value === undefined) return '';
+
+        const str = String(value);
+
+        if (window.CSS && CSS.escape) {
+            return CSS.escape(str);
+        }
+
+        return str.replace(/["\\\]\[\.#:>~+*^$|=()]/g, '\\$&');
     }
 </script>
 {% endblock %}

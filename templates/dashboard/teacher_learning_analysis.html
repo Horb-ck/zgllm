@@ -189,17 +189,8 @@
                 </div>
 
                 <!-- 右半区域：AI助手 - 平分宽度 -->
-                <div class="right-ai-assistant">
-                    <div class="dashboard-card ai-assistant-card">
-                        <div class="card-header">
-                            <h2>学情AI助手</h2>
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <div class="card-content">
-                            <div class="ai-assistant-description">
-                                <p id="ai-assistant-desc">与学情AI助手深度交流，获取个性化教学建议和学习分析</p>
-                            </div>
-                            <div class="ai-assistant-iframe-container">
+                <div class="right-side-content">
+                    <div class="ai-assistant-iframe-container">
                                 <iframe 
                                     id="aiAssistantIframe"
                                     src=""
@@ -208,8 +199,6 @@
                                     loading="lazy"
                                     class="ai-assistant-iframe"
                                 ></iframe>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -469,14 +458,11 @@
     transition: all 0.3s ease;
 }
 
-.right-ai-assistant {
+.right-side-content {
     display: flex;
     flex-direction: column;
-    min-height: 0;
-    max-height: 100%;
     height: 100%;
-    /* 添加缩放属性 */
-    transition: all 0.3s ease;
+    min-width: 0; /* 防止网格项目溢出 */
 }
 
 /* 合并区域样式 - 修复滚动问题并添加弹性缩放 */
@@ -1112,13 +1098,10 @@
 }
 
 .ai-assistant-iframe-container {
-    padding: 16px; /* 调整内边距 */
+    padding: 0 1.25rem 1.25rem 1.25rem; /* 0 20px 20px 20px */
     flex: 1;
-    min-height: 400px;
-    height: 100%;
+    min-height: 25rem; /* 400px */
     min-width: 0;
-    /* 添加缩放支持 */
-    transition: all 0.3s ease;
     overflow: hidden;
 }
 
@@ -1470,11 +1453,7 @@
         height: auto;
         gap: 16px;
     }
-    
-    .right-ai-assistant {
-        height: 500px;
-        min-height: 500px;
-    }
+
     
     .no-course-warning {
         height: calc(100vh - 120px);

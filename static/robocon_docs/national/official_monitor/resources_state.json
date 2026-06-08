@@ -4,9 +4,53 @@
     "label": "国赛",
     "description": "全国大学生机器人大赛 ROBOCON 主赛官方规则资料。",
     "official_url": "https://robocon.org.cn/",
-    "updated_at": "2026-04-23",
-    "update_note": "后台定时任务已在 2026-05-27 03:00:23 完成最近一次官网同步，当前仅对规则、图册、FAQ 等规则资产下载附件，通知类内容只记录详情。",
+    "updated_at": "2026-06-05",
+    "update_note": "后台定时任务已在 2026-06-08 03:00:32 完成最近一次官网同步，当前仅对规则、图册、FAQ 等规则资产下载附件，通知类内容只记录详情。",
     "docs": [
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON比赛通知",
+        "type": "通知",
+        "date": "2026-06-05",
+        "url": "https://robocon.org.cn/sys-nd/88.html",
+        "preview_url": "https://robocon.org.cn/sys-nd/88.html",
+        "source": "ROBOCON 官网赛事动态",
+        "category": "general_notice",
+        "download_policy": "metadata_only",
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 2025证书查询 | 赛事动态 赛事规则 通知公告 新闻发布 | 报名 | 联系我们 第二十五届全国大学生机器人大赛ROBOCON比赛通知 2026-06-05 10:41 第二十五届全国大学生机器人大赛ROBOCON比赛通知 20260605.pdf 声明：此篇为ROBOC"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON 报名指南",
+        "type": "通知",
+        "date": "2026-06-05",
+        "url": "https://robocon.org.cn/sys-nd/87.html",
+        "preview_url": "https://robocon.org.cn/sys-nd/87.html",
+        "source": "ROBOCON 官网赛事动态",
+        "category": "general_notice",
+        "download_policy": "metadata_only",
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 2025证书查询 | 赛事动态 赛事规则 通知公告 新闻发布 | 报名 | 联系我们 第二十五届全国大学生机器人大赛ROBOCON 报名指南 2026-06-05 08:37 第二十五届全国大学生机器人大赛报名指南_20260605.pdf 声明：此篇为ROBOCON原创文章"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V6",
+        "type": "核心规则",
+        "date": "2026-06-01",
+        "url": "https://download.s21i.co99.net/30049936/0/1/ABUIABA9GAAgver_0AYoncj58AQ.pdf?f=%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%94%E5%B1%8A%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%A4%A7%E8%B5%9BROBOCON%E2%80%9C%E6%AD%A6%E6%9E%97%E6%8E%A2%E7%A7%98%E2%80%9D%E7%AB%9E%E6%8A%80%E8%B5%9B%E8%A7%84%E5%88%99V6.pdf&v=1780462909",
+        "preview_url": "/static/robocon_docs/national/official_monitor/第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V6_06cb625db672.pdf",
+        "source": "ROBOCON 官网赛事动态 / 本地副本",
+        "category": "rule_core",
+        "download_policy": "download",
+        "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V6.pdf"
+      },
+      {
+        "title": "第二十五届全国大学生机器人大赛ROBOCON中期检查结果",
+        "type": "重要通知",
+        "date": "2026-05-21",
+        "url": "https://robocon.org.cn/sys-nd/85.html",
+        "preview_url": "https://robocon.org.cn/sys-nd/85.html",
+        "source": "ROBOCON 官网赛事动态",
+        "category": "important_notice",
+        "download_policy": "metadata_only",
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 2025证书查询 | 赛事动态 赛事规则 通知公告 新闻发布 | 报名 | 联系我们 第二十五届全国大学生机器人大赛ROBOCON中期检查结果 2026-05-21 18:00 第二十五届全国大学生机器人大赛 ROBOCON 中期检查结果 “ 武林探秘 ” 竞技赛、仿生足式机"
+      },
       {
         "title": "关于举办第二十五届全国大学生机器人大赛 ROBOCON 交流赛的通知",
         "type": "通知",
@@ -16,7 +60,7 @@
         "source": "ROBOCON 官网赛事动态",
         "category": "general_notice",
         "download_policy": "metadata_only",
-        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 | 赛事动态 赛事规则 通知公告 新闻发布 | 联系我们 | 2025证书查询 | 报名 关于举办第二十五届全国大学生机器人大赛 ROBOCON 交流赛的通知 2026-04-23 15:14 关于举办第二十五届全国大学生机器人大赛 ROBOCON 交流赛的通知.pdf 声明"
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 2025证书查询 | 赛事动态 赛事规则 通知公告 新闻发布 | 报名 | 联系我们 关于举办第二十五届全国大学生机器人大赛 ROBOCON 交流赛的通知 2026-04-23 15:14 关于举办第二十五届全国大学生机器人大赛 ROBOCON 交流赛的通知.pdf 声明：此"
       },
       {
         "title": "关于第二十五届全国大学生机器人大赛 ROBOCON 赛事中期检查的通知",
@@ -27,7 +71,7 @@
         "source": "ROBOCON 官网赛事动态",
         "category": "important_notice",
         "download_policy": "metadata_only",
-        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 | 赛事动态 赛事规则 通知公告 新闻发布 | 联系我们 | 2025证书查询 | 报名 关于第二十五届全国大学生机器人大赛 ROBOCON 赛事中期检查的通知 2026-04-03 14:32 备注：可在附件下载PDF版本和回执word模板 关于第二十五届全国大学生机器人大"
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 2025证书查询 | 赛事动态 赛事规则 通知公告 新闻发布 | 报名 | 联系我们 关于第二十五届全国大学生机器人大赛 ROBOCON 赛事中期检查的通知 2026-04-03 14:32 备注：可在附件下载PDF版本和回执word模板 关于第二十五届全国大学生机器人大赛 "
       },
       {
         "title": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V5",
@@ -170,7 +214,7 @@
         "source": "ROBOCON 官网赛事动态",
         "category": "general_notice",
         "download_policy": "metadata_only",
-        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 | 赛事动态 赛事规则 通知公告 新闻发布 | 联系我们 | 2025证书查询 | 报名 关于举办第二十五届全国大学生机器人大赛ROBOCON 赛事的通知 2025-10-27 15:00 关于举办第二十五届全国大学生机器人大赛 ROBOCON 赛事的通知.pdf 声明：此篇"
+        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 2025证书查询 | 赛事动态 赛事规则 通知公告 新闻发布 | 报名 | 联系我们 关于举办第二十五届全国大学生机器人大赛ROBOCON 赛事的通知 2025-10-27 15:00 关于举办第二十五届全国大学生机器人大赛 ROBOCON 赛事的通知.pdf 声明：此篇为R"
       },
       {
         "title": "【图册】第二十五届全国大学生机器人大赛ROBOCON图册",
@@ -195,7 +239,7 @@
         "downloaded_attachment": "第二十五届全国大学生机器人大赛ROBOCON“武林探秘”竞技赛规则V.1.pdf"
       }
     ],
-    "synced_at": "2026-05-27 03:00:23"
+    "synced_at": "2026-06-08 03:00:32"
   },
   "international": {
     "key": "international",
