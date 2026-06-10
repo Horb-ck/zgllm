@@ -1,1112 +1,389 @@
 {
+  "meta": {
+    "title": "AI+机电课程体系：首页导览版",
+    "purpose": "突出课程之间的主线关系，适合作为官网首页或课程体系入口图。",
+    "source_file": "home_kg.json",
+    "simplification_strategy": [
+      "删除能力模块的全连接，只保留课程主线关系",
+      "合并项目测试、项目答辩、工程项目报告为“项目测试与答辩”",
+      "合并无人机、多足、灵巧手等高阶平台出口为“具身机器人项目群”",
+      "仅保留能够体现 AI+机电特色的代表课程与项目"
+    ],
+    "original_counts": {
+      "nodes": 50,
+      "links": 153
+    },
+    "new_counts": {
+      "nodes": 24,
+      "links": 31
+    }
+  },
   "categories": [
     {
-      "name": "课程"
+      "name": "课程体系"
     },
     {
-      "name": "人工智能"
+      "name": "基础支撑"
     },
     {
-      "name": "机电"
+      "name": "机电主线"
     },
     {
-      "name": "融合实践"
+      "name": "AI主线"
     },
     {
-      "name": "能力模块"
+      "name": "人机产品"
+    },
+    {
+      "name": "融合项目"
+    },
+    {
+      "name": "成果出口"
     }
   ],
   "nodes": [
     {
       "id": "AI+机电课程体系",
       "name": "AI+机电课程体系",
-      "category": "融合实践",
-      "symbolSize": 82,
-      "value": 100,
-      "layer": "课程体系主线"
-    },
-    {
-      "id": "人工智能",
-      "name": "人工智能",
-      "category": "人工智能",
-      "symbolSize": 68,
-      "value": 60,
-      "layer": "方向"
-    },
-    {
-      "id": "机电",
-      "name": "机电",
-      "category": "机电",
-      "symbolSize": 68,
-      "value": 60,
-      "layer": "方向"
-    },
-    {
-      "id": "系统设计与项目实践",
-      "name": "系统设计与项目实践",
-      "category": "融合实践",
-      "symbolSize": 60,
-      "value": 45,
-      "layer": "方向"
-    },
-    {
-      "id": "计算机视觉与感知",
-      "name": "计算机视觉与感知",
-      "category": "人工智能",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "机器学习与深度学习",
-      "name": "机器学习与深度学习",
-      "category": "人工智能",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "强化学习与智能决策",
-      "name": "强化学习与智能决策",
-      "category": "人工智能",
-      "symbolSize": 40,
-      "value": 40,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "大模型与智能体",
-      "name": "大模型与智能体",
-      "category": "人工智能",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "多模态交互与人因",
-      "name": "多模态交互与人因",
-      "category": "人工智能",
-      "symbolSize": 40,
-      "value": 40,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "导航定位与路径规划",
-      "name": "导航定位与路径规划",
-      "category": "人工智能",
-      "symbolSize": 38,
-      "value": 38,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "机械设计与制造",
-      "name": "机械设计与制造",
-      "category": "机电",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "电子电路与PCB",
-      "name": "电子电路与PCB",
-      "category": "机电",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "嵌入式与硬件接口",
-      "name": "嵌入式与硬件接口",
-      "category": "机电",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "控制理论与运动控制",
-      "name": "控制理论与运动控制",
-      "category": "机电",
-      "symbolSize": 44,
-      "value": 44,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "传感器与信号处理",
-      "name": "传感器与信号处理",
-      "category": "机电",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "机器人系统与执行机构",
-      "name": "机器人系统与执行机构",
-      "category": "机电",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "智能制造与增材制造",
-      "name": "智能制造与增材制造",
-      "category": "机电",
-      "symbolSize": 40,
-      "value": 40,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "电源与可靠性",
-      "name": "电源与可靠性",
-      "category": "机电",
-      "symbolSize": 36,
-      "value": 36,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "软件工程与数据服务",
-      "name": "软件工程与数据服务",
-      "category": "融合实践",
-      "symbolSize": 38,
-      "value": 38,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "系统集成与测试",
-      "name": "系统集成与测试",
-      "category": "融合实践",
-      "symbolSize": 42,
-      "value": 42,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "产品设计与工程管理",
-      "name": "产品设计与工程管理",
-      "category": "融合实践",
-      "symbolSize": 40,
-      "value": 40,
-      "layer": "高层能力模块"
-    },
-    {
-      "id": "仿真建模与验证",
-      "name": "仿真建模与验证",
-      "category": "融合实践",
-      "symbolSize": 38,
-      "value": 38,
-      "layer": "高层能力模块"
+      "category": "课程体系",
+      "symbolSize": 74,
+      "value": 74,
+      "layer": "总览",
+      "description": "学院特色：AI × 机电 × 项目实践",
+      "x": 80,
+      "y": 360,
+      "fixed": true
     },
     {
       "id": "工程原理",
       "name": "工程原理",
-      "category": "课程",
+      "category": "基础支撑",
       "symbolSize": 50,
       "value": 50,
-      "layer": "核心课程"
+      "layer": "基础课",
+      "description": "工程系统入门，连接硬件、控制与项目",
+      "x": 230,
+      "y": 120,
+      "fixed": true
     },
     {
       "id": "机器人基础",
       "name": "机器人基础",
-      "category": "课程",
+      "category": "基础支撑",
       "symbolSize": 50,
       "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "控制原理",
-      "name": "控制原理",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "软件设计",
-      "name": "软件设计",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
+      "layer": "基础课",
+      "description": "机器人平台、传感、执行与控制入门",
+      "x": 230,
+      "y": 260,
+      "fixed": true
     },
     {
       "id": "信号与系统",
       "name": "信号与系统",
-      "category": "课程",
+      "category": "基础支撑",
       "symbolSize": 50,
       "value": 50,
-      "layer": "核心课程"
+      "layer": "基础课",
+      "description": "信号建模、反馈与状态估计基础",
+      "x": 230,
+      "y": 400,
+      "fixed": true
     },
     {
-      "id": "无人机飞控技术",
-      "name": "无人机飞控技术",
-      "category": "课程",
+      "id": "软件设计",
+      "name": "软件设计",
+      "category": "基础支撑",
       "symbolSize": 50,
       "value": 50,
-      "layer": "核心课程"
+      "layer": "基础课",
+      "description": "智能系统的软件与数据服务基础",
+      "x": 230,
+      "y": 540,
+      "fixed": true
     },
     {
       "id": "产品设计",
       "name": "产品设计",
-      "category": "课程",
+      "category": "基础支撑",
       "symbolSize": 50,
       "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "工效学",
-      "name": "工效学",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "自然与设计",
-      "name": "自然与设计",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
+      "layer": "基础课",
+      "description": "需求、交互、原型与工程表达",
+      "x": 230,
+      "y": 680,
+      "fixed": true
     },
     {
       "id": "开源处理器芯片设计",
       "name": "开源处理器芯片设计",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "智能系统设计与实现",
-      "name": "智能系统设计与实现",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "运动神经生理与人机交互",
-      "name": "运动神经生理与人机交互",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "产品制造",
-      "name": "产品制造",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "机器人进阶",
-      "name": "机器人进阶",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "大模型原理与应用",
-      "name": "大模型原理与应用",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "增材制造原理与实践",
-      "name": "增材制造原理与实践",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "灵巧手设计与运动学控制",
-      "name": "灵巧手设计与运动学控制",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "智能设备交互设计",
-      "name": "智能设备交互设计",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "多足系统运动学与步态规划",
-      "name": "多足系统运动学与步态规划",
-      "category": "课程",
-      "symbolSize": 50,
-      "value": 50,
-      "layer": "核心课程"
-    },
-    {
-      "id": "智能扫地机器人主控板设计",
-      "name": "智能扫地机器人主控板设计",
-      "category": "课程",
-      "symbolSize": 34,
-      "value": 34,
-      "layer": "项目/成果模块"
-    },
-    {
-      "id": "用户数据服务系统",
-      "name": "用户数据服务系统",
-      "category": "课程",
-      "symbolSize": 34,
-      "value": 34,
-      "layer": "项目/成果模块"
-    },
-    {
-      "id": "再创新模块",
-      "name": "再创新模块",
-      "category": "课程",
-      "symbolSize": 30,
-      "value": 30,
-      "layer": "项目/成果模块"
-    },
-    {
-      "id": "项目测试",
-      "name": "项目测试",
-      "category": "课程",
-      "symbolSize": 30,
-      "value": 30,
-      "layer": "项目/成果模块"
-    },
-    {
-      "id": "项目答辩",
-      "name": "项目答辩",
-      "category": "课程",
-      "symbolSize": 30,
-      "value": 30,
-      "layer": "项目/成果模块"
-    },
-    {
-      "id": "工程项目报告",
-      "name": "工程项目报告",
-      "category": "课程",
-      "symbolSize": 30,
-      "value": 30,
-      "layer": "项目/成果模块"
-    },
-    {
-      "id": "桌面智能宠物",
-      "name": "桌面智能宠物",
-      "category": "课程",
-      "symbolSize": 34,
-      "value": 34,
-      "layer": "项目/成果模块"
+      "category": "机电主线",
+      "symbolSize": 44,
+      "value": 44,
+      "layer": "硬件平台",
+      "description": "端侧算力与硬件平台",
+      "x": 440,
+      "y": 80,
+      "fixed": true
     },
     {
       "id": "智能硬件系统设计",
       "name": "智能硬件系统设计",
-      "category": "课程",
-      "symbolSize": 30,
-      "value": 30,
-      "layer": "项目/成果模块"
+      "category": "机电主线",
+      "symbolSize": 44,
+      "value": 44,
+      "layer": "硬件平台",
+      "description": "软硬件协同的硬件系统",
+      "x": 660,
+      "y": 80,
+      "fixed": true
+    },
+    {
+      "id": "控制原理",
+      "name": "控制原理",
+      "category": "机电主线",
+      "symbolSize": 48,
+      "value": 48,
+      "layer": "控制基础",
+      "description": "反馈控制与运动控制基础",
+      "x": 440,
+      "y": 240,
+      "fixed": true
+    },
+    {
+      "id": "无人机飞控技术",
+      "name": "无人机飞控技术",
+      "category": "机电主线",
+      "symbolSize": 44,
+      "value": 44,
+      "layer": "机器人平台",
+      "description": "飞控、导航与状态估计",
+      "x": 660,
+      "y": 200,
+      "fixed": true
+    },
+    {
+      "id": "多足系统运动学与步态规划",
+      "name": "多足系统运动学与步态规划",
+      "category": "机电主线",
+      "symbolSize": 42,
+      "value": 42,
+      "layer": "机器人平台",
+      "description": "复杂运动学与步态规划",
+      "x": 660,
+      "y": 290,
+      "fixed": true
+    },
+    {
+      "id": "灵巧手设计与运动学控制",
+      "name": "灵巧手设计与运动学控制",
+      "category": "机电主线",
+      "symbolSize": 42,
+      "value": 42,
+      "layer": "机器人平台",
+      "description": "执行机构与具身操作",
+      "x": 660,
+      "y": 380,
+      "fixed": true
+    },
+    {
+      "id": "大模型原理与应用",
+      "name": "大模型原理与应用",
+      "category": "AI主线",
+      "symbolSize": 48,
+      "value": 48,
+      "layer": "AI基础",
+      "description": "LLM/Agent 应用能力",
+      "x": 440,
+      "y": 520,
+      "fixed": true
+    },
+    {
+      "id": "智能系统设计与实现",
+      "name": "智能系统设计与实现",
+      "category": "AI主线",
+      "symbolSize": 52,
+      "value": 52,
+      "layer": "融合核心",
+      "description": "AI能力落地到端侧智能系统",
+      "x": 860,
+      "y": 160,
+      "fixed": true
+    },
+    {
+      "id": "机器人进阶",
+      "name": "机器人进阶",
+      "category": "AI主线",
+      "symbolSize": 52,
+      "value": 52,
+      "layer": "融合核心",
+      "description": "视觉、决策、控制与机器人系统融合",
+      "x": 860,
+      "y": 300,
+      "fixed": true
+    },
+    {
+      "id": "工效学",
+      "name": "工效学",
+      "category": "人机产品",
+      "symbolSize": 42,
+      "value": 42,
+      "layer": "人机交互",
+      "description": "人因与用户体验",
+      "x": 440,
+      "y": 640,
+      "fixed": true
+    },
+    {
+      "id": "智能设备交互设计",
+      "name": "智能设备交互设计",
+      "category": "人机产品",
+      "symbolSize": 48,
+      "value": 48,
+      "layer": "融合交互",
+      "description": "AI交互与智能硬件产品体验",
+      "x": 860,
+      "y": 500,
+      "fixed": true
+    },
+    {
+      "id": "产品制造",
+      "name": "产品制造",
+      "category": "人机产品",
+      "symbolSize": 42,
+      "value": 42,
+      "layer": "制造基础",
+      "description": "从设计到制造工艺",
+      "x": 440,
+      "y": 720,
+      "fixed": true
+    },
+    {
+      "id": "增材制造原理与实践",
+      "name": "增材制造原理与实践",
+      "category": "人机产品",
+      "symbolSize": 42,
+      "value": 42,
+      "layer": "制造进阶",
+      "description": "3D打印与快速成型",
+      "x": 660,
+      "y": 720,
+      "fixed": true
+    },
+    {
+      "id": "智能扫地机器人主控板设计",
+      "name": "智能扫地机器人主控板设计",
+      "category": "融合项目",
+      "symbolSize": 40,
+      "value": 40,
+      "layer": "代表项目",
+      "description": "硬件、嵌入式与系统集成项目",
+      "x": 1080,
+      "y": 90,
+      "fixed": true
+    },
+    {
+      "id": "桌面智能宠物",
+      "name": "桌面智能宠物",
+      "category": "融合项目",
+      "symbolSize": 40,
+      "value": 40,
+      "layer": "代表项目",
+      "description": "大模型交互与智能硬件项目",
+      "x": 1080,
+      "y": 220,
+      "fixed": true
+    },
+    {
+      "id": "具身机器人项目群",
+      "name": "具身机器人项目群",
+      "category": "融合项目",
+      "symbolSize": 42,
+      "value": 42,
+      "layer": "代表项目",
+      "description": "无人机、多足、灵巧手等具身系统",
+      "x": 1080,
+      "y": 350,
+      "fixed": true
     },
     {
       "id": "3D打印挑战赛",
       "name": "3D打印挑战赛",
-      "category": "课程",
-      "symbolSize": 30,
-      "value": 30,
-      "layer": "项目/成果模块"
+      "category": "成果出口",
+      "symbolSize": 38,
+      "value": 38,
+      "layer": "成果出口",
+      "description": "制造实践与创新竞赛",
+      "x": 1080,
+      "y": 610,
+      "fixed": true
+    },
+    {
+      "id": "项目测试与答辩",
+      "name": "项目测试与答辩",
+      "category": "成果出口",
+      "symbolSize": 38,
+      "value": 38,
+      "layer": "成果出口",
+      "description": "测试验证、项目报告与成果展示",
+      "x": 1080,
+      "y": 720,
+      "fixed": true
     }
   ],
   "links": [
     {
       "source": "AI+机电课程体系",
-      "target": "人工智能",
-      "value": "方向支撑",
-      "weight": 5
-    },
-    {
-      "source": "AI+机电课程体系",
-      "target": "机电",
-      "value": "方向支撑",
-      "weight": 5
-    },
-    {
-      "source": "AI+机电课程体系",
-      "target": "系统设计与项目实践",
-      "value": "方向支撑",
-      "weight": 5
-    },
-    {
-      "source": "人工智能",
-      "target": "计算机视觉与感知",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "人工智能",
-      "target": "机器学习与深度学习",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "人工智能",
-      "target": "强化学习与智能决策",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "人工智能",
-      "target": "大模型与智能体",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "人工智能",
-      "target": "多模态交互与人因",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "人工智能",
-      "target": "导航定位与路径规划",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "机械设计与制造",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "电子电路与PCB",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "嵌入式与硬件接口",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "控制理论与运动控制",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "传感器与信号处理",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "机器人系统与执行机构",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "智能制造与增材制造",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "机电",
-      "target": "电源与可靠性",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "系统设计与项目实践",
-      "target": "软件工程与数据服务",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "系统设计与项目实践",
-      "target": "系统集成与测试",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "系统设计与项目实践",
-      "target": "产品设计与工程管理",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "系统设计与项目实践",
-      "target": "仿真建模与验证",
-      "value": "能力模块",
-      "weight": 4
-    },
-    {
-      "source": "工程原理",
-      "target": "电子电路与PCB",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工程原理",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工程原理",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工程原理",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工程原理",
-      "target": "电源与可靠性",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能扫地机器人主控板设计",
-      "target": "电子电路与PCB",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能扫地机器人主控板设计",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能扫地机器人主控板设计",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人基础",
-      "target": "机械设计与制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人基础",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人基础",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人基础",
-      "target": "机器人系统与执行机构",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人基础",
-      "target": "计算机视觉与感知",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "控制原理",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "控制原理",
-      "target": "仿真建模与验证",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "控制原理",
-      "target": "传感器与信号处理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "软件设计",
-      "target": "软件工程与数据服务",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "软件设计",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "用户数据服务系统",
-      "target": "软件工程与数据服务",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "信号与系统",
-      "target": "传感器与信号处理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "信号与系统",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "信号与系统",
-      "target": "仿真建模与验证",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "再创新模块",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "再创新模块",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "项目测试",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "项目测试",
-      "target": "仿真建模与验证",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "项目答辩",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "项目答辩",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "无人机飞控技术",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "无人机飞控技术",
-      "target": "导航定位与路径规划",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "无人机飞控技术",
-      "target": "传感器与信号处理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "无人机飞控技术",
-      "target": "仿真建模与验证",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "产品设计",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "产品设计",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "产品设计",
-      "target": "机械设计与制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "产品设计",
-      "target": "软件工程与数据服务",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工程项目报告",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工效学",
-      "target": "多模态交互与人因",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工效学",
-      "target": "传感器与信号处理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工效学",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "自然与设计",
-      "target": "机械设计与制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "自然与设计",
-      "target": "仿真建模与验证",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "自然与设计",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "开源处理器芯片设计",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "开源处理器芯片设计",
-      "target": "电子电路与PCB",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "开源处理器芯片设计",
-      "target": "软件工程与数据服务",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能系统设计与实现",
-      "target": "大模型与智能体",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能系统设计与实现",
-      "target": "多模态交互与人因",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能系统设计与实现",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能系统设计与实现",
-      "target": "机器人系统与执行机构",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能系统设计与实现",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "桌面智能宠物",
-      "target": "多模态交互与人因",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "桌面智能宠物",
-      "target": "大模型与智能体",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "桌面智能宠物",
-      "target": "机器人系统与执行机构",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "桌面智能宠物",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能硬件系统设计",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能硬件系统设计",
-      "target": "电子电路与PCB",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能硬件系统设计",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "运动神经生理与人机交互",
-      "target": "多模态交互与人因",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "运动神经生理与人机交互",
-      "target": "传感器与信号处理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "运动神经生理与人机交互",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "产品制造",
-      "target": "智能制造与增材制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "产品制造",
-      "target": "机械设计与制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "产品制造",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人进阶",
-      "target": "强化学习与智能决策",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人进阶",
-      "target": "计算机视觉与感知",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人进阶",
-      "target": "大模型与智能体",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人进阶",
-      "target": "机器人系统与执行机构",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "机器人进阶",
-      "target": "导航定位与路径规划",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "大模型原理与应用",
-      "target": "大模型与智能体",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "大模型原理与应用",
-      "target": "机器学习与深度学习",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "大模型原理与应用",
-      "target": "软件工程与数据服务",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "增材制造原理与实践",
-      "target": "智能制造与增材制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "增材制造原理与实践",
-      "target": "机械设计与制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "增材制造原理与实践",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "增材制造原理与实践",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "3D打印挑战赛",
-      "target": "智能制造与增材制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "3D打印挑战赛",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "灵巧手设计与运动学控制",
-      "target": "机械设计与制造",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "灵巧手设计与运动学控制",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "灵巧手设计与运动学控制",
-      "target": "机器人系统与执行机构",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "灵巧手设计与运动学控制",
-      "target": "系统集成与测试",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能设备交互设计",
-      "target": "多模态交互与人因",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能设备交互设计",
-      "target": "大模型与智能体",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能设备交互设计",
-      "target": "嵌入式与硬件接口",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "智能设备交互设计",
-      "target": "产品设计与工程管理",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "多足系统运动学与步态规划",
-      "target": "控制理论与运动控制",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "多足系统运动学与步态规划",
-      "target": "机器人系统与执行机构",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "多足系统运动学与步态规划",
-      "target": "导航定位与路径规划",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "多足系统运动学与步态规划",
-      "target": "仿真建模与验证",
-      "value": "覆盖能力",
-      "weight": 2
-    },
-    {
-      "source": "工程原理",
-      "target": "智能扫地机器人主控板设计",
-      "value": "项目落地",
+      "target": "工程原理",
+      "value": "工程基础",
       "weight": 3
     },
     {
-      "source": "工程原理",
+      "source": "AI+机电课程体系",
       "target": "机器人基础",
-      "value": "机电入门",
+      "value": "机器人基础",
       "weight": 3
     },
     {
-      "source": "工程原理",
-      "target": "控制原理",
-      "value": "控制基础",
+      "source": "AI+机电课程体系",
+      "target": "信号与系统",
+      "value": "信号控制基础",
       "weight": 3
     },
     {
-      "source": "工程原理",
+      "source": "AI+机电课程体系",
+      "target": "软件设计",
+      "value": "软件基础",
+      "weight": 3
+    },
+    {
+      "source": "AI+机电课程体系",
       "target": "产品设计",
-      "value": "工程设计方法",
+      "value": "产品基础",
+      "weight": 3
+    },
+    {
+      "source": "工程原理",
+      "target": "开源处理器芯片设计",
+      "value": "硬件深化",
+      "weight": 3
+    },
+    {
+      "source": "开源处理器芯片设计",
+      "target": "智能硬件系统设计",
+      "value": "端侧硬件",
+      "weight": 3
+    },
+    {
+      "source": "智能硬件系统设计",
+      "target": "智能系统设计与实现",
+      "value": "软硬件协同",
+      "weight": 3
+    },
+    {
+      "source": "智能系统设计与实现",
+      "target": "智能扫地机器人主控板设计",
+      "value": "系统落地",
       "weight": 3
     },
     {
@@ -1116,39 +393,9 @@
       "weight": 3
     },
     {
-      "source": "机器人基础",
-      "target": "产品设计",
-      "value": "机器人原型",
-      "weight": 3
-    },
-    {
-      "source": "机器人基础",
-      "target": "机器人进阶",
-      "value": "机器人平台进阶",
-      "weight": 3
-    },
-    {
-      "source": "机器人基础",
-      "target": "无人机飞控技术",
-      "value": "移动机器人控制",
-      "weight": 3
-    },
-    {
-      "source": "机器人基础",
-      "target": "灵巧手设计与运动学控制",
-      "value": "执行机构进阶",
-      "weight": 3
-    },
-    {
-      "source": "机器人基础",
-      "target": "多足系统运动学与步态规划",
-      "value": "运动学进阶",
-      "weight": 3
-    },
-    {
       "source": "控制原理",
       "target": "无人机飞控技术",
-      "value": "飞控与轨迹控制",
+      "value": "飞控",
       "weight": 3
     },
     {
@@ -1164,15 +411,33 @@
       "weight": 3
     },
     {
-      "source": "控制原理",
-      "target": "运动神经生理与人机交互",
-      "value": "控制-反馈",
+      "source": "无人机飞控技术",
+      "target": "机器人进阶",
+      "value": "移动机器人",
+      "weight": 3
+    },
+    {
+      "source": "多足系统运动学与步态规划",
+      "target": "机器人进阶",
+      "value": "复杂运动",
+      "weight": 3
+    },
+    {
+      "source": "灵巧手设计与运动学控制",
+      "target": "机器人进阶",
+      "value": "具身操作",
+      "weight": 3
+    },
+    {
+      "source": "机器人进阶",
+      "target": "具身机器人项目群",
+      "value": "综合项目",
       "weight": 3
     },
     {
       "source": "信号与系统",
       "target": "控制原理",
-      "value": "信号建模与反馈",
+      "value": "建模反馈",
       "weight": 3
     },
     {
@@ -1183,38 +448,8 @@
     },
     {
       "source": "信号与系统",
-      "target": "运动神经生理与人机交互",
-      "value": "生理信号处理",
-      "weight": 3
-    },
-    {
-      "source": "信号与系统",
-      "target": "项目测试",
+      "target": "项目测试与答辩",
       "value": "测试验证",
-      "weight": 3
-    },
-    {
-      "source": "信号与系统",
-      "target": "再创新模块",
-      "value": "迭代优化",
-      "weight": 3
-    },
-    {
-      "source": "信号与系统",
-      "target": "项目答辩",
-      "value": "成果表达",
-      "weight": 3
-    },
-    {
-      "source": "软件设计",
-      "target": "用户数据服务系统",
-      "value": "数据服务项目",
-      "weight": 3
-    },
-    {
-      "source": "软件设计",
-      "target": "智能系统设计与实现",
-      "value": "系统软件支撑",
       "weight": 3
     },
     {
@@ -1224,81 +459,9 @@
       "weight": 3
     },
     {
-      "source": "开源处理器芯片设计",
-      "target": "智能硬件系统设计",
-      "value": "硬件平台",
-      "weight": 3
-    },
-    {
-      "source": "开源处理器芯片设计",
+      "source": "大模型原理与应用",
       "target": "智能系统设计与实现",
-      "value": "端侧算力",
-      "weight": 3
-    },
-    {
-      "source": "产品设计",
-      "target": "产品制造",
-      "value": "设计到制造",
-      "weight": 3
-    },
-    {
-      "source": "产品设计",
-      "target": "工程项目报告",
-      "value": "设计表达",
-      "weight": 3
-    },
-    {
-      "source": "产品设计",
-      "target": "智能设备交互设计",
-      "value": "智能硬件产品",
-      "weight": 3
-    },
-    {
-      "source": "工效学",
-      "target": "智能设备交互设计",
-      "value": "用户体验",
-      "weight": 3
-    },
-    {
-      "source": "工效学",
-      "target": "运动神经生理与人机交互",
-      "value": "人因与生理交互",
-      "weight": 3
-    },
-    {
-      "source": "自然与设计",
-      "target": "增材制造原理与实践",
-      "value": "仿生结构制造",
-      "weight": 3
-    },
-    {
-      "source": "自然与设计",
-      "target": "产品制造",
-      "value": "结构到工艺",
-      "weight": 3
-    },
-    {
-      "source": "产品制造",
-      "target": "增材制造原理与实践",
-      "value": "制造技术深化",
-      "weight": 3
-    },
-    {
-      "source": "增材制造原理与实践",
-      "target": "3D打印挑战赛",
-      "value": "实践竞赛",
-      "weight": 3
-    },
-    {
-      "source": "智能系统设计与实现",
-      "target": "桌面智能宠物",
-      "value": "综合项目",
-      "weight": 3
-    },
-    {
-      "source": "智能系统设计与实现",
-      "target": "大模型原理与应用",
-      "value": "大模型交互",
+      "value": "智能体应用",
       "weight": 3
     },
     {
@@ -1308,33 +471,51 @@
       "weight": 3
     },
     {
+      "source": "智能系统设计与实现",
+      "target": "桌面智能宠物",
+      "value": "综合项目",
+      "weight": 3
+    },
+    {
       "source": "大模型原理与应用",
       "target": "智能设备交互设计",
       "value": "AI交互",
       "weight": 3
     },
     {
-      "source": "机器人进阶",
-      "target": "多足系统运动学与步态规划",
-      "value": "复杂机器人运动",
+      "source": "产品设计",
+      "target": "工效学",
+      "value": "用户体验",
       "weight": 3
     },
     {
-      "source": "机器人进阶",
-      "target": "灵巧手设计与运动学控制",
-      "value": "具身操作",
+      "source": "工效学",
+      "target": "智能设备交互设计",
+      "value": "人因交互",
       "weight": 3
     },
     {
-      "source": "机器人进阶",
-      "target": "无人机飞控技术",
-      "value": "导航与智能决策",
+      "source": "产品设计",
+      "target": "产品制造",
+      "value": "设计到制造",
       "weight": 3
     },
     {
-      "source": "智能系统设计与实现",
-      "target": "智能硬件系统设计",
-      "value": "软硬件协同",
+      "source": "产品制造",
+      "target": "增材制造原理与实践",
+      "value": "制造进阶",
+      "weight": 3
+    },
+    {
+      "source": "增材制造原理与实践",
+      "target": "3D打印挑战赛",
+      "value": "实践竞赛",
+      "weight": 3
+    },
+    {
+      "source": "智能设备交互设计",
+      "target": "项目测试与答辩",
+      "value": "成果展示",
       "weight": 3
     }
   ]

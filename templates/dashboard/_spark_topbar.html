@@ -3,7 +3,7 @@
         <div class="spark-brand-mark">M</div>
         <div class="spark-brand-copy">
             <strong>明月科创教育大模型</strong>
-            <span>Large Model Learning Platform</span>
+            <span>Mingyue Sci-Tech Innovation Education Large Model</span>
         </div>
     </div>
 
@@ -53,15 +53,15 @@
         linear-gradient(180deg, #fcfdff 0%, var(--bg) 100%);
 }
 
-.spark-dashboard-page .spark-topbar,
+:is(.spark-dashboard-page, .spark-home) .spark-topbar,
 .spark-dashboard-page .spark-dashboard-main,
-.spark-dashboard-page .spark-flashes {
+:is(.spark-dashboard-page, .spark-home) .spark-flashes {
     width: min(1600px, calc(100% - 64px));
     margin-left: auto;
     margin-right: auto;
 }
 
-.spark-dashboard-page .spark-topbar {
+:is(.spark-dashboard-page, .spark-home) .spark-topbar {
     position: sticky;
     top: 0;
     z-index: 40;
@@ -80,23 +80,28 @@
     transition: background 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, backdrop-filter 0.22s ease;
 }
 
-.spark-dashboard-page .spark-topbar.is-scrolled,
-.spark-dashboard-page .spark-topbar:hover {
+:is(.spark-dashboard-page, .spark-home) .spark-topbar.is-scrolled,
+:is(.spark-dashboard-page, .spark-home) .spark-topbar:hover {
     border-color: rgba(132, 152, 214, 0.12);
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 14px 30px rgba(79, 97, 156, 0.06);
     backdrop-filter: blur(12px);
 }
 
-.spark-dashboard-page .spark-brand {
+:is(.spark-dashboard-page, .spark-home) .spark-brand {
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
 }
 
-.spark-dashboard-page .spark-brand-mark {
+:is(.spark-dashboard-page, .spark-home) .spark-brand-mark {
     width: 48px;
     height: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    flex: 0 0 48px;
+    aspect-ratio: 1 / 1;
     border-radius: 16px;
     display: grid;
     place-items: center;
@@ -106,42 +111,51 @@
     background: linear-gradient(135deg, #4b78ff, #36d3d8);
 }
 
-.spark-dashboard-page .spark-brand-copy strong {
+:is(.spark-dashboard-page, .spark-home) .spark-brand-copy {
+    min-width: 0;
+    max-width: 460px;
+}
+
+:is(.spark-dashboard-page, .spark-home) .spark-brand-copy strong {
     display: block;
     font-size: 20px;
 }
 
-.spark-dashboard-page .spark-brand-copy span {
+:is(.spark-dashboard-page, .spark-home) .spark-brand-copy span {
     display: block;
     margin-top: 4px;
     color: var(--muted);
     font-size: 12px;
+    line-height: 1.35;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
-.spark-dashboard-page .spark-nav {
+:is(.spark-dashboard-page, .spark-home) .spark-nav {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 28px;
+    min-width: 0;
 }
 
-.spark-dashboard-page .spark-nav a,
-.spark-dashboard-page .spark-link {
+:is(.spark-dashboard-page, .spark-home) .spark-nav a,
+:is(.spark-dashboard-page, .spark-home) .spark-link {
     color: var(--muted);
     text-decoration: none;
     font-size: 15px;
     transition: color 0.2s ease;
 }
 
-.spark-dashboard-page .spark-nav a.active,
-.spark-dashboard-page .spark-nav a:hover,
-.spark-dashboard-page .spark-link:hover {
+:is(.spark-dashboard-page, .spark-home) .spark-nav a.active,
+:is(.spark-dashboard-page, .spark-home) .spark-nav a:hover,
+:is(.spark-dashboard-page, .spark-home) .spark-link:hover {
     color: var(--primary-deep);
 }
 
-.spark-dashboard-page .spark-userbar {
+:is(.spark-dashboard-page, .spark-home) .spark-userbar {
     display: flex;
     align-items: center;
     gap: 16px;
@@ -149,29 +163,35 @@
     justify-content: flex-end;
 }
 
-.spark-dashboard-page .spark-link-subtle {
+:is(.spark-dashboard-page, .spark-home) .spark-link-subtle {
     color: rgba(71, 97, 143, 0.82);
 }
 
-.spark-dashboard-page .spark-user-pill {
+:is(.spark-dashboard-page, .spark-home) .spark-link-subtle:hover {
+    color: #244173;
+}
+
+:is(.spark-dashboard-page, .spark-home) .spark-user-pill {
     min-height: 44px;
     padding: 0 16px 0 10px;
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    font-size: 15px;
+    line-height: 1.2;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.46);
     border: 1px solid rgba(132, 152, 214, 0.1);
     transition: background 0.22s ease, border-color 0.22s ease;
 }
 
-.spark-dashboard-page .spark-topbar.is-scrolled .spark-user-pill,
-.spark-dashboard-page .spark-topbar:hover .spark-user-pill {
+:is(.spark-dashboard-page, .spark-home) .spark-topbar.is-scrolled .spark-user-pill,
+:is(.spark-dashboard-page, .spark-home) .spark-topbar:hover .spark-user-pill {
     background: rgba(246, 248, 255, 0.96);
     border-color: rgba(132, 152, 214, 0.14);
 }
 
-.spark-dashboard-page .spark-avatar {
+:is(.spark-dashboard-page, .spark-home) .spark-avatar {
     min-width: 44px;
     height: 30px;
     padding: 0 10px;
@@ -187,16 +207,28 @@
     background: linear-gradient(135deg, #6a76ff, #4bc6ef);
 }
 
-.spark-dashboard-page .spark-flashes {
+:is(.spark-dashboard-page, .spark-home) .spark-flashes {
     padding-top: 12px;
 }
 
-.spark-dashboard-page .spark-flash {
+:is(.spark-dashboard-page, .spark-home) .spark-flash {
     padding: 12px 16px;
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.78);
     border: 1px solid var(--line);
     box-shadow: var(--shadow-soft);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+:is(.spark-dashboard-page, .spark-home) .spark-flashes.is-hiding .spark-flash {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.spark-flashes.is-hiding .spark-flash {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
 .spark-dashboard-page .spark-dashboard-main {
@@ -256,24 +288,24 @@
 }
 
 @media (max-width: 920px) {
-    .spark-dashboard-page .spark-topbar {
+    :is(.spark-dashboard-page, .spark-home) .spark-topbar {
         grid-template-columns: 1fr;
         gap: 18px;
         padding: 18px 0;
     }
 
-    .spark-dashboard-page .spark-nav {
+    :is(.spark-dashboard-page, .spark-home) .spark-nav {
         justify-content: flex-start;
         gap: 18px;
     }
 
-    .spark-dashboard-page .spark-userbar {
+    :is(.spark-dashboard-page, .spark-home) .spark-userbar {
         justify-content: space-between;
     }
 
     .spark-dashboard-page .spark-dashboard-main,
-    .spark-dashboard-page .spark-topbar,
-    .spark-dashboard-page .spark-flashes {
+    :is(.spark-dashboard-page, .spark-home) .spark-topbar,
+    :is(.spark-dashboard-page, .spark-home) .spark-flashes {
         width: min(100% - 28px, 1600px);
     }
 
@@ -282,16 +314,41 @@
         border-radius: 22px;
     }
 }
+
+@media (min-width: 921px) and (max-width: 1240px) {
+    :is(.spark-dashboard-page, .spark-home) .spark-topbar {
+        grid-template-columns: minmax(220px, 0.75fr) minmax(360px, 1fr) auto;
+        gap: 18px;
+    }
+
+    :is(.spark-dashboard-page, .spark-home) .spark-brand-copy {
+        max-width: 250px;
+    }
+
+    :is(.spark-dashboard-page, .spark-home) .spark-nav {
+        gap: 18px;
+    }
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const topbar = document.querySelector('.spark-dashboard-page .spark-topbar');
+    const topbar = document.querySelector('.spark-topbar');
+    const flashBox = document.querySelector('.spark-flashes');
     function syncTopbarState() {
         if (!topbar) return;
         topbar.classList.toggle('is-scrolled', window.scrollY > 8);
     }
     syncTopbarState();
     window.addEventListener('scroll', syncTopbarState, { passive: true });
+
+    if (flashBox) {
+        window.setTimeout(function () {
+            flashBox.classList.add('is-hiding');
+            window.setTimeout(function () {
+                flashBox.remove();
+            }, 320);
+        }, 10000);
+    }
 });
 </script>
