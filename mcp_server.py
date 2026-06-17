@@ -994,4 +994,3 @@ if __name__ == "__main__":
 else:
     # 被其他模块导入时，只打印信息，不启动
     print("MCP server module imported (will be started as subprocess)")
-

@@ -23,7 +23,7 @@ ALLOWED_TERM_IDS = [13]
 
 @study_situation_canvas.route('/dashboard/study_situation/comprehensive/overview')
 def get_comprehensive_overview():
-    """获取班级整体学习情况综合分析 (全链路并发优化版)"""
+    """获取班级整体学习情况综合分析 (全链路并发优化版+ 重点关注学生筛查)"""
     user_courses = session.get('user_courses', [])
     if not user_courses:
         return jsonify({"error": "未找到课程信息"}), 400
@@ -68,12 +68,25 @@ def get_comprehensive_overview():
     students = [e for e in enrollments if e.get('type') == 'StudentEnrollment']
     total_students = len(students)
     
-    # 核心分析计算
-    assignment_stats = analyze_assignments_comprehensive(assignments, course_id, total_students)
-    quiz_stats = analyze_quizzes_comprehensive(quizzes, course_id)
-    module_stats = analyze_modules_comprehensive(modules, total_students, course_id)
-    student_performance = analyze_students_performance(students)
+    # 初始化学生异常行为追踪字典
+    student_issues = {}
+    for s in students:
+        uid = s.get('user_id') or s.get('user', {}).get('id')
+        if uid:
+            student_issues[uid] = {
+                "missing_assignments": [], "late_assignments": [], "failed_assignments": [],
+                "missing_quizzes": [], "late_quizzes": [], "failed_quizzes": []
+            }
     
+    
+    # 核心分析计算
+    assignment_stats = analyze_assignments_comprehensive(assignments, course_id, total_students,student_issues)
+    quiz_stats = analyze_quizzes_comprehensive(quizzes, course_id,student_issues)
+    module_stats = analyze_modules_comprehensive(modules, total_students, course_id)
+    
+    # 基于前面收集到的 issue，计算需要重点关注的学生
+    student_performance = analyze_students_performance(students, student_issues)
+    print(f"student_performance: {student_performance}")
     current_course = next((course for course in filtered_courses if str(course.get('course_id')) == str(course_id)), None)
     
     standardized_courses = [{
@@ -104,15 +117,19 @@ def get_comprehensive_overview():
         "student_performance": student_performance,
         "overall_score_distribution": calculate_score_distribution_class(students)
     })
-
     
-def analyze_assignments_comprehensive(assignments, course_id, total_students):
+def analyze_assignments_comprehensive(assignments, course_id, total_students, student_issues):
     """综合分析作业情况 (并发拉取底层数据)"""
-    published_count = 0
+    # --- 核心修改：提前过滤出已发布的作业，避免无效的API请求 ---
+    published_assignments = [a for a in assignments if a.get('published', False)]
+    published_count = len(published_assignments)
+    
     graded_count = 0
     submission_stats = {"total_submitted": 0, "total_graded": 0, "average_submission_rate": 0}
     assignment_categories = {"individual": [], "group": [], "late_submissions": 0, "upcoming_deadlines": []}
     assignments_with_ungraded = []
+    # ================= 添加下面这一行 =================
+    now_utc = datetime.now(timezone.utc)
 
     # ================= 优化点 2：将循环内的 3 个 API 封装并并发 =================
     def fetch_single_assign_data(assignment):
@@ -126,7 +143,7 @@ def analyze_assignments_comprehensive(assignments, course_id, total_students):
 
     # 使用最多 20 个工作线程并发处理所有作业
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        assign_results = list(executor.map(fetch_single_assign_data, assignments))
+        assign_results = list(executor.map(fetch_single_assign_data, published_assignments))
 
     # 在内存中快速处理并发拉取回来的数据
     for result in assign_results:
@@ -153,11 +170,14 @@ def analyze_assignments_comprehensive(assignments, course_id, total_students):
         submission_rate = round((submitted_count / total_students) * 100, 2) if total_students > 0 else 0
         
         due_at = assignment.get('due_at')
+        is_past_due = False
         if due_at:
             due_date = datetime.fromisoformat(due_at.replace('Z', '+00:00'))
-            now = datetime.now().replace(tzinfo=due_date.tzinfo)
-            days_remaining = (due_date - now).days
+            is_past_due = now_utc > due_date
             
+            # 记录即将到期的任务
+            now_local = datetime.now().replace(tzinfo=due_date.tzinfo)
+            days_remaining = (due_date - now_local).days
             if 0 <= days_remaining <= 2:
                 unsubmitted_list = get_unsubmitted_students(assignment_id, gradeable_students, submissions, is_group_assignment)
                 assignment_categories["upcoming_deadlines"].append({
@@ -170,6 +190,35 @@ def analyze_assignments_comprehensive(assignments, course_id, total_students):
                     },
                     "unsubmitted_students": unsubmitted_list
                 })
+        
+        
+        # --- 新增：遍历具体提交，填充学情异常数据 ---
+        sub_by_user = {sub.get('user_id'): sub for sub in submissions}
+        points_possible = assignment.get('points_possible', 0)
+
+        for student in gradeable_students:
+            user_id = student.get('id')
+            if student.get('fake_student') or user_id not in student_issues: 
+                continue
+            
+            sub = sub_by_user.get(user_id, {})
+            workflow_state = sub.get('workflow_state', 'unsubmitted')
+            score = sub.get('score')
+            late = sub.get('late', False)
+            
+            # 漏交：已过截止时间，且无分数，且状态为未提交
+            if is_past_due and workflow_state == 'unsubmitted' and score is None:
+                student_issues[user_id]['missing_assignments'].append(assignment_name)
+            
+            # 迟交：平台打标 late
+            if late:
+                student_issues[user_id]['late_assignments'].append(assignment_name)
+            
+            # 不及格：存在分数且低于总分的 60%
+            if score is not None and points_possible and points_possible > 0:
+                if score < (points_possible * 0.6):
+                    student_issues[user_id]['failed_assignments'].append(assignment_name)
+        
         
         has_ungraded = ungraded_count > 0
         assignment['submission_analysis'] = {
@@ -188,7 +237,7 @@ def analyze_assignments_comprehensive(assignments, course_id, total_students):
         submission_stats["average_submission_rate"] = round(submission_stats["total_submitted"] / (published_count * total_students) * 100, 2)
     
     return {
-        "total_assignments": len(assignments),
+        "total_assignments": len(published_assignments),
         "published_assignments": published_count,
         "graded_assignments": graded_count,
         "submission_stats": submission_stats,
@@ -204,19 +253,15 @@ def analyze_assignments_comprehensive(assignments, course_id, total_students):
 #获取未提交名单可以直接获取该作业的所有提交，检查状态，显示unsubmitted后获取该提交的user_id，该id对应的学生未提交
 def get_unsubmitted_students(assignment_id, gradeable_students, submissions, is_group_assignment):
     """获取未提交作业的学生/小组名单"""
-    # 获取已提交学生的ID
     submitted_user_ids = set()
     for submission in submissions:
-        if submission.get('workflow_state') in ['submitted', 'graded']:
+        # 如果存在分数，即使状态不是已提交，也认为已经有动作了
+        if submission.get('workflow_state') in ['submitted', 'graded'] or submission.get('score') is not None:
             submitted_user_ids.add(submission.get('user_id'))
     
-    # 获取未提交学生名单
     unsubmitted_students = []
-    
     for student in gradeable_students:
         user_id = student.get('id')
-        
-        # 排除测试学生
         if student.get('fake_student'):
             continue
             
@@ -227,23 +272,25 @@ def get_unsubmitted_students(assignment_id, gradeable_students, submissions, is_
                 "anonymous_id": student.get('anonymous_id')
             })
     
-    # 如果是小组作业，尝试获取小组信息（这里需要根据实际情况调整）
     if is_group_assignment and unsubmitted_students:
-        # 这里可以添加获取小组信息的逻辑
-        # 由于API限制，可能需要额外的接口来获取小组信息
         pass
     
     return unsubmitted_students
 
-def analyze_quizzes_comprehensive(quizzes, course_id):
+def analyze_quizzes_comprehensive(quizzes, course_id,student_issues):
     """综合分析测验情况 (并发拉取底层数据)"""
+    # --- 核心修改：提前过滤出已发布的测验 ---
+    published_quizzes = [q for q in quizzes if q.get('published', False)]
+    
     quiz_stats = {
         "total_quizzes": len(quizzes),
-        "published_quizzes": len([q for q in quizzes if q.get('published')]),
+        "published_quizzes": len(published_quizzes),
         "quiz_types": {}, "quiz_analysis": [],
         "completion_stats": {"completed_quizzes": 0, "incomplete_quizzes": 0, "expired_quizzes": 0, "not_started_quizzes": 0},
         "score_analysis": {"average_score_all_quizzes": 0, "highest_score": 0, "lowest_score": 100, "score_distribution": {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}}
     }
+    # ================= 添加下面这一行 =================
+    now_utc = datetime.now(timezone.utc)
     
     # ================= 优化点 3：并发拉取测验提交数据 =================
     def fetch_single_quiz_data(quiz):
@@ -253,7 +300,7 @@ def analyze_quizzes_comprehensive(quizzes, course_id):
         }
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-        quiz_results = list(executor.map(fetch_single_quiz_data, quizzes))
+        quiz_results = list(executor.map(fetch_single_quiz_data, published_quizzes))
 
     total_quiz_score = 0
     quiz_count_with_submissions = 0
@@ -261,9 +308,18 @@ def analyze_quizzes_comprehensive(quizzes, course_id):
     for result in quiz_results:
         quiz = result['quiz']
         quiz_type = quiz.get('quiz_type', 'unknown')
+        quiz_title = quiz.get('title', '未知测验')
+        points_possible = quiz.get('points_possible', 0)
         quiz_stats["quiz_types"][quiz_type] = quiz_stats["quiz_types"].get(quiz_type, 0) + 1
         
-        quiz_analysis = analyze_single_quiz(quiz, result['submissions'])
+        due_at_str = quiz.get('due_at')
+        is_past_due = False
+        if due_at_str:
+            due_date = datetime.fromisoformat(due_at_str.replace('Z', '+00:00'))
+            is_past_due = now_utc > due_date
+
+        submissions = result['submissions']
+        quiz_analysis = analyze_single_quiz(quiz, submissions)
         quiz_stats["quiz_analysis"].append(quiz_analysis)
         
         status = quiz_analysis["status"]
@@ -286,6 +342,34 @@ def analyze_quizzes_comprehensive(quizzes, course_id):
             elif avg_score >= 60: quiz_stats["score_analysis"]["score_distribution"]["D"] += 1
             else: quiz_stats["score_analysis"]["score_distribution"]["F"] += 1
 
+
+        # --- 新增：遍历具体提交，填充测验异常数据 ---
+        sub_by_user = {sub.get('user_id'): sub for sub in submissions}
+        for user_id in student_issues.keys():
+            sub = sub_by_user.get(user_id)
+            if not sub:
+                # 测验完全没有提交记录
+                if is_past_due:
+                    student_issues[user_id]['missing_quizzes'].append(quiz_title)
+            else:
+                workflow_state = sub.get('workflow_state', 'untaken')
+                score = sub.get('score') if sub.get('score') is not None else sub.get('kept_score')
+                late = sub.get('late', False)
+                
+                # 漏交
+                if is_past_due and workflow_state in ['untaken', 'unsubmitted'] and score is None:
+                    student_issues[user_id]['missing_quizzes'].append(quiz_title)
+                
+                # 迟交
+                if late:
+                    student_issues[user_id]['late_quizzes'].append(quiz_title)
+                
+                # 不及格
+                if score is not None and points_possible and points_possible > 0:
+                    if score < (points_possible * 0.6):
+                        student_issues[user_id]['failed_quizzes'].append(quiz_title)
+        
+        
     if quiz_count_with_submissions > 0:
         quiz_stats["score_analysis"]["average_score_all_quizzes"] = round(total_quiz_score / quiz_count_with_submissions, 2)
         
@@ -466,8 +550,8 @@ def calculate_module_completion_rate(items):
     return round(completed_items / len(items) * 100, 2)
 
 #用current_score判断学生表现
-def analyze_students_performance(students):
-    """分析学生表现"""
+def analyze_students_performance(students, student_issues):
+    """分析学生表现 (加入重点关注学生的异常行为筛查)"""
     performance_stats = {
         "score_distribution": {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0},
         "average_score": 0,
@@ -477,43 +561,69 @@ def analyze_students_performance(students):
     }
     
     total_score = 0
-    total_submission_rate = 0
     valid_students = 0
 
     for student in students:
+        user_info = student.get('user', {})
+        user_id = user_info.get('id')
+        if not user_id: continue
+
         current_score = student.get('grades', {}).get('current_score')
         if current_score is not None:
             total_score += current_score
             valid_students += 1
             
             # 成绩分布
-            if current_score >= 90:
-                performance_stats["score_distribution"]["A"] += 1
-            elif current_score >= 80:
-                performance_stats["score_distribution"]["B"] += 1
-            elif current_score >= 70:
-                performance_stats["score_distribution"]["C"] += 1
-            elif current_score >= 60:
-                performance_stats["score_distribution"]["D"] += 1
-            else:
-                performance_stats["score_distribution"]["F"] += 1
+            if current_score >= 90: performance_stats["score_distribution"]["A"] += 1
+            elif current_score >= 80: performance_stats["score_distribution"]["B"] += 1
+            elif current_score >= 70: performance_stats["score_distribution"]["C"] += 1
+            elif current_score >= 60: performance_stats["score_distribution"]["D"] += 1
+            else: performance_stats["score_distribution"]["F"] += 1
             
-            # 识别优秀学生和需要关注的学生
-            user_info = student.get('user', {})
-            student_data = {
-                "user_id": user_info.get('id'),
-                "name": user_info.get('name'),
-                "score": current_score,
-                "sis_user_id": user_info.get('sis_user_id')
+        # 提取该学生的异常数据
+        issues = student_issues.get(user_id, {})
+        missing_a = issues.get("missing_assignments", [])
+        late_a = issues.get("late_assignments", [])
+        failed_a = issues.get("failed_assignments", [])
+        missing_q = issues.get("missing_quizzes", [])
+        late_q = issues.get("late_quizzes", [])
+        failed_q = issues.get("failed_quizzes", [])
+        
+        # 统计异常总次数
+        total_issues_count = len(missing_a) + len(late_a) + len(failed_a) + len(missing_q) + len(late_q) + len(failed_q)
+        
+        student_data = {
+            "user_id": user_id,
+            "name": user_info.get('name'),
+            "score": current_score,
+            "sis_user_id": user_info.get('sis_user_id'),
+            "issue_summary": {
+                "total_issues_count": total_issues_count,
+                "missing_assignments": {"count": len(missing_a), "items": missing_a},
+                "late_assignments": {"count": len(late_a), "items": late_a},
+                "failed_assignments": {"count": len(failed_a), "items": failed_a},
+                "missing_quizzes": {"count": len(missing_q), "items": missing_q},
+                "late_quizzes": {"count": len(late_q), "items": late_q},
+                "failed_quizzes": {"count": len(failed_q), "items": failed_q}
             }
-            
-            if current_score >= 85:
-                performance_stats["top_performers"].append(student_data)
-            elif current_score < 60:
-                performance_stats["need_attention"].append(student_data)
+        }
+        
+        # 识别优秀学生 (无异常且分高)
+        if current_score is not None and current_score >= 85 and total_issues_count == 0:
+            performance_stats["top_performers"].append(student_data)
+        
+        # 识别需要关注的学生 (有任何异常，或者整体成绩不及格)
+        if total_issues_count > 0 or (current_score is not None and current_score < 60):
+            performance_stats["need_attention"].append(student_data)
     
     if valid_students > 0:
         performance_stats["average_score"] = round(total_score / valid_students, 2)
+        
+    # 将需要重点关注的学生按照 "异常次数最多" 且 "分数最低" 优先进行排序
+    performance_stats["need_attention"].sort(
+        key=lambda x: (x['issue_summary']['total_issues_count'], x['score'] is not None, -(x['score'] or 0)), 
+        reverse=True
+    )
     
     return performance_stats
 
@@ -653,60 +763,74 @@ def get_student_by_sis_id_in_course(sis_user_id, course_id):
             }
     return None
 
-
 def extract_grading_criteria(description_html, points_possible):
     """
-    智能防御性解析器：从作业描述HTML中抓取不同档次验收标准，保证绝对不崩溃。
+    智能防御性解析器：从作业描述HTML中抓取不同档次验收标准。
+    【核心机制】：严格匹配冒号，如果查重失败则隐藏。
+    【HTML修复】：完美处理富文本修饰标签（加粗、颜色）造成的断行问题。
     """
-    # 建立标准的百分制映射标准与通用兜底文本
     criteria = {
         "thresholds": {"pass": 60, "medium": 70, "good": 80, "excellent": 90},
-        "requirements": {
-            "pass": "满足作业大纲基础及格标准要求。",
-            "medium": "完成基础要求并撰写完备的接口文档说明。",
-            "good": "引入安全保障机制（包含加密及鉴权等安全验证功能）。",
-            "excellent": "具备重传容错、高并发高负载表现或压力测试报告。"
-        }
+        "requirements": None 
     }
     
     if not description_html:
         return criteria
 
     try:
-        # 1. 清洗 HTML 标签，转化为纯文本进行分行处理
-        clean_text = re.sub(r'<[^>]+>', '\n', description_html)
-        clean_text = unescape(clean_text) # 还原可能存在的转移字符如 &nbsp; 等
+        # ================= 核心修复 =================
+        # 1. 先把真正的“换行/分段”标签替换为换行符 (\n)
+        clean_text = re.sub(r'<(br|/p|/div|/li|tr|/h[1-6])[^>]*>', '\n', description_html, flags=re.I)
+        
+        # 2. 再把其他修饰性标签（如 <strong>, <span>, <b> 等）直接抹除，保证同一句话不被劈开
+        clean_text = re.sub(r'<[^>]+>', '', clean_text)
+        # ============================================
+
+        clean_text = unescape(clean_text) 
         lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
         
-        # 2. 正则状态机扫描，抓取可能匹配到的档次和分值条件
+        temp_reqs = {}
+        opt_paren = r'(?:\s*[(（][^)）]*[)）])?'
+        
         for line in lines:
             # 捕获 及格 / 60分段要求
-            if re.search(r'(及格|合格|60分|６０分|60)', line, re.I):
-                match = re.search(r'(?:及格|合格|60分|官方推荐分|６０分)[:：\s]*(.*)', line)
-                if match and match.group(1).strip():
-                    criteria["requirements"]["pass"] = match.group(1).strip()
+            match = re.search(r'(及格|合格|60分|６０分)' + opt_paren + r'[:：]\s*(.*)', line)
+            if match and match.group(2).strip():
+                if "pass" in temp_reqs: return criteria
+                temp_reqs["pass"] = match.group(2).strip()
+                continue
             
             # 捕获 中等 / 70分段要求
-            elif re.search(r'(中|中等?|70分|７０分|70)', line, re.I):
-                match = re.search(r'(?:中等?|中|70分|７０分)[:：\s]*(.*)', line)
-                if match and match.group(1).strip():
-                    criteria["requirements"]["medium"] = match.group(1).strip()
+            match = re.search(r'(中等?|中|70分|７０分)' + opt_paren + r'[:：]\s*(.*)', line)
+            if match and match.group(2).strip():
+                if "medium" in temp_reqs: return criteria
+                temp_reqs["medium"] = match.group(2).strip()
+                continue
             
             # 捕获 良好 / 80分段要求
-            elif re.search(r'(良|良好?|80分|８０分|80)', line, re.I):
-                match = re.search(r'(?:良好?|良|80分|８０分)[:：\s]*(.*)', line)
-                if match and match.group(1).strip():
-                    criteria["requirements"]["good"] = match.group(1).strip()
+            match = re.search(r'(良好?|良|80分|８０分)' + opt_paren + r'[:：]\s*(.*)', line)
+            if match and match.group(2).strip():
+                if "good" in temp_reqs: return criteria
+                temp_reqs["good"] = match.group(2).strip()
+                continue
             
             # 捕获 优秀 / 90分段要求
-            elif re.search(r'(优|优秀?|卓越|优|90分|９ cracks|９０分|90)', line, re.I):
-                match = re.search(r'(?:优秀?|卓越|优|90分|９０分)[:：\s]*(.*)', line)
-                if match and match.group(1).strip():
-                    criteria["requirements"]["excellent"] = match.group(1).strip()
-                    
+            match = re.search(r'(优秀?|卓越|优|90分|９０分)' + opt_paren + r'[:：]\s*(.*)', line)
+            if match and match.group(2).strip():
+                if "excellent" in temp_reqs: return criteria
+                temp_reqs["excellent"] = match.group(2).strip()
+                continue
+                
+        # 兜底拦截：字数过长防崩溃
+        for v in temp_reqs.values():
+            if len(v) > 150:
+                return criteria
+
+        if temp_reqs:
+            criteria["requirements"] = temp_reqs
+
     except Exception as e:
-        # 即使提取过程中发生任何意外（如遇到畸形HTML代码），也将直接交由兜底标准接管，严防API抛500错误
-        print(f"解析作业标准异常，已启用防崩兜底引擎: {str(e)}")
+        print(f"解析作业标准异常: {str(e)}")
         
     return criteria
 def analyze_student_assignments(sis_user_id, course_id, assignments):

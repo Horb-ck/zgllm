@@ -136,8 +136,8 @@
                                             <span class="card-badge" id="attention-count" style="background: var(--danger-light); color: var(--danger-color); border-color: #fecaca;">0</span>
                                         </div>
                                     </div>
-                                    <div class="card-content flex-grow">
-                                        <div id="students-need-attention" class="scrollable-list">
+                                    <div class="card-content flex-grow" style="overflow-y: auto;">
+                                        <div id="students-need-attention">
                                             <div class="loading">加载中...</div>
                                         </div>
                                     </div>
@@ -206,7 +206,6 @@
     --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 核心修复：整体 min-height: 100vh，一旦内容因为缩放撑破，允许垂直滚动 */
 html, body {
     margin: 0; padding: 0; width: 100%; min-height: 100vh;
     background-color: var(--bg-page);
@@ -225,14 +224,12 @@ html, body {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: var(--radius-pill); }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* 页面外部结构设为弹性扩展 */
 .spark-dashboard-page { display: flex; flex-direction: column; min-height: 100vh; width: 100%; }
 .spark-dashboard-main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .dashboard-container { flex: 1; display: flex; flex-direction: column; padding: clamp(0.5rem, 1.5vh, 1rem) clamp(1rem, 2vw, 2.5rem); max-width: 1800px; margin: 0 auto; width: 100%; min-height: 0; }
 .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0;}
 #coursePageContent { flex: 1; display: flex; flex-direction: column; gap: clamp(0.5rem, 1.5vh, 1rem); min-height: 0;}
 
-/* --- 头部区域 --- */
 .page-header { flex: 0 0 auto; margin-bottom: 0.25rem; }
 .header-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.5rem; flex-wrap: wrap; }
 .header-titles h1 { font-size: clamp(1.5rem, 2vw, 1.8rem); font-weight: 800; margin: 0 0 0.4rem 0; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; }
@@ -248,7 +245,6 @@ html, body {
 .selected-course { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
 .course-selector-btn i.fa-chevron-down { font-size: 0.8rem; color: var(--text-muted); transition: var(--transition-base); }
 .course-dropdown.show ~ .course-selector-btn i.fa-chevron-down { transform: rotate(180deg); }
-
 .course-dropdown { position: absolute; top: calc(100% + 10px); left: 0; width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); display: none; max-height: 45vh; overflow-y: auto; padding: 0.5rem; }
 .course-dropdown.show { display: block; animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -260,34 +256,16 @@ html, body {
 .course-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text-main); }
 .course-id { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; }
 
-/* --- 核心布局网格 --- */
-/* 设置较小的 min-height(650px) 保证初始化时利用 flex 正好填满页面，只有放大使得页面绝对像素低于650px时才出现系统滚动条 */
 .main-grid { flex: 1; display: flex; gap: clamp(1rem, 2vw, 1.5rem); min-height: 750px; }
 .left-main-content { flex: 1.3; display: flex; flex-direction: column; gap: clamp(0.5rem, 1.5vh, 1rem); min-height: 0; }
 .right-side-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-
 .left-bottom-grid { display: flex; flex-direction: column; gap: clamp(0.5rem, 1.5vh, 1rem); flex: 1; min-height: 0; }
 
-/* ======== 核心高度修复区域 ======== */
+.activities-section { flex: 1 1 0%; min-height: 500px; }
+.students-section { flex: 0 0 150px; min-height: 150px; max-height: 200px; }
 
-/* 已发布活动模块：增加高度权重，分配更多剩余空间 */
-.activities-section {
-    flex: 1 1 0%;
-    min-height: 500px; /* 提高基础最小高度，使其更大 */
-}
-
-/* 重点关注学生模块：严防死守，绝对不准长高，高度锁死在 130px */
-.students-section {
-    flex: 0 0 150px; /* 高度调短 */
-    min-height: 150px;
-    max-height: 200px; /* 强制锁定，限制最大高度 */
-}
-
-/* =================================== */
-
-/* --- 卡片通用样式 --- */
 .dashboard-card { background: var(--bg-card); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; }
-.card-header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; padding:  1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); }
+.card-header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); }
 .header-title-wrap { display: flex; align-items: center; gap: 0.8rem; }
 .icon-box { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; box-shadow: var(--shadow-sm); }
 .icon-box.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
@@ -299,7 +277,6 @@ html, body {
 .flex-col { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .flex-grow { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
-/* --- 概览统计模块 --- */
 .overview-section { flex: 0 0 auto; }
 .overview-stats { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 0; }
 .stat-card { flex: 1; min-width: 130px; display: flex; align-items: center; gap: 0.8rem; background: var(--bg-page); border: 1px solid var(--border-color); padding: 0.8rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
@@ -307,7 +284,6 @@ html, body {
 .stat-info h3 { font-size: 1.3rem; font-weight: 800; margin: 0 0 0.1rem 0; line-height: 1; color: var(--text-main); font-family: 'SF Pro Display', sans-serif; }
 .stat-info p { font-size: 0.75rem; color: var(--text-muted); margin: 0; font-weight: 500; }
 
-/* --- Tab 标签栏优化 --- */
 .tab-buttons { display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 0.8rem; flex-shrink: 0; padding: 0 0.5rem; }
 .tab-button { background: none; border: none; padding: 0.5rem 0.25rem; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); cursor: pointer; position: relative; transition: var(--transition-base); }
 .tab-button:hover { color: var(--text-main); }
@@ -315,24 +291,17 @@ html, body {
 .tab-button::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: var(--primary-color); border-radius: 3px 3px 0 0; transform: scaleX(0); transition: transform 0.25s ease; }
 .tab-button.active::after { transform: scaleX(1); }
 
-/* 核心修复：通过相对定位和绝对定位的组合，彻底隔绝数据多少对容器高度的影响 */
 .tab-content { position: relative; flex: 1; min-height: 0; width: 100%; }
 .tab-pane { display: none; position: absolute; inset: 0; flex-direction: column; height: 100%; width: 100%; }
 .tab-pane.active { display: flex; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* --- 列表与条目优化 --- */
 .scrollable-list { flex: 1; overflow-y: auto; overflow-x: hidden; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; min-height: 0; padding-bottom: 0.5rem; }
 .list-item { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color); flex-shrink: 0; position: relative; overflow: hidden; transition: var(--transition-base); }
 .list-item:hover { border-color: var(--primary-light-border); background: var(--bg-hover); transform: translateX(2px); }
 .list-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px 0 0 4px; background: var(--primary-color); }
 .list-item.quiz::before { background: var(--purple-color); }
 .list-item.expired::before { background: var(--text-muted); }
-
-/* 教师端特色：强视觉警示样式 (待评分或需要重点关注) */
-.attention-highlight { background-color: #fff1f2; border-color: #fda4af; }
-.attention-highlight:hover { background-color: #ffe4e6; border-color: #f87171; }
-.attention-highlight::before { background: var(--danger-color); }
 
 .task-info { flex: 1; min-width: 0; margin-left: 0.5rem; }
 .task-info h3 { font-size: 0.95rem; font-weight: 600; margin: 0 0 0.2rem 0; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -345,29 +314,125 @@ html, body {
 .status-completed { background: var(--success-light); color: var(--success-color); border-color: #a7f3d0; }
 .status-pending { background: var(--warning-light); color: var(--warning-color); border-color: #fde68a; }
 .status-expired { background: var(--border-light); color: var(--text-muted); border-color: var(--border-color); }
-.status-danger { background: var(--danger-color); color: white; border-color: var(--danger-color); box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2); }
 
-/* 学生列表样式 */
-.student-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary-light); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-size: 0.9rem; }
-.student-score { font-weight: 800; color: var(--danger-color); font-size: 1.05rem; }
-
-/* --- 右侧 AI 助手面板 --- */
 .ai-assistant-iframe-container { flex: 1; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; display: flex; background: var(--bg-card); }
 .ai-assistant-iframe { flex: 1; width: 100%; height: 100%; border: none; display: block; }
 
-/* --- 空状态提示 --- */
 .empty-state { text-align: center; padding: 2rem 0; color: var(--text-muted); font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; font-weight: 500; }
 .empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.8rem; }
 .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; justify-content: center; height: 100%; }
 
-/* --- 无课程警告页 --- */
+/* --- 重点关注学生：优化后的网格排列 CSS (去掉大红背景) --- */
+.student-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    padding-bottom: 10px;
+    align-content: start;
+}
+
+.student-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--bg-card); /* 变白底 */
+    border: 1px solid var(--border-color); /* 常规边框 */
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.student-badge-item:hover {
+    background-color: var(--bg-hover);
+    border-color: #fca5a5; /* Hover 时淡淡的红边框，提示关注 */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.badge-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fee2e2; /* 保留一点点淡红作为警告暗示 */
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.badge-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main); /* 恢复正常文字颜色 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- 全局悬浮窗 Tooltip CSS --- */
+.custom-global-tooltip {
+    position: fixed;
+    z-index: 99999;
+    background: rgba(15, 23, 42, 0.95);
+    color: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    pointer-events: none;
+    transform: translate(-50%, -100%);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    min-width: 200px;
+}
+.custom-global-tooltip.visible {
+    opacity: 1;
+}
+.custom-global-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(15, 23, 42, 0.95);
+}
+.tt-title {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #fff;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 6px;
+}
+.tt-line {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tt-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.tt-dot.missing { background: #ef4444; } 
+.tt-dot.late { background: #f59e0b; }    
+.tt-dot.failed { background: #8b5cf6; }  
+
+/* ... */
 .no-course-warning { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background: var(--bg-card); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
 .warning-content { text-align: center; max-width: 420px; padding: 3rem 2rem; }
 .warning-icon { font-size: 4.5rem; color: var(--primary-light-border); margin-bottom: 1.5rem; }
 .warning-content h2 { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem; }
 .warning-content p { color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; font-size: 0.95rem; }
 .goto-course-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.8rem; background: var(--primary-color); color: white; text-decoration: none; border-radius: var(--radius-pill); font-weight: 600; font-size: 0.95rem; transition: var(--transition-base); box-shadow: 0 4px 12px rgba(79,70,229,0.3); }
-.goto-course-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79,70,229,0.4); }
 
 @media (max-width: 1024px) {
     .main-grid { flex-direction: column; height: auto; }
@@ -377,95 +442,97 @@ html, body {
 </style>
 
 <script>
-    // 定义固定链接和用户名（从模板传递）
-    const FIXED_AI_ASSISTANT_URL = "http://180.85.206.30:3000/chat/share?shareId=eUW8D23nZjeiq2OzkCpcS1Eg";
+    const FIXED_AI_ASSISTANT_URL = "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eUW8D23nZjeiq2OzkCpcS1Eg";
     const CURRENT_USERNAME = "{{ username }}";
     const CURRENT_SIS_ID = "{{ sis_id }}";
     
-    // 全局变量：存储当前课程的真实数据
     let currentCourseData = null;
+    let globalTooltip = null;
     
-    // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', function() {
         initializeAIAssistant();
+        initGlobalTooltip();
         initEventListeners();
         loadCourseData();
     });
+
+    // 初始化全局悬浮窗
+    function initGlobalTooltip() {
+        globalTooltip = document.createElement('div');
+        globalTooltip.className = 'custom-global-tooltip';
+        document.body.appendChild(globalTooltip);
+    }
+
+    // 显示悬浮窗
+    window.showStudentTooltip = function(event, element) {
+        if (!globalTooltip) return;
+        
+        const dataHtml = element.querySelector('.tooltip-data').innerHTML;
+        globalTooltip.innerHTML = dataHtml;
+        globalTooltip.style.display = 'block';
+        
+        const rect = element.getBoundingClientRect();
+        globalTooltip.style.left = rect.left + (rect.width / 2) + 'px';
+        globalTooltip.style.top = (rect.top - 10) + 'px';
+        
+        void globalTooltip.offsetWidth;
+        globalTooltip.classList.add('visible');
+    };
+
+    // 隐藏悬浮窗
+    window.hideStudentTooltip = function() {
+        if (globalTooltip) {
+            globalTooltip.classList.remove('visible');
+            globalTooltip.style.display = 'none';
+        }
+    };
     
-    /**
-     * 1. 数据加载核心逻辑
-     */
     async function loadCourseData() {
         try {
             const response = await fetch('/dashboard/study_situation/comprehensive/overview');
             const data = await response.json();
             
             if (data.error || !data.course_info) {
-                console.error('加载课程数据失败:', data.error);
                 toggleNoCourseWarning(true);
                 return;
             }
-            
             const courses = data.course_info.user_course || [];
             if (courses.length === 0) {
                 toggleNoCourseWarning(true);
                 return;
             }
             
-            // 存储并更新UI
             currentCourseData = data;
             toggleNoCourseWarning(false);
             updateCourseSelector(data.course_info);
             updateDashboardData(data);
-            
         } catch (error) {
-            console.error('加载课程数据过程出错:', error);
             toggleNoCourseWarning(true);
         }
     }
 
-    // 显示/隐藏无课程提示
     function toggleNoCourseWarning(show) {
-        const noCourseWarning = document.getElementById('noCourseWarning');
-        const coursePageContent = document.getElementById('coursePageContent');
-        
-        if (show) {
-            noCourseWarning.style.display = 'flex';
-            coursePageContent.style.display = 'none';
-        } else {
-            noCourseWarning.style.display = 'none';
-            coursePageContent.style.display = 'flex';
-        }
+        document.getElementById('noCourseWarning').style.display = show ? 'flex' : 'none';
+        document.getElementById('coursePageContent').style.display = show ? 'none' : 'flex';
     }
 
-    // 切换课程时加载
     async function loadCourseDataByCourseId(courseId) {
         try {
             const response = await fetch(`/dashboard/study_situation/comprehensive/overview?course_id=${courseId}`);
             const data = await response.json();
-            
-            if (data.error) {
-                alert('加载该课程数据失败');
-                return;
+            if (!data.error) {
+                currentCourseData = data;
+                updateDashboardData(data);
             }
-            currentCourseData = data;
-            updateDashboardData(data);
-        } catch (error) {
-            console.error('切换课程失败:', error);
-            alert('网络请求失败，请重试');
-        }
+        } catch (error) {}
     }
     
-    /**
-     * 2. 仪表板更新主函数
-     */
     function updateDashboardData(data) {
         updateOverviewStats(data);
         updateStudentsNeedAttentionUI(data);
         updateActivitiesListUI(data);
     }
     
-    // 更新概览统计
     function updateOverviewStats(data) {
         const overview = data.course_overview || {};
         const assignmentStats = data.assignment_analysis?.submission_stats || {};
@@ -479,36 +546,61 @@ html, body {
             (avgRate != null && !isNaN(avgRate)) ? avgRate.toFixed(1) + '%' : '--%';
     }
     
-    /**
-     * 3. UI 渲染函数
-     */
-    
-    // 渲染需要关注的学生 (默认平铺)
     function updateStudentsNeedAttentionUI(data) {
         const container = document.getElementById('students-need-attention');
         let students = data.student_performance?.need_attention || [];
         document.getElementById('attention-count').textContent = students.length;
     
         if (students.length === 0) {
+            container.className = ''; 
             container.innerHTML = '<div class="empty-state"><i class="fas fa-user-check"></i><p>暂无需要特别关注的学生</p></div>';
             return;
         }
+
+        container.className = 'student-grid-container';
     
-        container.innerHTML = students.map(s => `
-            <div class="list-item attention-highlight">
-                <div style="display:flex; align-items:center; flex: 1;">
-                    <div class="student-avatar">${escapeHtml((s.name||'?')[0])}</div>
-                    <div class="task-info">
-                        <h3>${escapeHtml(s.name || '未知学生')}</h3>
-                        <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">学号: ${escapeHtml(s.student_id || '--')}</p>
-                    </div>
+        container.innerHTML = students.map(s => {
+            const issues = s.issue_summary || {};
+            
+            const missingA = issues.missing_assignments?.count || 0;
+            const missingQ = issues.missing_quizzes?.count || 0;
+            const totalMissing = missingA + missingQ;
+            
+            const lateA = issues.late_assignments?.count || 0;
+            const lateQ = issues.late_quizzes?.count || 0;
+            const totalLate = lateA + lateQ;
+            
+            const failedA = issues.failed_assignments?.count || 0;
+            const failedQ = issues.failed_quizzes?.count || 0;
+            const totalFailed = failedA + failedQ;
+
+            let ttHtml = `<div class="tt-title">${escapeHtml(s.name || '未知学生')}</div>`;
+            
+            if (totalMissing > 0) {
+                ttHtml += `<div class="tt-line"><span class="tt-dot missing"></span>漏交: ${totalMissing}次 (作业${missingA}次, 测验${missingQ}次)</div>`;
+            }
+            if (totalLate > 0) {
+                ttHtml += `<div class="tt-line"><span class="tt-dot late"></span>迟交: ${totalLate}次 (作业${lateA}次, 测验${lateQ}次)</div>`;
+            }
+            if (totalFailed > 0) {
+                ttHtml += `<div class="tt-line"><span class="tt-dot failed"></span>不及格: ${totalFailed}次 (作业${failedA}次, 测验${failedQ}次)</div>`;
+            }
+            
+            if (totalMissing === 0 && totalLate === 0 && totalFailed === 0) {
+                ttHtml += `<div class="tt-line">总体分数偏低，建议关注</div>`;
+            }
+
+            return `
+                <div class="student-badge-item" onmouseenter="showStudentTooltip(event, this)" onmouseleave="hideStudentTooltip()">
+                    <div class="badge-avatar">${escapeHtml((s.name||'?')[0])}</div>
+                    <div class="badge-name">${escapeHtml(s.name || '未知学生')}</div>
+                    
+                    <div class="tooltip-data" style="display: none;">${ttHtml}</div>
                 </div>
-                <div class="student-score">${Math.round(s.average_score || s.score || 0)}分</div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
     
-    // 渲染作业和测验列表
     function updateActivitiesListUI(data) {
         const ind = data.assignment_analysis?.assignment_categories?.individual || [];
         const grp = data.assignment_analysis?.assignment_categories?.group || [];
@@ -517,21 +609,37 @@ html, body {
         
         document.getElementById('published-count').textContent = allA.length + allQ.length;
     
-        // 按照距离当前时间最近进行严格排序
         const nowTime = Date.now();
-        const sortByNearest = (a, b) => {
+        
+        // 核心改动 1：全新的排序逻辑
+        const customSort = (a, b) => {
             const aTime = (a.due_at || a.due_date) ? new Date(a.due_at || a.due_date).getTime() : 9999999999999;
             const bTime = (b.due_at || b.due_date) ? new Date(b.due_at || b.due_date).getTime() : 9999999999999;
-            return Math.abs(aTime - nowTime) - Math.abs(bTime - nowTime);
+            
+            const aIsExpired = aTime < nowTime;
+            const bIsExpired = bTime < nowTime;
+            
+            // 规则1：进行中的排在上面，已截止排在下面
+            if (aIsExpired !== bIsExpired) {
+                return aIsExpired ? 1 : -1; // a 过期了往后排，b 过期了往前排
+            }
+            
+            // 规则2 & 3：同状态下按时间排
+            if (!aIsExpired) {
+                // 都在进行中：截止时间越近（越小）排越前
+                return aTime - bTime;
+            } else {
+                // 都已截止：过去时间最短（越大）排越前
+                return bTime - aTime;
+            }
         };
-        allA.sort(sortByNearest);
-        allQ.sort(sortByNearest);
 
-        // 渲染作业标签页
+        allA.sort(customSort);
+        allQ.sort(customSort);
+
         const aContainer = document.getElementById('published-assignments');
         aContainer.innerHTML = allA.length ? allA.map(a => renderAssignmentItem(a)).join('') : '<div class="empty-state"><i class="fas fa-inbox"></i><p>暂无作业</p></div>';
     
-        // 渲染测验标签页
         const qContainer = document.getElementById('published-quizzes');
         qContainer.innerHTML = allQ.length ? allQ.map(q => renderQuizItem(q)).join('') : '<div class="empty-state"><i class="fas fa-inbox"></i><p>暂无测验</p></div>';
     }
@@ -542,7 +650,6 @@ html, body {
         const now = new Date();
         const isExpired = dueAt && new Date(dueAt) < now;
         
-        // 核心改动：是否高亮依靠是否有待评分份数
         const ungradedCount = analysis.ungraded_count || 0;
         const submittedCount = analysis.submitted_count || 0;
         const subRate = analysis.submission_rate ?? 0;
@@ -550,6 +657,11 @@ html, body {
         let statusClass = isExpired ? 'status-expired' : 'status-pending';
         let statusText = isExpired ? '已截止' : '进行中';
         let typeClass = isExpired ? 'expired' : 'assignment'
+
+        // 核心改动 2：待评分背景色修改
+        const ungradedHtml = ungradedCount > 0 
+            ? `<span class="status-pill" style="margin-top:4px; background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a;">${ungradedCount} 份待评分</span>` 
+            : '';
 
         return `
             <div class="list-item ${typeClass}">
@@ -565,7 +677,7 @@ html, body {
                 </div>
                 <div class="task-status">
                     <span class="status-pill ${statusClass}">${statusText}</span>
-                    ${ungradedCount > 0 ? `<span class="status-pill status-danger" style="margin-top:4px;">${ungradedCount} 份待评分</span>` : ''}
+                    ${ungradedHtml}
                 </div>
             </div>`;
     }
@@ -598,11 +710,7 @@ html, body {
             </div>`;
     }
     
-    /**
-     * 4. 事件监听器初始化
-     */
     function initEventListeners() {
-        // 1. 课程选择器对齐学生端操作
         const courseBtn = document.getElementById('courseSelectorBtn');
         const courseDropdown = document.getElementById('courseDropdown');
         courseBtn?.addEventListener('click', (e) => {
@@ -629,7 +737,6 @@ html, body {
             }
         });
     
-        // 2. 标签页切换
         document.querySelectorAll('.tab-buttons').forEach(tabGroup => {
             tabGroup.addEventListener('click', function(e) {
                 const btn = e.target.closest('.tab-button');
@@ -646,9 +753,6 @@ html, body {
         });
     }
     
-    /**
-     * 5. 辅助工具函数
-     */
     function updateCourseSelector(info) {
         const list = document.getElementById('courseList');
         const selectedNameSpan = document.getElementById('selectedCourseName');
@@ -688,8 +792,8 @@ html, body {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ course_id: courseId, course_name: courseName, sis_course_id: sisCourseId })
             });
-            initializeAIAssistant(); // 刷新AI助手
-        } catch (e) { console.error('更新Session课程失败', e); }
+            initializeAIAssistant();
+        } catch (e) { }
     }
     
     function initializeAIAssistant() {

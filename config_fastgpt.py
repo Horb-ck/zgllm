@@ -19,12 +19,12 @@ _PROFILES = {
 
     # ──────── 正式版 ────────
     "prod": {
-        "FASTGPT_BASE_URL":       "http://180.85.206.30:3000",
-        "FASTGPT_API_URL":        "http://180.85.206.30:3000/api",
+        "FASTGPT_BASE_URL":       "https://mingyueai.cqu.edu.cn:8080/",
+        "FASTGPT_API_URL":        "https://mingyueai.cqu.edu.cn:8080/api",
         "FASTGPT_API_KEY":        "fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV",
         "FASTGPT_APP_KEY":        "fastgpt-suPpeQxXcXBuqdoxW4Y3HiPVS9ecccfeL958V64aJYK0Y4tQmApxuCQtCDxXV",
         "FASTGPT_SHARE_ID":       "zDrmPPnh9rdi3WmnyWCFwDcb",       # 个人知识库 share
-        "FASTGPT_SHARE_BASE_URL": "http://180.85.206.30:3000",
+        "FASTGPT_SHARE_BASE_URL": "https://mingyueai.cqu.edu.cn:8080",
 
         "FASTGPT_SHARED_DATASET_ID": "",
         "FASTGPT_SHARED_DATASET_NAME": "共享知识库",
@@ -34,8 +34,8 @@ _PROFILES = {
         "FASTGPT_SHARED_FILENAME_TAG_POSITION": "prefix",
 
         # LLM / Whisper（经 FastGPT 转发）
-        "LLM_API_URL":            "http://180.85.206.30:3000/api/v1",
-        "WHISPER_API_URL":        "http://180.85.206.30:3000/api/v1",
+        "LLM_API_URL":            "https://mingyueai.cqu.edu.cn:8080/api/v1",
+        "WHISPER_API_URL":        "https://mingyueai.cqu.edu.cn:8080/api/v1",
 
         # LLM 回退端点
         "LLM_FALLBACK_ENDPOINTS": [
@@ -44,8 +44,8 @@ _PROFILES = {
         ],
 
         # 学情分析 share 链接
-        "STUDY_TEACHER_SHARE_URL": "http://180.85.206.30:3000/chat/share?shareId=eXdNT9oSlB5U6MDNrYCCFK0T",
-        "STUDY_STUDENT_SHARE_URL": "http://180.85.206.30:3000/chat/share?shareId=eJTdUHhzeIBYWb7Kdp6URitd",
+        "STUDY_TEACHER_SHARE_URL": "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eXdNT9oSlB5U6MDNrYCCFK0T",
+        "STUDY_STUDENT_SHARE_URL": "https://mingyueai.cqu.edu.cn:8080/chat/share?shareId=eJTdUHhzeIBYWb7Kdp6URitd",
     },
 
     # ──────── 测试版 ────────
@@ -142,11 +142,11 @@ def get_config():
 _cfg = get_config()
 
 FASTGPT_BASE_URL       = _cfg["FASTGPT_BASE_URL"]
-FASTGPT_API_URL        = _cfg["FASTGPT_API_URL"]
+FASTGPT_API_URL        = _PROFILES["prod"]["FASTGPT_API_URL"]
 FASTGPT_API_KEY        = _cfg["FASTGPT_API_KEY"]
 FASTGPT_APP_KEY        = _cfg["FASTGPT_APP_KEY"]
-FASTGPT_SHARE_ID       = _cfg["FASTGPT_SHARE_ID"]
-FASTGPT_SHARE_BASE_URL = _cfg["FASTGPT_SHARE_BASE_URL"]
+FASTGPT_SHARE_ID       = _PROFILES["prod"]["FASTGPT_SHARE_ID"]
+FASTGPT_SHARE_BASE_URL = _PROFILES["prod"]["FASTGPT_SHARE_BASE_URL"]
 
 FASTGPT_SHARED_DATASET_ID = _cfg.get("FASTGPT_SHARED_DATASET_ID", "")
 FASTGPT_SHARED_DATASET_NAME = _cfg.get("FASTGPT_SHARED_DATASET_NAME", "共享知识库")
