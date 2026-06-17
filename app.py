@@ -1071,19 +1071,10 @@ def _build_new_home_context():
             kg_mode = 'student'
         kg_embed_url = url_for('kg_page', course_id=showcase_agent['id'], mode=kg_mode)
 
-    total_registered_users = 0
-    try:
-        with closing(get_conn()) as conn, conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM student")
-            result = cursor.fetchone()
-            total_registered_users = int((result or [0])[0] or 0)
-    except Exception as exc:
-        print(f"获取首页注册人数失败: {exc}")
-
     dialogue_stats = get_fastgpt_super_teacher_question_stats()
     homepage_stats = {
         'total_dialogues': dialogue_stats.get('total_questions_all_time', 0),
-        'total_registered_users': total_registered_users,
+        'total_registered_users': get_total_registered_accounts(),
         'total_course_resources': len(agents),
         'total_competitions': len(agents_kd),
     }
@@ -1469,16 +1460,7 @@ def usage_analytics():
     }
     for item in summary.get("top_agents", []):
         item["question_count"] = question_count_by_course.get(item.get("agent_name"), 0)
-    total_registered_users = 0
-    try:
-        with closing(get_conn()) as conn, conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM student")
-            row = cursor.fetchone()
-            total_registered_users = int((row or [0])[0] or 0)
-    except Exception as e:
-        print(f"获取总注册人数失败: {e}")
-
-    summary["total_registered_users"] = total_registered_users
+    summary["total_registered_users"] = get_total_registered_accounts()
     return render_template(
         'dashboard/usage_analytics.html',
         analytics=summary,
@@ -1688,6 +1670,22 @@ def get_conn():
         database="zgllm",
         charset="utf8mb4"
     )
+
+def get_total_registered_accounts():
+    """Count all accounts stored in the MySQL account table."""
+    try:
+        with closing(get_conn()) as conn, conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM student
+                """
+            )
+            row = cursor.fetchone()
+            return int((row or [0])[0] or 0)
+    except Exception as exc:
+        print(f"获取总注册账户数失败: {exc}")
+        return 0
 
 # 应用启动前初始化
 create_sample_images()
