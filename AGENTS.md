@@ -1,7 +1,7 @@
 # Project overview
 - Flask 3 app serving dashboard pages (`/dashboard/*`) and auth flows; main entry `app.py`.
 - Data: MySQL for users/roles; MongoDB for course/knowledge data; in-memory dict `users` for favorites (non-prod).
-- Agents: `agents` (课程智能体) and `agents_kd` (知识库智能体) embedded via iframe; class KG pages under `/classkg/<course_id>`.
+- Agents: `agents` (课程智能体) and `agents_kd` (知识库智能体) embedded via iframe; current competition-style KD agents include `Robocon`、`Robotac`、`Robomaster`、`Robocon仿生足式机器人的战队智能体`; class KG pages under `/classkg/<course_id>`.
 - Frontend: Jinja templates in `templates/`, assets under `static/`; layout base `layout.html`, dashboard pages in `templates/dashboard/`.
 - Background: starts `mcp_server.py` subprocess; KG helpers in `KG/`; canvas/email utils in `utils/`.
 
@@ -15,7 +15,9 @@
 - Setup: Python 3.x; install from `requirement.txt`; ensure MySQL/Mongo reachable per `config.py` (`MYSQL_URL`, `MONGO_URL`), ports 7777/7778 as configured.
 - Run: `python app.py` (starts Flask at `APP_PORT`, spawns MCP server).
 - Optional env: `FASTGPT_API_URL`, `FASTGPT_API_KEY`, `FASTGPT_ROBOCON_DATASET_ID` control Robocon 官方规则自动同步到指定 FastGPT 知识库。
+- Optional env: `FASTGPT_ROBOCON_BIONIC_LEGGED_DATASET_ID` control Robocon 仿生足式机器人规则自动同步到指定 FastGPT 知识库。
 - Optional env: `FASTGPT_ROBOTAC_DATASET_ID` control Robotac 官方规则自动同步到指定 FastGPT 知识库。
+- Optional env: `FASTGPT_ROBOMASTER_DATASET_ID` control Robomaster 官方规则自动同步到指定 FastGPT 知识库；`RMUC/RMUL/RMUA/RMU` 对应的 `parentId` 目录已在代码里固定配置。
 - Test: no automated tests provided; sanity-check login/register, `/dashboard/agents`, `/dashboard/agent/<id>`, KG update endpoints.
 - Lint/format: none enforced; keep consistent with existing style.
 

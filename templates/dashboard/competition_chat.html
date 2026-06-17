@@ -15,7 +15,7 @@
                         <div class="panel-header-top">
                             <span class="panel-tag">官方规则</span>
                         </div>
-                        <h2>{{ competition_name }}比赛资料区</h2>
+                        <h2>{{ resource_panel_title }}</h2>
                     </div>
                 </div>
 
@@ -111,7 +111,7 @@
 
 .robocon-layout {
     display: grid;
-    grid-template-columns: 400px minmax(0, 1fr);
+    grid-template-columns: clamp(760px, 48vw, 840px) minmax(0, 1fr);
     gap: 20px;
     height: 100%;
     min-height: 0;

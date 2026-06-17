@@ -1,0 +1,52 @@
+{
+  "track_key": "rmua",
+  "track_label": "RMUA",
+  "updated_at": "2026-06-17 22:15:50",
+  "doc_count": 2,
+  "docs": [
+    {
+      "title": "RoboMaster 2026 机甲大师高校人工智能挑战赛比赛规则手册V1.0.0.pdf",
+      "type": "规则",
+      "date": "2026-01-30",
+      "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/3e1c7a2859654326ac7d7b70205536e51769767756927/RoboMaster 2026 机甲大师高校人工智能挑战赛比赛规则手册V1.0.0.pdf",
+      "preview_url": "/static/robomaster_docs/official_monitor/rmua/RoboMaster_2026_机甲大师高校人工智能挑战赛比赛规则手册V1.0.0_bdd9a6e66d6b.pdf",
+      "source": "ROBOMASTER RMUA 官方规则页 / 本地副本",
+      "category": "rule_core",
+      "track_key": "rmua",
+      "download_policy": "download",
+      "metadata_source": "robomaster_rmua_official_monitor",
+      "official_page_url": "https://bbs.robomaster.com/wiki/20204847/809873?source=7",
+      "page_title": "RMUA 2026 比赛规则文件 Competition Rules",
+      "file_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/3e1c7a2859654326ac7d7b70205536e51769767756927/RoboMaster 2026 机甲大师高校人工智能挑战赛比赛规则手册V1.0.0.pdf",
+      "file_name": "RoboMaster 2026 机甲大师高校人工智能挑战赛比赛规则手册V1.0.0.pdf",
+      "file_ext": ".pdf",
+      "file_md5": "4ec3d6505b0b3e442027eb2668167cc0",
+      "file_len": 1661673,
+      "downloaded_attachment": "RoboMaster 2026 机甲大师高校人工智能挑战赛比赛规则手册V1.0.0.pdf",
+      "file_hash": "bdd9a6e66d6b6192e431ea991490da7fac6c1c304a1d0670c23b72c1bdab0d31",
+      "local_relative_path": "static/robomaster_docs/official_monitor/rmua/RoboMaster_2026_机甲大师高校人工智能挑战赛比赛规则手册V1.0.0_bdd9a6e66d6b.pdf"
+    },
+    {
+      "title": "RoboMaster 2026 机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）.pdf",
+      "type": "规则",
+      "date": "2026-01-30",
+      "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/39f2f028bff24ccea0830d3fdd87a2f61768459324737/RoboMaster 2026 机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）.pdf",
+      "preview_url": "/static/robomaster_docs/official_monitor/rmua/RoboMaster_2026_机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）_3822a86b8277.pdf",
+      "source": "ROBOMASTER RMUA 官方规则页 / 本地副本",
+      "category": "rule_core",
+      "track_key": "rmua",
+      "download_policy": "download",
+      "metadata_source": "robomaster_rmua_official_monitor",
+      "official_page_url": "https://bbs.robomaster.com/wiki/20204847/809873?source=7",
+      "page_title": "RMUA 2026 比赛规则文件 Competition Rules",
+      "file_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/39f2f028bff24ccea0830d3fdd87a2f61768459324737/RoboMaster 2026 机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）.pdf",
+      "file_name": "RoboMaster 2026 机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）.pdf",
+      "file_ext": ".pdf",
+      "file_md5": "34604cc6cdcbfd2c0e18727934312e99",
+      "file_len": 1203929,
+      "downloaded_attachment": "RoboMaster 2026 机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）.pdf",
+      "file_hash": "3822a86b8277829bcbfbe1987e48f14b0031cfd5f692775562334bdbbd5c37db",
+      "local_relative_path": "static/robomaster_docs/official_monitor/rmua/RoboMaster_2026_机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）_3822a86b8277.pdf"
+    }
+  ]
+}

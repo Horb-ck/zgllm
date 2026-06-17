@@ -2,7 +2,7 @@
 
 ## 目标
 
-当前 `Robocon` 和 `Robotac` 已整理为一套通用页面和一份集中配置，后续可以继续复用这套模式管理更多“页面布局相近、只是在链接和资料来源上有差异”的比赛智能体。
+当前 `Robocon`、`Robotac`、`Robomaster` 和 `Robocon-仿生足式机器人` 已整理为一套通用页面和一份集中配置，后续可以继续复用这套模式管理更多“页面布局相近、只是在链接和资料来源上有差异”的比赛智能体。
 
 ## 现在的结构
 
@@ -11,6 +11,7 @@
 - 路由入口：`app_comp.py` 中的 `/dashboard/kd` 和 `/dashboard/kds/<int:agent_id>`
 - 比赛资料加载器：
   - `get_robocon_main_resources()`
+  - `get_robocon_bionic_resources()`
   - `get_robotac_resources()`
 
 ## 配置源
@@ -69,11 +70,11 @@
 
 ## 当前已经完成的复用点
 
-- `Robocon` 和 `Robotac` 共用同一个详情页模板。
+- `Robocon`、`Robotac`、`Robomaster` 和 `Robocon-仿生足式机器人` 共用同一个详情页模板。
 - 广场列表不再手写 `agents_kd`，而是从注册表生成。
 - 详情页不再通过 `if agent_id == 1/2` 手工分支拼上下文，而是通过注册表自动装配。
 - 官网链接等易变参数已从 `app_comp.py` 抽到注册表。
-- `Robocon` 和 `Robotac` 的静态资源快照已从主业务文件抽离。
+- `Robocon`、`Robotac`、`Robomaster` 和 `Robocon-仿生足式机器人` 的页面参数与静态资源快照均已从主业务文件抽离。
 
 ## 当前仍保留在代码里的差异
 

@@ -188,6 +188,102 @@ COMPETITION_AGENT_DEFINITIONS = [
                 ]
             }
         }
+    },
+    {
+        "id": 3,
+        "key": "robomaster",
+        "route_name": "Robomaster",
+        "competition_name": "Robomaster",
+        "name": "Robomaster",
+        "description": "Robomaster 战队智能体，聚焦 Robomaster 赛题解析、战队方案设计与实战复盘。",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=o3BBx3j5FNohHbNH8WjUDaGQ",
+        "image_url": "/static/img/robomaster_logo.jpg",
+        "template_name": "dashboard/competition_chat.html",
+        "resource_loader_key": "robomaster",
+        "default_category": "rmuc",
+        "assistant_title": "Robomaster 战队智能体",
+        "official_link_label": "ROBOMASTER 资料入口",
+        "site_urls": {
+            "home_url": "https://www.robomaster.com/zh-CN",
+            "news_url": "https://bbs.robomaster.com/wiki/20204847"
+        },
+        "resource_snapshot": {
+            "rmuc": {
+                "key": "rmuc",
+                "label": "RMUC",
+                "description": "Robomaster RMUC 官方规则与公告资料。",
+                "official_url": "https://bbs.robomaster.com/wiki/20204847/809871?source=7",
+                "updated_at": "2026-06-17",
+                "update_note": "服务端将按 Robocon 主赛相同标准抓取 RMUC 规则页附件并同步到本地与 FastGPT。",
+                "docs": []
+            },
+            "rmul": {
+                "key": "rmul",
+                "label": "RMUL",
+                "description": "Robomaster RMUL 官方规则与公告资料。",
+                "official_url": "https://bbs.robomaster.com/wiki/20204847/809872?source=7",
+                "updated_at": "2026-06-17",
+                "update_note": "服务端将按 Robocon 主赛相同标准抓取 RMUL 规则页附件并同步到本地与 FastGPT。",
+                "docs": []
+            },
+            "rmua": {
+                "key": "rmua",
+                "label": "RMUA",
+                "description": "Robomaster RMUA 官方规则与公告资料。",
+                "official_url": "https://bbs.robomaster.com/wiki/20204847/809873?source=7",
+                "updated_at": "2026-06-17",
+                "update_note": "服务端将按 Robocon 主赛相同标准抓取 RMUA 规则页附件并同步到本地与 FastGPT。",
+                "docs": []
+            },
+            "rmu": {
+                "key": "rmu",
+                "label": "RMU",
+                "description": "Robomaster RMU 官方规则与公告资料。",
+                "official_url": "https://bbs.robomaster.com/wiki/20204847/811363?source=7",
+                "updated_at": "2026-06-17",
+                "update_note": "服务端将按 Robocon 主赛相同标准抓取 RMU 规则页附件并同步到本地与 FastGPT。",
+                "docs": []
+            }
+        }
+    },
+    {
+        "id": 4,
+        "key": "robocon_bionic_legged",
+        "route_name": "RoboconBionicLegged",
+        "competition_name": "Robocon",
+        "name": "Robocon-仿生足式机器人",
+        "description": "Robocon 仿生足式机器人战队智能体，聚焦仿生足式机器人赛题的专项资料与问答。",
+        "url": "http://180.85.206.30:3000/chat/share?shareId=cy2uRFeYVahpoEdETXoisAfo",
+        "image_url": "/static/img/robocon_logo.png",
+        "template_name": "dashboard/competition_chat.html",
+        "resource_loader_key": "robocon_bionic_legged",
+        "default_category": "national",
+        "assistant_title": "Robocon-仿生足式机器人",
+        "official_link_label": "ROBOCON 官网入口",
+        "site_urls": {
+            "home_url": "https://robocon.org.cn/",
+            "news_url": "https://robocon.org.cn/h-col-104.html",
+        },
+        "resource_snapshot": {
+            "national": {
+                "key": "national",
+                "label": "国赛",
+                "description": "Robocon 仿生足式机器人方向的官方规则资料。",
+                "official_url": "https://robocon.org.cn/",
+                "updated_at": "2026-06-10",
+                "update_note": "当前资料区用于展示 Robocon 官网中的仿生足式机器人相关规则，服务端会独立抓取并同步到足式知识库。",
+                "docs": []
+            },
+            "international": {
+                "key": "international",
+                "label": "国际赛",
+                "description": "当前未单独维护 Robocon 仿生足式机器人国际赛资料。",
+                "official_url": "https://robocon.org.cn/",
+                "updated_at": "2026-06-10",
+                "update_note": "当前仅维护国赛足式规则，国际赛资料后续可按实际来源扩展。",
+                "docs": []
+            }
+        }
     }
 ]
 

@@ -1,0 +1,22 @@
+{
+  "national": {
+    "key": "national",
+    "label": "国赛",
+    "description": "Robocon 仿生足式机器人方向的官方规则资料。",
+    "official_url": "https://robocon.org.cn/",
+    "updated_at": "2026-06-10",
+    "update_note": "后台定时任务已在 2026-06-17 21:09:52 完成最近一次官网同步，当前仅抓取标题或附件明确包含“仿生足式机器人/足式比赛”的规则、图册、FAQ 资料。",
+    "docs": [],
+    "synced_at": "2026-06-17 21:09:52"
+  },
+  "international": {
+    "key": "international",
+    "label": "国际赛",
+    "description": "当前未单独维护 Robocon 仿生足式机器人国际赛资料。",
+    "official_url": "https://robocon.org.cn/",
+    "updated_at": "2026-06-10",
+    "update_note": "当前仅维护国赛足式规则，国际赛资料后续可按实际来源扩展。",
+    "docs": [],
+    "synced_at": "2026-06-10"
+  }
+}
