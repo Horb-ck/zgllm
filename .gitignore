@@ -15,6 +15,9 @@ logs/
 # KG模块等待重构
 KG/
 
+# 这些文件里有敏感信息
+
+
 kb_raw_sources/
 # 配置信息，需要在不同的机器上灵活配置
 agents_config.py

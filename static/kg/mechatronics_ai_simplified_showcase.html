@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>机电 × 人工智能 双核心知识图谱（动态展示版）</title>
+<style>
+  :root {
+    --panel: rgba(255, 255, 255, 0.76);
+    --panel-strong: rgba(255, 255, 255, 0.94);
+    --line: rgba(132, 152, 214, 0.18);
+    --text: #1f2a44;
+    --muted: #6f7e99;
+    --mecha: #4bb8c7;
+    --ai: #6274ed;
+    --course: #f5a524;
+    --shadow: 0 22px 54px rgba(73, 97, 153, 0.14);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(98, 116, 237, 0.12), transparent 30%),
+      radial-gradient(circle at 82% 24%, rgba(75, 184, 199, 0.12), transparent 32%),
+      linear-gradient(180deg, #f7f9ff 0%, #eef4ff 100%);
+    overflow: hidden;
+  }
+  .app {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(720px, 1fr) 360px;
+    gap: 16px;
+    padding: 18px;
+  }
+  .stage {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.62);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.82);
+  }
+  .stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(132,152,214,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(132,152,214,0.07) 1px, transparent 1px);
+    background-size: 38px 38px;
+    mask-image: radial-gradient(circle at center, black, transparent 84%);
+    pointer-events: none;
+  }
+  .topbar {
+    position: absolute;
+    z-index: 5;
+    top: 20px;
+    left: 22px;
+    right: 22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    pointer-events: none;
+  }
+  .title h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 0;
+    color: #21304d;
+  }
+  .title p {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 620px;
+    line-height: 1.6;
+  }
+  .controls {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  input[type="search"] {
+    width: 210px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(132, 152, 214, 0.22);
+    outline: none;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.92);
+  }
+  button {
+    border: 1px solid rgba(132, 152, 214, 0.22);
+    color: #425172;
+    background: rgba(255, 255, 255, 0.78);
+    padding: 10px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .18s ease;
+    font-weight: 600;
+  }
+  button:hover, button.active {
+    border-color: rgba(98,116,237,0.28);
+    color: #2f52d9;
+    background: rgba(235, 240, 255, 0.92);
+    transform: translateY(-1px);
+  }
+  #graph {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .link {
+    stroke-linecap: round;
+    transition: opacity .18s ease, stroke-width .18s ease;
+  }
+  .node { cursor: pointer; transition: opacity .18s ease; }
+  .node circle, .node rect {
+    transition: transform .18s ease, filter .18s ease, stroke-width .18s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .node:hover circle, .node:hover rect {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 14px rgba(255,255,255,0.36));
+  }
+  .node text {
+    fill: #21304d;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.88);
+  }
+  .course text { font-size: 13px; }
+  .pillar text { font-size: 14px; }
+  .core text { font-size: 24px; letter-spacing: 0.08em; }
+  .dim { opacity: .14; }
+  .highlight circle, .highlight rect {
+    stroke: #6274ed !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 10px 18px rgba(98,116,237,0.24));
+  }
+  .side {
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: var(--panel);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.84);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .side-header {
+    padding: 22px 22px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .side-header .eyebrow {
+    color: #6274ed;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .side-header h2 {
+    margin: 10px 0 0;
+    font-size: 22px;
+    color: #21304d;
+  }
+  .side-body {
+    padding: 20px 22px;
+    overflow: auto;
+  }
+  .course-card {
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .image-wrap { height: 118px; background: linear-gradient(135deg, rgba(75,184,199,.18), rgba(98,116,237,.18)); display:flex; align-items:center; justify-content:center; }
+  .image-wrap img { width: 100%; height: 100%; object-fit: cover; opacity: .92; }
+  .fallback-img { font-size: 42px; font-weight:900; color:rgba(98,116,237,.28); }
+  .card-inner { padding: 16px; }
+  .desc { color: #60708f; font-size: 14px; line-height: 1.75; margin: 10px 0 16px; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { padding: 7px 10px; border-radius: 999px; background: rgba(235,240,255,.72); color:#425172; font-size: 12px; border:1px solid rgba(132,152,214,.16); }
+  .open-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 14px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 900;
+    background: linear-gradient(135deg, #6274ed, #4bb8c7);
+  }
+  .open-btn.disabled {
+    background: rgba(132,152,214,.16);
+    color: #8a96ad;
+    cursor: not-allowed;
+  }
+  .legend {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .legend-item {
+    display:flex; align-items:center; gap:8px;
+    color:#60708f; font-size:12px;
+    padding: 9px 10px; border-radius: 12px;
+    background: rgba(235,240,255,.72);
+  }
+  .dot { width:10px; height:10px; border-radius:999px; display:inline-block; }
+  .summary {
+    border-radius: 18px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid var(--line);
+    color: #60708f;
+    line-height: 1.7;
+    font-size: 13px;
+  }
+  .stats {
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:10px;
+    margin: 18px 0;
+  }
+  .stat {
+    background: rgba(235,240,255,.72);
+    border: 1px solid rgba(132,152,214,.14);
+    padding: 12px 8px;
+    border-radius: 16px;
+    text-align:center;
+  }
+  .stats-single {
+    grid-template-columns: 1fr;
+  }
+  .stats-single .stat {
+    min-height: 96px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+  }
+  .stat strong { display:block; font-size: 20px; color:#21304d; }
+  .stat span { color:#7d8aa3; font-size:12px; }
+  .tooltip {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -110%);
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(132,152,214,.18);
+    color: #425172;
+    font-size: 12px;
+    max-width: 260px;
+    line-height: 1.5;
+    box-shadow: 0 14px 30px rgba(73, 97, 153, 0.16);
+  }
+  @media (max-width: 1100px) {
+    body { overflow: auto; }
+    .app { height: auto; min-height: 100vh; grid-template-columns: 1fr; }
+    .stage { height: 720px; }
+    .side { min-height: 420px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="stage" id="stage">
+    <div class="topbar">
+      <div class="title">
+        <h1>机电 × 人工智能 双核心知识图谱</h1>
+        <p>可通过搜索快速定位课程或模块，点击节点查看课程简介、关键词与课程智能体入口；拖动或滚轮缩放图谱，可浏览不同课程之间的关联。</p>
+      </div>
+      <div class="controls">
+        <input type="search" id="search" placeholder="搜索课程 / 模块" />
+        <button id="btnCourses">只看课程</button>
+      </div>
+    </div>
+    <div id="graph" role="img" aria-label="机电与人工智能双核心知识图谱"></div>
+    <div class="tooltip" id="tooltip"></div>
+  </main>
+
+  <aside class="side">
+    <div class="side-header">
+      <div class="eyebrow">Course Knowledge Map</div>
+      <h2 id="sideTitle">选择一门课程</h2>
+    </div>
+    <div class="side-body" id="sideBody"></div>
+  </aside>
+</div>
+
+<script src="/static/js/echarts.min.js"></script>
+<script>
+const raw = {
+  "pillars": [
+    {
+      "id": "p-quant",
+      "name": "数理基础",
+      "description": "支撑控制、机器人建模和AI算法的数学底座。",
+      "x": 500,
+      "y": 96,
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "p-control",
+      "name": "控制与机器人",
+      "description": "连接机电系统、运动控制、状态估计和自主机器人。",
+      "x": 230,
+      "y": 226,
+      "color": "#14b8a6"
+    },
+    {
+      "id": "p-design",
+      "name": "工程设计与制造",
+      "description": "覆盖工程设计、制造工艺、产品原型和量产意识。",
+      "x": 205,
+      "y": 494,
+      "color": "#f59e0b"
+    },
+    {
+      "id": "p-software",
+      "name": "软件与AI系统",
+      "description": "覆盖编程、软件系统、大模型和智能体应用。",
+      "x": 785,
+      "y": 226,
+      "color": "#6366f1"
+    },
+    {
+      "id": "p-hci",
+      "name": "人机交互与智能感知",
+      "description": "关注人的感知、运动意图、交互设计和智能感知。",
+      "x": 795,
+      "y": 494,
+      "color": "#ec4899"
+    },
+    {
+      "id": "p-humanity",
+      "name": "人文与科技视野",
+      "description": "提供科技演进、文明视角和系统设计的宏观背景。",
+      "x": 500,
+      "y": 604,
+      "color": "#64748b"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "name": "定量工程设计方法",
+      "description": "学习定量工程设计方法，掌握机器人控制、优化决策与自主导航等核心技能。",
+      "shareId": "zci1ditlgimgguu13dz5ra5n",
+      "image_url": "/static/img/qea.jpg",
+      "pillar": "工程设计与制造",
+      "mecha": 0.78,
+      "ai": 0.48,
+      "tags": [
+        "定量设计",
+        "优化决策",
+        "自主导航",
+        "工程建模"
+      ],
+      "x": 80.0,
+      "y": 494.0
+    },
+    {
+      "id": 2,
+      "name": "自动控制原理",
+      "description": "深入学习控制理论的核心知识，掌握控制系统分析与设计的关键技能。",
+      "shareId": "my14ciwq8qa7moats2q4p28v",
+      "image_url": "/static/img/poac.jpg",
+      "pillar": "控制与机器人",
+      "mecha": 0.9,
+      "ai": 0.42,
+      "tags": [
+        "控制系统",
+        "姿态平衡",
+        "状态估计",
+        "电机控制"
+      ],
+      "x": 84.85,
+      "y": 199.81
+    },
+    {
+      "id": 3,
+      "name": "程序设计实践",
+      "description": "掌握C++工程化开发，培养高效编程与系统设计能力。",
+      "shareId": "k53UaEbEHTWKQRLHzIjV5jFT",
+      "image_url": "/static/img/pp.jpg",
+      "pillar": "软件与AI系统",
+      "mecha": 0.35,
+      "ai": 0.72,
+      "tags": [
+        "C++",
+        "工程化开发",
+        "数据结构",
+        "系统设计"
+      ],
+      "x": 748.0,
+      "y": 327.66
+    },
+    {
+      "id": 4,
+      "name": "软件设计",
+      "description": "掌握全栈软件设计，构建高可用、可扩展的工业级应用。",
+      "shareId": "eajvaYCSBHZSXVN1q24sbYNR",
+      "image_url": "/static/img/sd.jpg",
+      "pillar": "软件与AI系统",
+      "mecha": 0.38,
+      "ai": 0.7,
+      "tags": [
+        "全栈软件",
+        "数据生命周期",
+        "系统架构",
+        "工程部署"
+      ],
+      "x": 711.02,
+      "y": 138.06
+    },
+    {
+      "id": 5,
+      "name": "移动机器人应用与开发",
+      "description": "学习运用工程原理解决工程设计中的实际问题，掌握科学决策的核心技能。",
+      "shareId": "i8Oeda9zIrXfVUfqZXQ1qKuv",
+      "image_url": "/static/img/mraad.jpg",
+      "pillar": "控制与机器人",
+      "mecha": 0.86,
+      "ai": 0.58,
+      "tags": [
+        "移动机器人",
+        "路径规划",
+        "传感器融合",
+        "系统调试"
+      ],
+      "x": 189.78,
+      "y": 122.86
+    },
+    {
+      "id": 6,
+      "name": "线性代数",
+      "description": "掌握线性代数的核心理论与方法，学会用矩阵和线性变换解决实际问题。",
+      "shareId": "fhw37s0q4ksu2mdt46yye54r",
+      "image_url": "/static/img/la.jpg",
+      "pillar": "数理基础",
+      "mecha": 0.45,
+      "ai": 0.72,
+      "tags": [
+        "矩阵",
+        "线性变换",
+        "特征值",
+        "空间建模"
+      ],
+      "x": 334.75,
+      "y": 57.69
+    },
+    {
+      "id": 7,
+      "name": "机器人数学基础",
+      "description": "掌握机器人数学核心理论，实现算法设计与工程落地的全链路应用。",
+      "shareId": "cFXQK1BlZq1zNkWSuGsxbu8J",
+      "image_url": "/static/img/rm.jpg",
+      "pillar": "数理基础",
+      "mecha": 0.7,
+      "ai": 0.68,
+      "tags": [
+        "坐标变换",
+        "运动学",
+        "矩阵建模",
+        "算法基础"
+      ],
+      "x": 500.0,
+      "y": 45
+    },
+    {
+      "id": 8,
+      "name": "概率论与数理统计",
+      "description": "掌握概率统计核心方法，培养数据驱动的工程决策能力。",
+      "shareId": "vqjCwyKQLzmNbxiJbNT8o3mi",
+      "image_url": "/static/img/ptams.jpg",
+      "pillar": "数理基础",
+      "mecha": 0.38,
+      "ai": 0.75,
+      "tags": [
+        "概率模型",
+        "统计推断",
+        "不确定性",
+        "数据决策"
+      ],
+      "x": 665.25,
+      "y": 57.69
+    },
+    {
+      "id": 9,
+      "name": "人类文明史",
+      "description": "掌握人类文明演进规律，培养历史洞察与系统设计的跨学科思维。",
+      "shareId": "ed78T6IEQ5hanDkXVovkQtjZ",
+      "image_url": "/static/img/hohc.jpg",
+      "pillar": "人文与科技视野",
+      "mecha": 0.18,
+      "ai": 0.24,
+      "tags": [
+        "文明演进",
+        "系统思维",
+        "社会需求",
+        "设计视野"
+      ],
+      "x": 381.33,
+      "y": 578.09
+    },
+    {
+      "id": 10,
+      "name": "科技发展史",
+      "description": "理解科技发展脉络，培养历史洞察与未来设计的系统性思维。",
+      "shareId": "xVJOQmaXZC2hxKkO2B75VrRs",
+      "image_url": "/static/img/hotd.jpg",
+      "pillar": "人文与科技视野",
+      "mecha": 0.28,
+      "ai": 0.32,
+      "tags": [
+        "技术演进",
+        "工程范式",
+        "未来设计",
+        "创新脉络"
+      ],
+      "x": 618.67,
+      "y": 578.09
+    },
+    {
+      "id": 11,
+      "name": "机器人动力学与控制",
+      "description": "学习运动学、轨迹规划、动力学与运动控制，掌握建模与控制核心技能。",
+      "shareId": "iecsnqtrFQeuOY4353ZZ1ilM",
+      "image_url": "/static/img/rdac.png",
+      "pillar": "控制与机器人",
+      "mecha": 0.92,
+      "ai": 0.5,
+      "tags": [
+        "运动学",
+        "动力学",
+        "轨迹规划",
+        "运动控制"
+      ],
+      "x": 255.37,
+      "y": 98.67
+    },
+    {
+      "id": 12,
+      "name": "无人机飞控技术",
+      "description": "深入学习无人机状态估计与飞行控制，掌握自主导航系统全栈开发能力。",
+      "shareId": "r1DhxDlJNqqxg0YwGNly7Aam",
+      "image_url": "/static/img/ufct.png",
+      "pillar": "控制与机器人",
+      "mecha": 0.88,
+      "ai": 0.62,
+      "tags": [
+        "四旋翼",
+        "状态估计",
+        "飞行控制",
+        "视觉定位"
+      ],
+      "x": 343.46,
+      "y": 166.35
+    },
+    {
+      "id": 13,
+      "name": "信号与系统",
+      "description": "从电路设计到嵌入式开发，融合感知与路径规划，打造智能机器人系统。",
+      "shareId": "amW0TPXufsrOwYD3oVNFxgs5",
+      "image_url": "/static/img/sas.png",
+      "pillar": "控制与机器人",
+      "mecha": 0.82,
+      "ai": 0.45,
+      "tags": [
+        "信号处理",
+        "嵌入式",
+        "传感器",
+        "系统集成"
+      ],
+      "x": 348.38,
+      "y": 255.51
+    },
+    {
+      "id": 14,
+      "name": "工程原理",
+      "description": "以电子琴项目为载体，培养电路系统设计思维与工程实践能力。",
+      "shareId": "nMlH4UV6sPg6BhGiN8NWolWO",
+      "image_url": "/static/img/ep.png",
+      "pillar": "工程设计与制造",
+      "mecha": 0.88,
+      "ai": 0.36,
+      "tags": [
+        "电路系统",
+        "PCB设计",
+        "电源管理",
+        "系统集成"
+      ],
+      "x": 118.56,
+      "y": 403.7
+    },
+    {
+      "id": 15,
+      "name": "工程设计",
+      "description": "以斯特林发动机为牵引，完成从理论计算到样机制造的全流程。",
+      "shareId": "h26F3cIJqYSLw4H9w3NHLkJF",
+      "image_url": "/static/img/ed.png",
+      "pillar": "工程设计与制造",
+      "mecha": 0.92,
+      "ai": 0.2,
+      "tags": [
+        "斯特林发动机",
+        "机械原理",
+        "材料力学",
+        "样机制造"
+      ],
+      "x": 210.45,
+      "y": 369.12
+    },
+    {
+      "id": 16,
+      "name": "工效学",
+      "description": "理解人的感知、认知与反应规律，掌握以用户为中心的设计评估方法。",
+      "shareId": "llaiuXe8HwjymvXjkfpiLdhr",
+      "image_url": "/static/img/he.png",
+      "pillar": "人机交互与智能感知",
+      "mecha": 0.44,
+      "ai": 0.52,
+      "tags": [
+        "用户研究",
+        "感知认知",
+        "交互评估",
+        "人因设计"
+      ],
+      "x": 920.0,
+      "y": 494.0
+    },
+    {
+      "id": 17,
+      "name": "机器人基础",
+      "description": "学习机器人机构与感知技术，掌握机器人设计与系统集成的核心能力。",
+      "shareId": "d15FrTplAcL52KMK3oKFmzRP",
+      "image_url": "/static/img/rb.png",
+      "pillar": "控制与机器人",
+      "mecha": 0.82,
+      "ai": 0.58,
+      "tags": [
+        "机器人机构",
+        "感知技术",
+        "3D打印",
+        "系统集成"
+      ],
+      "x": 281.0,
+      "y": 339.66
+    },
+    {
+      "id": 18,
+      "name": "产品设计",
+      "description": "经历完整产品创新流程，培养设计思维与原型制作综合能力。",
+      "shareId": "jwv1RfhutIzIxvM8o6Ubgij3",
+      "image_url": "/static/img/pd.png",
+      "pillar": "工程设计与制造",
+      "mecha": 0.76,
+      "ai": 0.34,
+      "tags": [
+        "设计思维",
+        "产品创新",
+        "原型制作",
+        "技术选型"
+      ],
+      "x": 298.98,
+      "y": 411.58
+    },
+    {
+      "id": 19,
+      "name": "产品制造",
+      "description": "聚焦齿轮全流程制造，系统学习材料选择、成形工艺等核心技术。",
+      "shareId": "pgTOHEGASrW4VgImEp9dtX1c",
+      "image_url": "/static/img/pm.png",
+      "pillar": "工程设计与制造",
+      "mecha": 0.9,
+      "ai": 0.2,
+      "tags": [
+        "材料选择",
+        "成形工艺",
+        "GD&T",
+        "小批量生产"
+      ],
+      "x": 329.52,
+      "y": 504.89
+    },
+    {
+      "id": 20,
+      "name": "大模型原理及应用",
+      "description": "系统掌握大模型构建、微调与智能体开发核心技术。",
+      "shareId": "hP0Nptl04DfkZQFLTrKhjGjU",
+      "image_url": "/static/img/lmpa.png",
+      "pillar": "软件与AI系统",
+      "mecha": 0.18,
+      "ai": 0.96,
+      "tags": [
+        "大模型",
+        "指令微调",
+        "智能体",
+        "LangChain"
+      ],
+      "x": 913.15,
+      "y": 204.81
+    },
+    {
+      "id": 21,
+      "name": "运动神经生理与人机交互",
+      "description": "融合运动神经生理、肌电/脑电信号采集与人机交互，支撑运动意图识别与智能假肢控制。",
+      "shareId": "",
+      "image_url": "/static/img/mnhci.png",
+      "pillar": "人机交互与智能感知",
+      "mecha": 0.55,
+      "ai": 0.72,
+      "tags": [
+        "肌电信号",
+        "脑电采集",
+        "运动意图识别",
+        "智能假肢"
+      ],
+      "x": 655.0,
+      "y": 502.0
+    }
+  ]
+};
+
+const pillarDetails = {
+  "数理基础": {
+    role: "数理基础是 AI+机电课程体系的通用底座，帮助学生建立面向建模、计算、优化与数据分析的基础能力。",
+    coverage: "覆盖线性代数、概率统计、机器人数学等内容，支撑机器人运动建模、控制算法、感知推理和智能系统分析。",
+    goal: "培养学生用数学语言描述工程问题、用定量方法分析系统行为，并为后续控制、机器人与人工智能课程打下基础。"
+  },
+  "控制与机器人": {
+    role: "控制与机器人模块面向机电系统的运动控制、感知决策与系统集成，是连接机械实体和智能算法的核心方向。",
+    coverage: "覆盖自动控制、机器人动力学、无人机飞控、移动机器人、信号与系统、机器人基础等课程内容。",
+    goal: "培养学生理解复杂机电系统的建模与控制方法，具备机器人系统设计、调试、集成和工程落地能力。"
+  },
+  "工程设计与制造": {
+    role: "工程设计与制造模块强调从问题定义到方案设计、原型制作和产品实现的完整工程过程。",
+    coverage: "覆盖工程原理、工程设计、产品设计、产品制造和定量工程设计方法等内容，贯穿结构、电路、工艺与产品意识。",
+    goal: "培养学生面向真实需求进行工程设计、权衡约束、制造验证和迭代优化的综合实践能力。"
+  },
+  "软件与AI系统": {
+    role: "软件与AI系统模块面向智能系统的软件底座和算法应用，是把工程问题转化为可运行系统的重要支撑。",
+    coverage: "覆盖程序设计实践、软件设计、大模型原理及应用等内容，涉及工程化开发、系统架构、智能体和大模型应用。",
+    goal: "培养学生完成软件系统设计与实现、构建 AI 应用原型，并将大模型能力融入课程学习和工程实践的能力。"
+  },
+  "人机交互与智能感知": {
+    role: "人机交互与智能感知模块关注人与智能机电系统之间的感知、理解和协同关系。",
+    coverage: "覆盖工效学、运动神经生理与人机交互等内容，涉及用户研究、感知认知、运动意图识别和交互评估。",
+    goal: "培养学生从人的需求和行为出发设计智能产品与交互系统，提升系统的可用性、安全性和协同体验。"
+  },
+  "人文与科技视野": {
+    role: "人文与科技视野模块为工程学习提供历史、社会和文明层面的背景，帮助学生理解技术创新的长期脉络。",
+    coverage: "覆盖人类文明史、科技发展史等内容，引导学生认识技术演进、社会需求与工程伦理之间的关系。",
+    goal: "培养学生具备更开阔的科技判断力、社会责任意识和面向未来的系统思维。"
+  }
+};
+
+const cores = [
+  { id: "core-mecha", name: "机电", type: "core", x: 420, y: 350, fx: 420, fy: 350, r: 64, color: "#4bb8c7", desc: "机械、电子、控制、制造与系统集成能力。" },
+  { id: "core-ai", name: "人工智能", type: "core", x: 580, y: 350, fx: 580, fy: 350, r: 64, color: "#6274ed", desc: "算法、感知、学习、大模型与智能体能力。" }
+];
+
+const pillarAnchors = [
+  { x: 500, y: 105 },
+  { x: 180, y: 220 },
+  { x: 190, y: 520 },
+  { x: 820, y: 220 },
+  { x: 830, y: 520 },
+  { x: 500, y: 620 }
+];
+const pillars = raw.pillars.map((p, i) => ({
+  ...p,
+  type: "pillar",
+  r: 42,
+  x: pillarAnchors[i].x,
+  y: pillarAnchors[i].y,
+  vx: 0,
+  vy: 0,
+  anchorX: pillarAnchors[i].x,
+  anchorY: pillarAnchors[i].y
+}));
+const courses = raw.courses.map(c => ({
+  ...c,
+  type: "course",
+  agentId: c.id,
+  id: "course-" + c.id,
+  r: c.name.length >= 10 ? 32 : 30,
+  vx: 0,
+  vy: 0,
+  url: c.id >= 1 && c.id <= 20 ? `/dashboard/agent/${c.id}` : ""
+}));
+const nodes = [...cores, ...pillars, ...courses];
+const byId = new Map(nodes.map(d => [d.id, d]));
+const byName = new Map(nodes.map(d => [d.name, d]));
+const pillarByName = new Map(pillars.map(d => [d.name, d]));
+
+let selected = null;
+let mode = "all";
+let skillNodes = [];
+let skillLinks = [];
+let frame = 0;
+let animationStarted = false;
+let layoutSettled = false;
+
+const svg = document.getElementById("graph");
+const tooltip = document.getElementById("tooltip");
+const stage = document.getElementById("stage");
+const sideTitle = document.getElementById("sideTitle");
+const sideBody = document.getElementById("sideBody");
+const chartDom = document.getElementById("graph");
+let kgChart = null;
+
+function initializeCourseLayout() {
+  const grouped = new Map();
+  courses.forEach(c => {
+    if (!grouped.has(c.pillar)) grouped.set(c.pillar, []);
+    grouped.get(c.pillar).push(c);
+  });
+  const courseAreas = {
+    "数理基础": { x1: 300, x2: 700, y1: 38, y2: 156, cols: 3 },
+    "控制与机器人": { x1: 60, x2: 360, y1: 150, y2: 400, cols: 2 },
+    "工程设计与制造": { x1: 66, x2: 370, y1: 430, y2: 628, cols: 2 },
+    "软件与AI系统": { x1: 640, x2: 934, y1: 138, y2: 356, cols: 2 },
+    "人机交互与智能感知": { x1: 650, x2: 930, y1: 430, y2: 560, cols: 2 },
+    "人文与科技视野": { x1: 382, x2: 618, y1: 584, y2: 640, cols: 2 }
+  };
+  grouped.forEach((list, pillarName) => {
+    const p = pillarByName.get(pillarName);
+    const area = courseAreas[pillarName];
+    if (area) {
+      const cols = Math.min(area.cols, list.length);
+      const rows = Math.ceil(list.length / cols);
+      const xStep = cols > 1 ? (area.x2 - area.x1) / (cols - 1) : 0;
+      const yStep = rows > 1 ? (area.y2 - area.y1) / (rows - 1) : 0;
+      list.forEach((c, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const rowShift = row % 2 ? xStep * 0.18 : 0;
+        c.x = area.x1 + col * xStep + rowShift;
+        c.y = area.y1 + row * yStep;
+        c.homeX = c.x;
+        c.homeY = c.y;
+        c.homeOffsetX = c.x - p.x;
+        c.homeOffsetY = c.y - p.y;
+      });
+      return;
+    }
+    list.forEach((c, i) => {
+      const angle = (Math.PI * 2 * i) / list.length - Math.PI / 2;
+      const radius = 122 + (i % 2) * 48;
+      const coreBias = (c.ai - c.mecha) * 132;
+      c.x = p.x + Math.cos(angle) * radius + coreBias;
+      c.y = p.y + Math.sin(angle) * radius + (i % 3 - 1) * 18;
+      c.homeX = c.x;
+      c.homeY = c.y;
+      c.homeOffsetX = Math.cos(angle) * radius + coreBias;
+      c.homeOffsetY = Math.sin(angle) * radius + (i % 3 - 1) * 18;
+    });
+  });
+}
+
+initializeCourseLayout();
+
+function linkColor(kind, course) {
+  if (kind === "mecha") return `rgba(75, 184, 199, ${0.12 + course.mecha * 0.26})`;
+  if (kind === "ai") return `rgba(98, 116, 237, ${0.12 + course.ai * 0.26})`;
+  return "rgba(245, 165, 36, 0.24)";
+}
+
+function makeLinks() {
+  const links = [];
+  // core bridge
+  links.push({ id:"core-bridge", source: cores[0], target: cores[1], color:"rgba(98,116,237,.22)", width: 3, type:"bridge" });
+  // pillars to cores
+  pillars.forEach(p => {
+    const related = courses.filter(c => c.pillar === p.name);
+    const avgM = related.reduce((s,c)=>s+c.mecha,0) / Math.max(1, related.length);
+    const avgA = related.reduce((s,c)=>s+c.ai,0) / Math.max(1, related.length);
+    links.push({ id:`${p.id}-m`, source:p, target:cores[0], color:`rgba(75,184,199,${0.08 + avgM*.20})`, width:1.4+avgM*2, type:"pillar-core" });
+    links.push({ id:`${p.id}-a`, source:p, target:cores[1], color:`rgba(98,116,237,${0.08 + avgA*.20})`, width:1.4+avgA*2, type:"pillar-core" });
+  });
+  // courses to pillar and cores
+  courses.forEach(c => {
+    const p = pillarByName.get(c.pillar);
+    links.push({ id:`${c.id}-p`, source:c, target:p, color:"rgba(245,165,36,.26)", width: 1.6, type:"course-pillar" });
+    links.push({ id:`${c.id}-m`, source:c, target:cores[0], color:linkColor("mecha", c), width: 0.8 + c.mecha*2.6, type:"course-core mecha" });
+    links.push({ id:`${c.id}-a`, source:c, target:cores[1], color:linkColor("ai", c), width: 0.8 + c.ai*2.6, type:"course-core ai" });
+  });
+  return links;
+}
+
+function roundedLink(a,b,curve=0.16) {
+  const mx = (a.x + b.x)/2;
+  const my = (a.y + b.y)/2;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const nx = -dy * curve;
+  const ny = dx * curve;
+  return `M ${a.x} ${a.y} Q ${mx+nx} ${my+ny} ${b.x} ${b.y}`;
+}
+
+function shortName(name) {
+  if (name.length <= 8) return [name];
+  if (name.length <= 12) return [name.slice(0,6), name.slice(6)];
+  return [name.slice(0,6), name.slice(6,12) + (name.length > 12 ? "…" : "")];
+}
+
+function nodeFill(d) {
+  if (d.type === "core") return d.color;
+  if (d.type === "pillar") return "rgba(255, 255, 255, .94)";
+  if (d.type === "skill") return "rgba(255, 250, 232, .96)";
+  return "rgba(255, 255, 255, .92)";
+}
+function nodeStroke(d) {
+  if (d.type === "core") return "rgba(255,255,255,.9)";
+  if (d.type === "pillar") return d.color || "#facc15";
+  if (d.type === "skill") return "#f2b84b";
+  return "#f5a524";
+}
+
+function visibleNode(d) {
+  if (mode === "courses") return d.type === "core" || d.type === "course";
+  return true;
+}
+function visibleLink(l) {
+  if (mode === "courses") return l.type.includes("course-core") || l.type === "bridge";
+  return visibleNode(l.source) && visibleNode(l.target);
+}
+
+function shouldShowSkills() {
+  return mode !== "courses" && selected && selected.type === "course" && skillNodes.length > 0;
+}
+
+function collisionSize(d) {
+  if (d.type === "core") return { w: 140, h: 140 };
+  if (d.type === "pillar") return { w: 112, h: 86 };
+  if (d.type === "course") return { w: 150, h: 76 };
+  return { w: 62, h: 48 };
+}
+
+function minDistance(a, b) {
+  const as = collisionSize(a);
+  const bs = collisionSize(b);
+  const dx = Math.abs((as.w + bs.w) / 2);
+  const dy = Math.abs((as.h + bs.h) / 2);
+  return Math.sqrt(dx * dx + dy * dy) * 0.82;
+}
+
+function render() {
+  svg.innerHTML = "";
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  defs.innerHTML = `
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="coreGradM" cx="35%" cy="28%" r="68%"><stop offset="0%" stop-color="#defbff"/><stop offset="58%" stop-color="#70d5df"/><stop offset="100%" stop-color="#4bb8c7"/></radialGradient>
+    <radialGradient id="coreGradA" cx="35%" cy="28%" r="68%"><stop offset="0%" stop-color="#edf1ff"/><stop offset="58%" stop-color="#8fa0ff"/><stop offset="100%" stop-color="#6274ed"/></radialGradient>
+  `;
+  svg.appendChild(defs);
+
+  const baseLinks = makeLinks().filter(visibleLink);
+  const allLinks = [...baseLinks, ...(shouldShowSkills() ? skillLinks : [])];
+
+  const linkLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  svg.appendChild(linkLayer);
+  allLinks.forEach(l => {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("class", "link");
+    path.setAttribute("data-link-id", l.id);
+    path.setAttribute("d", roundedLink(l.source, l.target, l.type === "skill" ? 0.04 : 0.10));
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", l.color || "rgba(132,152,214,.22)");
+    path.setAttribute("stroke-width", l.width || 1.4);
+    path.setAttribute("data-source", l.source.id);
+    path.setAttribute("data-target", l.target.id);
+    linkLayer.appendChild(path);
+  });
+
+  const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  svg.appendChild(nodeLayer);
+  const drawNodes = [...nodes.filter(visibleNode), ...(shouldShowSkills() ? skillNodes : [])];
+  drawNodes.forEach(d => drawNode(nodeLayer, d));
+  updateSvgPositions();
+  updateHighlights();
+}
+
+function drawNode(layer, d) {
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("class", `node ${d.type}`);
+  g.setAttribute("transform", `translate(${d.x},${d.y})`);
+  g.setAttribute("data-id", d.id);
+  g.addEventListener("mouseenter", evt => showTooltip(evt, d));
+  g.addEventListener("mousemove", evt => moveTooltip(evt));
+  g.addEventListener("mouseleave", hideTooltip);
+  g.addEventListener("click", evt => { evt.stopPropagation(); selectNode(d); });
+
+  if (d.type === "course") {
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", -56);
+    rect.setAttribute("y", -24);
+    rect.setAttribute("width", 112);
+    rect.setAttribute("height", 48);
+    rect.setAttribute("rx", 17);
+    rect.setAttribute("fill", nodeFill(d));
+    rect.setAttribute("stroke", nodeStroke(d));
+    rect.setAttribute("stroke-width", 1.6);
+    g.appendChild(rect);
+  } else {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("r", d.r || 24);
+    circle.setAttribute("fill", d.type === "core" ? (d.name === "机电" ? "url(#coreGradM)" : "url(#coreGradA)") : nodeFill(d));
+    circle.setAttribute("stroke", nodeStroke(d));
+    circle.setAttribute("stroke-width", d.type === "core" ? 2.8 : 2);
+    if (d.type === "core") circle.setAttribute("filter", "url(#glow)");
+    g.appendChild(circle);
+  }
+
+  const lines = d.type === "skill" ? [d.name] : shortName(d.name);
+  lines.forEach((line, i) => {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.textContent = line;
+    const offset = (i - (lines.length-1)/2) * (d.type === "core" ? 26 : 16);
+    t.setAttribute("y", offset);
+    t.setAttribute("font-size", d.type === "skill" ? 11 : (d.type === "core" ? 24 : 13));
+    if (d.type === "skill") t.setAttribute("fill", "#6b5b2e");
+    g.appendChild(t);
+  });
+  layer.appendChild(g);
+}
+
+function updateSvgPositions() {
+  const activeLinks = [...makeLinks().filter(visibleLink), ...(shouldShowSkills() ? skillLinks : [])];
+  document.querySelectorAll(".link").forEach(path => {
+    const link = activeLinks.find(l => l.id === path.getAttribute("data-link-id"));
+    if (!link) return;
+    path.setAttribute("d", roundedLink(link.source, link.target, link.type === "skill" ? 0.04 : 0.10));
+  });
+  document.querySelectorAll(".node").forEach(el => {
+    const d = byId.get(el.getAttribute("data-id")) || skillNodes.find(s => s.id === el.getAttribute("data-id"));
+    if (!d) return;
+    el.setAttribute("transform", `translate(${d.x},${d.y})`);
+  });
+}
+
+function applyForces() {
+  frame += 1;
+  cores.forEach(c => {
+    c.x = c.fx;
+    c.y = c.fy;
+    c.vx = 0;
+    c.vy = 0;
+  });
+
+  const movable = nodes.filter(n => n.type !== "core");
+  movable.forEach(d => {
+    let targetX = d.x;
+    let targetY = d.y;
+    if (d.type === "pillar") {
+      targetX = d.anchorX + Math.sin(frame / 140 + d.anchorY) * 5;
+      targetY = d.anchorY + Math.cos(frame / 160 + d.anchorX) * 4;
+    } else if (d.type === "course") {
+      targetX = d.homeX + Math.sin(frame / 110 + d.id.length) * 5;
+      targetY = d.homeY + Math.cos(frame / 130 + d.id.length) * 4;
+    }
+    d.vx += (targetX - d.x) * (d.type === "pillar" ? 0.012 : 0.009);
+    d.vy += (targetY - d.y) * (d.type === "pillar" ? 0.012 : 0.009);
+  });
+
+  const repelNodes = nodes.filter(visibleNode);
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = 0; i < repelNodes.length; i++) {
+      for (let j = i + 1; j < repelNodes.length; j++) {
+        const a = repelNodes[i];
+        const b = repelNodes[j];
+        if (a.type === "core" && b.type === "core") continue;
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const target = minDistance(a, b);
+        if (dist < target) {
+          const push = (target - dist) * 0.028;
+          dx /= dist;
+          dy /= dist;
+          if (a.type !== "core") {
+            a.vx -= dx * push;
+            a.vy -= dy * push;
+          }
+          if (b.type !== "core") {
+            b.vx += dx * push;
+            b.vy += dy * push;
+          }
+        }
+      }
+    }
+  }
+
+  movable.forEach(d => {
+    d.vx *= 0.86;
+    d.vy *= 0.86;
+    d.x += d.vx;
+    d.y += d.vy;
+    d.x = Math.max(52, Math.min(948, d.x));
+    d.y = Math.max(52, Math.min(642, d.y));
+  });
+
+  if (shouldShowSkills()) {
+    const course = skillNodes[0].parentCourse;
+    const count = skillNodes.length;
+    skillNodes.forEach((s, i) => {
+      const angle = (-90 + (360 / count) * i + Math.sin(frame / 90) * 6) * Math.PI / 180;
+      const radius = 76;
+      s.x = course.x + Math.cos(angle) * radius;
+      s.y = course.y + Math.sin(angle) * radius;
+    });
+  }
+}
+
+function settleLayout(iterations = 90) {
+  for (let i = 0; i < iterations; i++) {
+    applyForces();
+  }
+}
+
+function startMotion() {
+  if (animationStarted) return;
+  animationStarted = true;
+  const tick = () => {
+    applyForces();
+    updateEchartsPositions();
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function selectNode(d) {
+  if (d.type === "skill") {
+    selected = d.parentCourse;
+    renderSideCourse(d.parentCourse);
+    renderEchartsGraph();
+    return;
+  }
+
+  if (selected && selected.id === d.id) {
+    selected = null;
+    skillNodes = [];
+    skillLinks = [];
+    renderSideDefault();
+    renderEchartsGraph();
+    return;
+  }
+
+  selected = d;
+  if (d.type === "course") {
+    buildSkillNodes(d);
+    renderSideCourse(d);
+  } else if (d.type === "pillar") {
+    skillNodes = [];
+    skillLinks = [];
+    renderSidePillar(d);
+  } else if (d.type === "core") {
+    skillNodes = [];
+    skillLinks = [];
+    renderSideCore(d);
+  }
+  renderEchartsGraph();
+}
+
+function buildSkillNodes(course) {
+  skillNodes = [];
+  skillLinks = [];
+  const count = course.tags.length;
+  const radius = 76;
+  const start = -90;
+  course.tags.forEach((tag, i) => {
+    const angle = (start + (360 / count) * i) * Math.PI / 180;
+    const s = {
+      id: `skill-${course.id}-${i}`,
+      name: tag,
+      type: "skill",
+      x: course.x + Math.cos(angle) * radius,
+      y: course.y + Math.sin(angle) * radius,
+      r: 19,
+      color: "#fbbf24",
+      parentCourse: course,
+      desc: `《${course.name}》能力点：${tag}`
+    };
+    skillNodes.push(s);
+    skillLinks.push({ id: `${course.id}-skill-${i}`, source: course, target: s, color: "rgba(245,165,36,.34)", width: 1.3, type:"skill" });
+  });
+}
+
+function relatedIds(d) {
+  if (!d) return new Set();
+  const ids = new Set([d.id]);
+  if (d.type === "course") {
+    ids.add("core-mecha"); ids.add("core-ai");
+    const p = pillarByName.get(d.pillar); if (p) ids.add(p.id);
+    skillNodes.forEach(s => ids.add(s.id));
+  } else if (d.type === "pillar") {
+    ids.add("core-mecha"); ids.add("core-ai");
+    courses.filter(c => c.pillar === d.name).forEach(c => ids.add(c.id));
+  } else if (d.type === "core") {
+    nodes.forEach(n => ids.add(n.id));
+  } else if (d.type === "skill") {
+    ids.add(d.parentCourse.id);
+  }
+  return ids;
+}
+
+function updateHighlights() {
+  const ids = relatedIds(selected);
+  document.querySelectorAll(".node").forEach(el => {
+    const id = el.getAttribute("data-id");
+    el.classList.remove("highlight", "dim");
+    if (selected && !ids.has(id)) el.classList.add("dim");
+    if (selected && ids.has(id)) el.classList.add("highlight");
+  });
+  document.querySelectorAll(".link").forEach(el => {
+    const s = el.getAttribute("data-source"), t = el.getAttribute("data-target");
+    if (selected && !(ids.has(s) && ids.has(t))) el.classList.add("dim");
+    else el.classList.remove("dim");
+  });
+}
+
+function showTooltip(evt, d) {
+  tooltip.style.opacity = 1;
+  tooltip.innerHTML = `<b>${d.name}</b><br>${d.desc || d.description || d.pillar || ""}`;
+  moveTooltip(evt);
+}
+function moveTooltip(evt) {
+  const r = stage.getBoundingClientRect();
+  tooltip.style.left = `${evt.clientX - r.left}px`;
+  tooltip.style.top = `${evt.clientY - r.top}px`;
+}
+function hideTooltip() { tooltip.style.opacity = 0; }
+
+function renderSideDefault() {
+  sideTitle.textContent = "选择一门课程";
+  sideBody.innerHTML = `
+    <div class="legend">
+      <div class="legend-item"><span class="dot" style="background:#2dd4bf"></span>机电核心</div>
+      <div class="legend-item"><span class="dot" style="background:#818cf8"></span>人工智能核心</div>
+      <div class="legend-item"><span class="dot" style="background:#facc15"></span>课程节点</div>
+      <div class="legend-item"><span class="dot" style="background:#fbbf24"></span>能力点展开</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><strong>2</strong><span>核心</span></div>
+      <div class="stat"><strong>${courses.length}</strong><span>课程</span></div>
+      <div class="stat"><strong>${pillars.length}</strong><span>能力模块</span></div>
+    </div>
+    <div class="summary">
+      重庆大学卓越工程师学院围绕“AI+机电”构建课程体系，强调学科交叉、项目牵引与产教协同，让学生在真实工程问题中建立从原理学习到系统设计、产品实现的完整能力链。<br><br>
+      <b>课程构成：</b>图谱以机电与人工智能为双核心，串联数理基础、控制与机器人、工程设计与制造、软件与AI系统、人机交互与智能感知、人文与科技视野等模块。点击课程节点，可查看课程简介、关键词，并进入对应课程智能体。
+    </div>`;
+}
+
+function renderSideCourse(c) {
+  sideTitle.textContent = c.name;
+  sideBody.innerHTML = `
+    <div class="course-card">
+      <div class="image-wrap">
+        <img src="${c.image_url}" alt="${c.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+        <div class="fallback-img" style="display:none;">${c.name.slice(0,1)}</div>
+      </div>
+      <div class="card-inner">
+        <div class="chip">${c.pillar}</div>
+        <p class="desc">${c.description}</p>
+        <div class="chips">${c.tags.map(t => `<span class="chip">${t}</span>`).join("")}</div>
+        ${c.url ? `<a class="open-btn" href="${c.url}" target="_top">进入课程智能体</a>` : `<span class="open-btn disabled">暂无课程链接</span>`}
+      </div>
+    </div>
+  `;
+}
+function renderSidePillar(p) {
+  const list = courses.filter(c => c.pillar === p.name);
+  const detail = pillarDetails[p.name];
+  sideTitle.textContent = p.name;
+  sideBody.innerHTML = `
+    <div class="summary">
+      <b>模块定位：</b>${detail ? detail.role : p.description}<br><br>
+      <b>覆盖内容：</b>${detail ? detail.coverage : p.description}<br><br>
+      <b>培养目标：</b>${detail ? detail.goal : "帮助学生建立该方向的课程理解和工程实践能力。"}
+    </div>
+    <div class="stats stats-single"><div class="stat"><strong>${list.length}</strong><span>课程</span></div></div>
+    <div class="chips">${list.map(c => `<span class="chip" onclick="selectNode(byName.get('${c.name}'))">${c.name}</span>`).join("")}</div>
+  `;
+}
+function renderSideCore(d) {
+  sideTitle.textContent = d.name;
+  const sorted = [...courses].sort((a,b) => d.name === "机电" ? b.mecha-a.mecha : b.ai-a.ai).slice(0,8);
+  sideBody.innerHTML = `
+    <div class="summary">${d.desc}</div>
+    <div class="course-card"><div class="card-inner"><b>相关度最高的课程</b><div class="chips" style="margin-top:12px;">${sorted.map(c => `<span class="chip" onclick="selectNode(byName.get('${c.name}'))">${c.name}</span>`).join("")}</div></div></div>
+  `;
+}
+
+function echartsNode(d) {
+  const isCore = d.type === "core";
+  const isPillar = d.type === "pillar";
+  const isSkill = d.type === "skill";
+  const isCourse = d.type === "course";
+  const itemColor = isCore
+    ? (d.name === "机电" ? "#4bb8c7" : "#6274ed")
+    : isPillar
+      ? "#ffffff"
+      : isSkill
+        ? "#fff7dc"
+        : "#ffffff";
+  const borderColor = isCore
+    ? "#ffffff"
+    : isPillar
+      ? d.color
+      : isSkill
+        ? "#f5a524"
+        : "#f5a524";
+
+  return {
+    id: d.id,
+    name: d.name,
+    value: isCore ? 100 : isPillar ? 70 : isCourse ? 48 : 24,
+    category: isCore ? 0 : isPillar ? 1 : isCourse ? 2 : 3,
+    x: d.x,
+    y: d.y,
+    fixed: isCore,
+    draggable: !isCore,
+    symbol: isCourse ? "roundRect" : "circle",
+    symbolSize: isCore ? 118 : isPillar ? 74 : isSkill ? 34 : [110, 48],
+    rawNode: d,
+    label: {
+      show: true,
+      color: isCore ? "#ffffff" : "#24314d",
+      fontWeight: 700,
+      fontSize: isCore ? 22 : isPillar ? 13 : isSkill ? 11 : 12,
+      lineHeight: 15,
+      formatter: function (params) {
+        return shortName(params.name).join("\n");
+      }
+    },
+    itemStyle: {
+      color: itemColor,
+      borderColor: borderColor,
+      borderWidth: isCore ? 3 : 1.8,
+      shadowBlur: isCore ? 28 : isPillar ? 16 : 12,
+      shadowColor: isCore
+        ? (d.name === "机电" ? "rgba(75,184,199,.38)" : "rgba(98,116,237,.36)")
+        : "rgba(73,97,153,.16)"
+    },
+    emphasis: {
+      scale: true,
+      itemStyle: {
+        borderWidth: 3,
+        shadowBlur: 32,
+        shadowColor: "rgba(98,116,237,.32)"
+      },
+      label: {
+        fontSize: isCore ? 24 : 14
+      }
+    }
+  };
+}
+
+function echartsLinks() {
+  return [...makeLinks().filter(visibleLink), ...(shouldShowSkills() ? skillLinks : [])].map(l => ({
+    source: l.source.id,
+    target: l.target.id,
+    value: l.type,
+    lineStyle: {
+      color: l.color || "rgba(132,152,214,.22)",
+      width: l.width || 1.4,
+      curveness: l.type === "skill" ? 0.06 : 0.12,
+      opacity: l.type === "bridge" ? 0.55 : 0.42
+    },
+    emphasis: {
+      lineStyle: {
+        opacity: 0.9,
+        width: Math.max(2.2, (l.width || 1.4) + 1)
+      }
+    }
+  }));
+}
+
+function graphNodes() {
+  return [...nodes.filter(visibleNode), ...(shouldShowSkills() ? skillNodes : [])];
+}
+
+function buildEchartsData() {
+  const related = relatedIds(selected);
+  return graphNodes().map(d => {
+    const node = echartsNode(d);
+    if (selected && !related.has(d.id)) {
+      node.itemStyle.opacity = 0.22;
+      node.label.opacity = 0.28;
+    }
+    if (selected && related.has(d.id)) {
+      node.itemStyle.borderWidth = d.type === "core" ? 3.4 : 2.8;
+      node.itemStyle.shadowBlur = d.type === "core" ? 34 : 24;
+      node.itemStyle.shadowColor = "rgba(98,116,237,.34)";
+    }
+    return node;
+  });
+}
+
+function updateEchartsPositions() {
+  if (!kgChart) return;
+  kgChart.setOption({
+    series: [{
+      data: buildEchartsData(),
+      links: echartsLinks()
+    }]
+  }, false, true);
+}
+
+function renderEchartsGraph() {
+  if (!window.echarts || !chartDom) return;
+  if (!kgChart) {
+    kgChart = echarts.init(chartDom, null, { renderer: "canvas" });
+    kgChart.on("click", params => {
+      if (params.dataType === "node" && params.data && params.data.rawNode) {
+        selectNode(params.data.rawNode);
+      }
+    });
+    kgChart.getZr().on("click", event => {
+      if (!event.target) {
+        selected = null;
+        skillNodes = [];
+        skillLinks = [];
+        renderSideDefault();
+        renderEchartsGraph();
+      }
+    });
+    window.addEventListener("resize", () => kgChart && kgChart.resize());
+  }
+
+  if (!layoutSettled) {
+    settleLayout(70);
+    layoutSettled = true;
+  }
+
+  kgChart.dispatchAction({ type: "downplay", seriesIndex: 0 });
+
+  kgChart.setOption({
+    backgroundColor: "transparent",
+    animationDuration: 900,
+    animationEasingUpdate: "cubicOut",
+    tooltip: {
+      trigger: "item",
+      confine: true,
+      backgroundColor: "rgba(255,255,255,.96)",
+      borderColor: "rgba(132,152,214,.18)",
+      borderWidth: 1,
+      textStyle: { color: "#425172" },
+      extraCssText: "box-shadow:0 14px 30px rgba(73,97,153,.16);border-radius:12px;",
+      formatter: function (params) {
+        if (params.dataType === "edge") return "";
+        const d = params.data.rawNode;
+        return `<b>${d.name}</b><br>${d.desc || d.description || d.pillar || ""}`;
+      }
+    },
+    series: [{
+      type: "graph",
+      layout: "none",
+      roam: true,
+      draggable: false,
+      selectedMode: false,
+      focusNodeAdjacency: false,
+      scaleLimit: {
+        min: 0.72,
+        max: 2.4
+      },
+      edgeSymbol: ["none", "none"],
+      categories: [
+        { name: "核心" },
+        { name: "能力模块" },
+        { name: "课程" },
+        { name: "能力点" }
+      ],
+      data: buildEchartsData(),
+      links: echartsLinks(),
+      label: { position: "inside" },
+      lineStyle: {
+        cap: "round"
+      },
+      emphasis: {
+        focus: "none"
+      }
+    }]
+  }, true);
+
+  startMotion();
+}
+
+function setMode(next) {
+  mode = next;
+  if (mode === "courses") {
+    skillNodes = [];
+    skillLinks = [];
+  }
+  document.getElementById("btnCourses").classList.toggle("active", mode === "courses");
+  document.getElementById("btnCourses").textContent = mode === "courses" ? "显示类别" : "只看课程";
+  renderEchartsGraph();
+}
+
+document.getElementById("btnCourses").addEventListener("click", () => setMode(mode === "courses" ? "all" : "courses"));
+
+document.getElementById("search").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  if (!q) { selected = null; skillNodes=[]; skillLinks=[]; renderSideDefault(); renderEchartsGraph(); return; }
+  const found = nodes.find(n => n.name.toLowerCase().includes(q));
+  if (found) selectNode(found);
+});
+
+renderSideDefault();
+renderEchartsGraph();
+</script>
+</body>
+</html>
