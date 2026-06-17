@@ -32,7 +32,7 @@ var option_4ed221bd03f84e8b9227cdd3d973b8bc = {
         {
             "type": "graph",
             "layout": "force",
-            "zoom": 0.5,
+            "zoom": 0.3,
             "scaleLimit": {
                 "min": 0.2,
                 "max": 3
