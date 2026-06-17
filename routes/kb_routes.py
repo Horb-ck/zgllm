@@ -5153,8 +5153,8 @@ def api_kb_folder_documents(folder_id):
 @_require_login
 def api_kb_chat_url():
     username, _, _ = _get_user_info()
-    share_id = os.environ.get('FASTGPT_SHARE_ID', _DEFAULT_FASTGPT_SHARE_ID)
-    base_url = os.environ.get('FASTGPT_SHARE_BASE_URL', _DEFAULT_FASTGPT_SHARE_BASE_URL)
+    share_id = _DEFAULT_FASTGPT_SHARE_ID
+    base_url = _DEFAULT_FASTGPT_SHARE_BASE_URL
 
     user_auth_token = hashlib.md5(f"pkb_auth_{username}".encode()).hexdigest()
 
