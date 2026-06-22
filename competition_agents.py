@@ -1,4 +1,5 @@
 import copy
+from config import FASTGPT_URL
 
 
 COMPETITION_AGENT_DEFINITIONS = [
@@ -9,7 +10,7 @@ COMPETITION_AGENT_DEFINITIONS = [
         "competition_name": "Robocon",
         "name": "Robocon-主赛",
         "description": "Robocon 主赛智能体，聚焦赛题解析、方案设计与实战复盘。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=pjSRSIwb4iudHQu7T7OeVm7s",
+        "url": FASTGPT_URL+"chat/share?shareId=pjSRSIwb4iudHQu7T7OeVm7s",
         "image_url": "/static/img/robocon_logo.png",
         "template_name": "dashboard/competition_chat.html",
         "resource_loader_key": "robocon_main",
@@ -106,7 +107,7 @@ COMPETITION_AGENT_DEFINITIONS = [
         "competition_name": "Robotac",
         "name": "Robotac",
         "description": "Robotac 智能体，聚焦对抗赛、挑战赛与备赛资料梳理。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=op71UGEW28SkdhD9NVAGVens",
+        "url": FASTGPT_URL+"chat/share?shareId=op71UGEW28SkdhD9NVAGVens",
         "image_url": "/static/img/robotac-logo.png",
         "template_name": "dashboard/competition_chat.html",
         "resource_loader_key": "robotac",
@@ -196,7 +197,7 @@ COMPETITION_AGENT_DEFINITIONS = [
         "competition_name": "Robomaster",
         "name": "Robomaster",
         "description": "Robomaster 战队智能体，聚焦 Robomaster 赛题解析、战队方案设计与实战复盘。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=o3BBx3j5FNohHbNH8WjUDaGQ",
+        "url": FASTGPT_URL+"chat/share?shareId=o3BBx3j5FNohHbNH8WjUDaGQ",
         "image_url": "/static/img/robomaster_logo.jpg",
         "template_name": "dashboard/competition_chat.html",
         "resource_loader_key": "robomaster",
@@ -253,7 +254,7 @@ COMPETITION_AGENT_DEFINITIONS = [
         "competition_name": "Robocon",
         "name": "Robocon-仿生足式机器人",
         "description": "Robocon 仿生足式机器人战队智能体，聚焦仿生足式机器人赛题的专项资料与问答。",
-        "url": "http://180.85.206.30:3000/chat/share?shareId=cy2uRFeYVahpoEdETXoisAfo",
+        "url": FASTGPT_URL+"chat/share?shareId=cy2uRFeYVahpoEdETXoisAfo",
         "image_url": "/static/img/robocon_logo.png",
         "template_name": "dashboard/competition_chat.html",
         "resource_loader_key": "robocon_bionic_legged",

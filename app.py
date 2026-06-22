@@ -50,7 +50,7 @@ from utils.usage_analytics import (
 )
 
 from database_mongo import db, user_sessions_collection
-from config import EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL,FASTGPT_MONGO_URI,ANALYTICS_ACCESS_KEY
+from config import FASTGPT_URL,EMAIL_URL,MAIL_AUTH_KEY,APP_PORT,MYSQL_URL,MONGO_URL,FASTGPT_MONGO_URI,ANALYTICS_ACCESS_KEY
 from app_kg import app_kg
 from app_comp import app_comp, agents_kd
 from study_situation_LLM import study_situation_LLM
@@ -401,8 +401,8 @@ def _fastgpt_dialogue_targets():
     extra_targets = {}
     for share_url, name in [
         (new_chat_url, "首页通用问答"),
-        ("http://180.85.206.30:3000/chat/share?shareId=eXdNT9oSlB5U6MDNrYCCFK0T", "学情分析-教师"),
-        ("http://180.85.206.30:3000/chat/share?shareId=eJTdUHhzeIBYWb7Kdp6URitd", "学情分析-学生"),
+        (FASTGPT_URL+"chat/share?shareId=eXdNT9oSlB5U6MDNrYCCFK0T", "学情分析-教师"),
+        (FASTGPT_URL+"chat/share?shareId=eJTdUHhzeIBYWb7Kdp6URitd", "学情分析-学生"),
     ]:
         share_id = _extract_share_id(share_url)
         if share_id:

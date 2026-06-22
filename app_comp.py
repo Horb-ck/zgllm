@@ -26,6 +26,8 @@ from competition_agents import (
     list_kd_agents,
 )
 
+from config import FASTGPT_URL
+
 app_comp = Blueprint("app_comp", __name__)
 
 ROBOCON_AGENT_CONFIG = get_competition_agent_by_key("robocon_main") or {}
@@ -83,7 +85,7 @@ ROBOCON_SCHEDULER_STATE = {
     "lock": threading.Lock(),
     "thread": None
 }
-ROBOCON_FASTGPT_API_URL = os.environ.get("FASTGPT_API_URL", "http://180.85.206.30:3000/api").rstrip("/")
+ROBOCON_FASTGPT_API_URL = os.environ.get("FASTGPT_API_URL", FASTGPT_URL+"api").rstrip("/")
 ROBOCON_FASTGPT_DATASET_ID = os.environ.get(
     "FASTGPT_ROBOCON_DATASET_ID",
     "69c23d555a95f8059e185c36"

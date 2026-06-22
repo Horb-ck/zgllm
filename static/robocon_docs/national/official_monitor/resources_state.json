@@ -8,15 +8,14 @@
     "update_note": "后台定时任务已在 2026-06-22 03:00:28 完成最近一次官网同步，当前仅对规则、图册、FAQ 等规则资产下载附件，通知类内容只记录详情。",
     "docs": [
       {
-        "title": "第二十五届全国大学生机器人大赛 ROBOCON 参赛队行为规范与安全承诺书",
+        "title": "第二十五届全国大学生机器人大赛 ROBOCON 参赛队行为规范与安全承诺书 2026-06-08 请报到时提交纸质版承诺书，无承诺书不得办理参赛手续 通知公告",
         "type": "通知",
         "date": "2026-06-08",
         "url": "https://robocon.org.cn/sys-nd/89.html",
         "preview_url": "https://robocon.org.cn/sys-nd/89.html",
         "source": "ROBOCON 官网赛事动态",
         "category": "general_notice",
-        "download_policy": "metadata_only",
-        "summary": "全国大学生机器人大赛ROBOCON 首页 | 关于大赛 2025赛事 赛事代表大会 2025证书查询 | 赛事动态 赛事规则 通知公告 新闻发布 | 报名 | 联系我们 第二十五届全国大学生机器人大赛 ROBOCON 参赛队行为规范与安全承诺书 请报到时提交纸质版承诺书，无承诺书不得办理参赛手续 2026-06-08 19:10 第二十五届全国大学生机器人大"
+        "download_policy": "metadata_only"
       },
       {
         "title": "第二十五届全国大学生机器人大赛ROBOCON比赛通知",
