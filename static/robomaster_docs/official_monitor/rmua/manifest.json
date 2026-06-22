@@ -1,12 +1,12 @@
 {
   "track_key": "rmua",
   "track_label": "RMUA",
-  "updated_at": "2026-06-17 22:15:50",
+  "updated_at": "2026-06-22 03:01:00",
   "doc_count": 2,
   "docs": [
     {
       "title": "RoboMaster 2026 机甲大师高校人工智能挑战赛比赛规则手册V1.0.0.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-01-30",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/3e1c7a2859654326ac7d7b70205536e51769767756927/RoboMaster 2026 机甲大师高校人工智能挑战赛比赛规则手册V1.0.0.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmua/RoboMaster_2026_机甲大师高校人工智能挑战赛比赛规则手册V1.0.0_bdd9a6e66d6b.pdf",
@@ -28,7 +28,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-01-30",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/39f2f028bff24ccea0830d3fdd87a2f61768459324737/RoboMaster 2026 机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmua/RoboMaster_2026_机甲大师高校人工智能挑战赛参赛手册V1.0.0（20260115）_3822a86b8277.pdf",

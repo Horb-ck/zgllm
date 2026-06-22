@@ -4394,6 +4394,2016 @@
       "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/a2df2c3c0a28433ea17771e00b5c49b41764044823107/RoboMaster Referee System Serial Port Protocol Appendix V1.5（20230717）.pdf",
       "training_type": "chunk",
       "uploaded_at": "2026-06-17 22:36:06"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.1.0（20251208）.pdf",
+      "collection_id": "6a32edcce2eeb153edc0c50f",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.1.0（20251208）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/073961674d05447bb9b8b9160d97fb921765166210881/RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.1.0（20251208）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:31"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.1.0（20251208）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.1.0（20251208）.pdf",
+      "collection_id": "6a32edcde2eeb153edc0c587",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.1.0（20251208）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/073961674d05447bb9b8b9160d97fb921765166210881/RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.1.0（20251208）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:32"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.0.0（20251021）.pdf",
+      "collection_id": "6a32edcde2eeb153edc0c5fe",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.0.0（20251021）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/e241d31a73b54ea5b81920fb6d1fa3a41761039370120/RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.0.0（20251021）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:32"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.0.0（20251021）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.0.0（20251021）.pdf",
+      "collection_id": "6a32edcee2eeb153edc0c664",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.0.0（20251021）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/e241d31a73b54ea5b81920fb6d1fa3a41761039370120/RoboMaster 2026 机甲大师高校联盟赛比赛规则手册 V1.0.0（20251021）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:33"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.1.0（20251225）.pdf",
+      "collection_id": "6a32edcee2eeb153edc0c6c8",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/71cc772615c341c28be4f16d09011d921766656341580/RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.1.0（20251225）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:33"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.1.0（20251225）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.1.0（20251225）.pdf",
+      "collection_id": "6a32edcfe2eeb153edc0c72f",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/71cc772615c341c28be4f16d09011d921766656341580/RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.1.0（20251225）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:33"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.0.0（20251021）.pdf",
+      "collection_id": "6a32edcfe2eeb153edc0c78e",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.0.0（20251021）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/fea87c2bb5f14a50846253e1da1658e01761032197139/RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.0.0（20251021）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:34"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.0.0（20251021）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.0.0（20251021）.pdf",
+      "collection_id": "6a32edcfe2eeb153edc0c7dc",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.0.0（20251021）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/fea87c2bb5f14a50846253e1da1658e01761032197139/RoboMaster 2026 机甲大师高校联盟赛参赛手册V1.0.0（20251021）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:34"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
+      "collection_id": "6a32edd0e2eeb153edc0c852",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.3.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/0af874e7e10a4f9eb7c3c4872e47f03b1770636018010/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:35"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
+      "collection_id": "6a32edd0e2eeb153edc0c8c6",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.3.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/0af874e7e10a4f9eb7c3c4872e47f03b1770636018010/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:35"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
+      "collection_id": "6a32edd1e2eeb153edc0c938",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.2.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/a36873dca86c4883b9b067eda72ad43b1767087376172/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:36"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
+      "collection_id": "6a32edd2e2eeb153edc0c9ae",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.2.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/a36873dca86c4883b9b067eda72ad43b1767087376172/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:36"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
+      "collection_id": "6a32edd2e2eeb153edc0ca30",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/6367360c67454a2b9e448fc3b980d1bd1766656409272/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:37"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
+      "collection_id": "6a32edd3e2eeb153edc0ca9c",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/6367360c67454a2b9e448fc3b980d1bd1766656409272/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:38"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
+      "collection_id": "6a32edd4e2eeb153edc0cb08",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/de032563bfa247b8ad765406167ecbe41761039375926/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:38"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
+      "collection_id": "6a32edd4e2eeb153edc0cb86",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "手册",
+        "V1.0.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/de032563bfa247b8ad765406167ecbe41761039375926/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:39"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "collection_id": "6a32edd5e2eeb153edc0cbf6",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/270e4d3f297a414ba809f701dda8a28f1767780578641/RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:39"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "collection_id": "6a32edd5e2eeb153edc0cc66",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/270e4d3f297a414ba809f701dda8a28f1767780578641/RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:40"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a32edd6e2eeb153edc0cd14",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bddd3bef88534cd79dc45276d377533f1761651077423/RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:40"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a32edd6e2eeb153edc0cd8d",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bddd3bef88534cd79dc45276d377533f1761651077423/RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:41"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
+      "collection_id": "6a32edd8e2eeb153edc0ce48",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
+      "version_text": "V1.4.1",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/81cd185109d64c329ec7717c1584ab2a1776752726810/RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:42"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
+      "collection_id": "6a32edd8e2eeb153edc0ceb4",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
+      "version_text": "V1.4.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/cd7e23495de144c6896308c2d03813d11774266958298/RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:43"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
+      "collection_id": "6a32edd9e2eeb153edc0cf20",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
+      "version_text": "V1.4.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/cd7e23495de144c6896308c2d03813d11774266958298/RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:44"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
+      "collection_id": "6a32eddae2eeb153edc0cf9c",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/1f5311fdcab74273ba596a9446fbbe331770969401569/RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:44"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
+      "collection_id": "6a32eddbe2eeb153edc0d00a",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/1f5311fdcab74273ba596a9446fbbe331770969401569/RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:45"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "collection_id": "6a32eddbe2eeb153edc0d07a",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/40df7539f8fc431f83bb749ab8172bf81767779361679/RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:46"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "collection_id": "6a32eddce2eeb153edc0d0e6",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/40df7539f8fc431f83bb749ab8172bf81767779361679/RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:46"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a32eddce2eeb153edc0d153",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/044bd71580de4d6aa586735f4d42e6a61761650956411/RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:47"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a32eddde2eeb153edc0d1b8",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/044bd71580de4d6aa586735f4d42e6a61761650956411/RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:48"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
+      "collection_id": "6a32eddee2eeb153edc0d227",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
+      "version_text": "V1.5.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.5.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.5.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/c9e072de769a44bb9a60e1cf6f1214a71779183286124/RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:48"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
+      "collection_id": "6a32eddfe2eeb153edc0d297",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
+      "version_text": "V1.5.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.5.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.5.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/c9e072de769a44bb9a60e1cf6f1214a71779183286124/RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:49"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
+      "collection_id": "6a32ede0e2eeb153edc0d322",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
+      "version_text": "V1.4.2",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.2"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.2",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/1f59fe9c9d154752a5e456e1f7139d4c1777519819115/RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:50"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
+      "collection_id": "6a32ede1e2eeb153edc0d38e",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
+      "version_text": "V1.4.2",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.2"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.2",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/1f59fe9c9d154752a5e456e1f7139d4c1777519819115/RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:51"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
+      "collection_id": "6a32ede2e2eeb153edc0d3fa",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
+      "version_text": "V1.4.1",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/8ae5be57358643e8ad1861848cd56c481776412189143/RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:52"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
+      "collection_id": "6a32ede3e2eeb153edc0d466",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
+      "version_text": "V1.4.1",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/8ae5be57358643e8ad1861848cd56c481776412189143/RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:53"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
+      "collection_id": "6a32ede3e2eeb153edc0d4dd",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
+      "version_text": "V1.4.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/6b7e680aba75431182a8ba7045c262951774230994387/RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:54"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
+      "collection_id": "6a32ede4e2eeb153edc0d553",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
+      "version_text": "V1.4.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/6b7e680aba75431182a8ba7045c262951774230994387/RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:55"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
+      "collection_id": "6a32ede5e2eeb153edc0d5c0",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bca662c2b43f40b88754f6a8e6254b841770969477350/RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:56"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
+      "collection_id": "6a32ede6e2eeb153edc0d62c",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.3.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bca662c2b43f40b88754f6a8e6254b841770969477350/RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:56"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
+      "collection_id": "6a32ede7e2eeb153edc0d699",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/afa8d58d7d2b43efb72809a43ede11571767779263329/RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:57"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
+      "collection_id": "6a32ede8e2eeb153edc0d705",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.2.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/afa8d58d7d2b43efb72809a43ede11571767779263329/RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:01:58"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a32ede9e2eeb153edc0d7e7",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/b6cff695e30948369f97ae2819e4216e1761650934839/RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:01:59"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a32edeae2eeb153edc0d8ca",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.0.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/b6cff695e30948369f97ae2819e4216e1761650934839/RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:02:00"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
+      "collection_id": "6a32edeae2eeb153edc0d927",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/4c515209610645d09689d1e8518d8be31766656573731/RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:01"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
+      "collection_id": "6a32edeae2eeb153edc0d985",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/4c515209610645d09689d1e8518d8be31766656573731/RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:02:01"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
+      "collection_id": "6a32edebe2eeb153edc0d9ee",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/e69069028b1041538874dae2b62888911761018059333/RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:01"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
+      "collection_id": "6a32edebe2eeb153edc0da43",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.1.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/e69069028b1041538874dae2b62888911761018059333/RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-18 03:02:01"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.3.0（20260327）.pdf",
+      "collection_id": "6a32edece2eeb153edc0db34",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.3.0（20260327）.pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.3.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/ef4f084944e34393aa70378a4a405c681774586313231/RoboMaster 2026 机甲大师高校系列赛通信协议 V1.3.0（20260327）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:02"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.2.0（20260209）.pdf",
+      "collection_id": "6a32edece2eeb153edc0db92",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.2.0（20260209）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.2.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/0f0b7b1db4a843b89caeddabfe69dc471770881652881/RoboMaster 2026 机甲大师高校系列赛通信协议 V1.2.0（20260209）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:03"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.1.0（20251217）.pdf",
+      "collection_id": "6a32edece2eeb153edc0dbef",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.1.0（20251217）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.1.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/502f6389eb64439c942327f56c8289cc1766051819355/RoboMaster 2026 机甲大师高校系列赛通信协议 V1.1.0（20251217）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:03"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.0.0（20251127）.pdf",
+      "collection_id": "6a32edede2eeb153edc0dc3f",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 机甲大师高校系列赛通信协议 V1.0.0（20251127）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.0.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/be708495d31c4737b3c80b832b701f161764246686747/RoboMaster 2026 机甲大师高校系列赛通信协议 V1.0.0（20251127）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:03"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 University Series Communication Protocol V1.3.1（20260520）.pdf",
+      "collection_id": "6a32edede2eeb153edc0dca5",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 University Series Communication Protocol V1.3.1（20260520）.pdf",
+      "version_text": "V1.3.1",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.3.1"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.3.1",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/3e6681e3921d42a3a55745645c1148961779246088444/RoboMaster 2026 University Series Communication Protocol V1.3.1（20260520）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:03"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 University Series Communication Protocol V1.3.0（20260327）.pdf",
+      "collection_id": "6a32edede2eeb153edc0dce3",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 University Series Communication Protocol V1.3.0（20260327）.pdf",
+      "version_text": "V1.3.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.3.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.3.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/d1997b5de3c24e33a2e80620854b24af1774586321935/RoboMaster 2026 University Series Communication Protocol V1.3.0（20260327）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:04"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 University Series Communication Protocol V1.2.0（20260213）.pdf",
+      "collection_id": "6a32edede2eeb153edc0dd12",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 University Series Communication Protocol V1.2.0（20260213）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.2.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/f5d58eadb44142c09f9ad92e008231531770968919241/RoboMaster 2026 University Series Communication Protocol V1.2.0（20260213）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:04"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 University Series Communication Protocol V1.1.0（20251230）.pdf",
+      "collection_id": "6a32edeee2eeb153edc0dd41",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 University Series Communication Protocol V1.1.0（20251230）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.1.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/1efb9933b0e64aba9237228653762e411767088405842/RoboMaster 2026 University Series Communication Protocol V1.1.0（20251230）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:04"
+    },
+    {
+      "dataset_id": "6a32af49e2eeb153edc06786",
+      "filename": "RoboMaster 2026 University Series Communication Protocol V1.0.0（20251203）.pdf",
+      "collection_id": "6a32edeee2eeb153edc0dd70",
+      "parent_id": "",
+      "track_key": "rmu",
+      "date": "2026-05-20",
+      "title": "RoboMaster 2026 University Series Communication Protocol V1.0.0（20251203）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMU",
+        "V1.0.0",
+        "RMU",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/e43c29c066b443fab64614397cbfd3761764749912683/RoboMaster 2026 University Series Communication Protocol V1.0.0（20251203）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-18 03:02:04"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Rule Manual V1.2.0（20260113）.pdf",
+      "collection_id": "6a3590cde2eeb153edc13090",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Rule Manual V1.2.0（20260113）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bf8d1954e384499281310380b4a293b71768291609875/RoboMaster 2026 University League Rule Manual V1.2.0（20260113）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-20 03:01:31"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Rule Manual V1.2.0（20260113）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University League Rule Manual V1.2.0（20260113）.pdf",
+      "collection_id": "6a3590cde2eeb153edc130f8",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Rule Manual V1.2.0（20260113）.pdf",
+      "version_text": "V1.2.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.2.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bf8d1954e384499281310380b4a293b71768291609875/RoboMaster 2026 University League Rule Manual V1.2.0（20260113）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-20 03:01:32"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Rule Manual V1.1.0（20251209）.pdf",
+      "collection_id": "6a3590cee2eeb153edc13174",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Rule Manual V1.1.0（20251209）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/030952a273af43ca85bcddc8e34212211765275249500/RoboMaster 2026 University League Rule Manual V1.1.0（20251209）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-20 03:01:33"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Rule Manual V1.1.0（20251209）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University League Rule Manual V1.1.0（20251209）.pdf",
+      "collection_id": "6a3590cee2eeb153edc131f2",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Rule Manual V1.1.0（20251209）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/030952a273af43ca85bcddc8e34212211765275249500/RoboMaster 2026 University League Rule Manual V1.1.0（20251209）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-20 03:01:33"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Rule Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a3590cfe2eeb153edc13256",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Rule Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/5caf60ab83a04bd5a48ba119ac7f9e581761651053565/RoboMaster 2026 University League Rule Manual V1.0.0（20251028）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-20 03:01:34"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Rule Manual V1.0.0（20251028）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University League Rule Manual V1.0.0（20251028）.pdf",
+      "collection_id": "6a3590cfe2eeb153edc132c2",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Rule Manual V1.0.0（20251028）.pdf",
+      "version_text": "V1.0.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.0.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/5caf60ab83a04bd5a48ba119ac7f9e581761651053565/RoboMaster 2026 University League Rule Manual V1.0.0（20251028）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-20 03:01:34"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Participant Manual V1.1.0（20251225）.pdf",
+      "collection_id": "6a3590d0e2eeb153edc13324",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Participant Manual V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/185ceb8de1ec436f8d2b20da88976f071766656378169/RoboMaster 2026 University League Participant Manual V1.1.0（20251225）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-20 03:01:35"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Participant Manual V1.1.0（20251225）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University League Participant Manual V1.1.0（20251225）.pdf",
+      "collection_id": "6a3590d0e2eeb153edc13384",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Participant Manual V1.1.0（20251225）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/185ceb8de1ec436f8d2b20da88976f071766656378169/RoboMaster 2026 University League Participant Manual V1.1.0（20251225）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-20 03:01:35"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Participant Manual V1.1.0（20251021）.pdf",
+      "collection_id": "6a3590d1e2eeb153edc133e6",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Participant Manual V1.1.0（20251021）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0",
+        "RMUL",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/752f0ae88ee649ee8a974ba418665ea31761032202707/RoboMaster 2026 University League Participant Manual V1.1.0（20251021）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-20 03:01:35"
+    },
+    {
+      "dataset_id": "6a32af39e2eeb153edc05cf1",
+      "filename": "RoboMaster 2026 University League Participant Manual V1.1.0（20251021）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 University League Participant Manual V1.1.0（20251021）.pdf",
+      "collection_id": "6a3590d1e2eeb153edc1344f",
+      "parent_id": "",
+      "track_key": "rmul",
+      "date": "2026-03-18",
+      "title": "RoboMaster 2026 University League Participant Manual V1.1.0（20251021）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUL",
+        "规则",
+        "V1.1.0",
+        "RMUL",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/752f0ae88ee649ee8a974ba418665ea31761032202707/RoboMaster 2026 University League Participant Manual V1.1.0（20251021）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-20 03:01:36"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
+      "collection_id": "6a3590d2e2eeb153edc1351e",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/a0e96a98e6a846fcb8fa8309733e8f3a1761018043235/RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-20 03:01:36"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf（问答对）",
+      "source_filename": "RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
+      "collection_id": "6a3590d2e2eeb153edc13583",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
+      "version_text": "V1.1.0",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "手册",
+        "V1.1.0"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "手册",
+        "V1.1.0",
+        "RMUC",
+        "历史版本",
+        "问答对提取"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/a0e96a98e6a846fcb8fa8309733e8f3a1761018043235/RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
+      "training_type": "qa",
+      "uploaded_at": "2026-06-20 03:01:37"
+    },
+    {
+      "dataset_id": "6a32ae84e2eeb153edc04c5d",
+      "filename": "RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
+      "collection_id": "6a3590d3e2eeb153edc136af",
+      "parent_id": "",
+      "track_key": "rmuc",
+      "date": "2026-05-19",
+      "title": "RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
+      "version_text": "V1.4.1",
+      "semantic_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1"
+      ],
+      "effective_tags": [
+        "ROBOMASTER",
+        "RMUC",
+        "规则",
+        "V1.4.1",
+        "RMUC",
+        "历史版本"
+      ],
+      "is_latest_version": false,
+      "source_url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/81cd185109d64c329ec7717c1584ab2a1776752726810/RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
+      "training_type": "chunk",
+      "uploaded_at": "2026-06-20 03:01:38"
     }
   ]
 }

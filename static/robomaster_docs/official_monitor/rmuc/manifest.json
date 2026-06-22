@@ -1,12 +1,12 @@
 {
   "track_key": "rmuc",
   "track_label": "RMUC",
-  "updated_at": "2026-06-17 22:15:36",
+  "updated_at": "2026-06-22 03:00:47",
   "doc_count": 33,
   "docs": [
     {
       "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.4.1（20260421）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/36eeb3f9ce2b4d0caf551a58151d4cd21776999563305/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.4.1（20260421）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师高校系列赛机器人制作规范手册V1.4.1（20260421）_beb5f83f722d.pdf",
@@ -28,7 +28,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.4.0（20260323）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/2e43720d34ee4928a6e795445c6842931774267015799/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.4.0（20260323）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师高校系列赛机器人制作规范手册V1.4.0（20260323）_76da5b7ef99a.pdf",
@@ -50,7 +50,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/715e2519e5384666a5d13edda17c6b831770696773838/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师高校系列赛机器人制作规范手册V1.3.0（20260209）_b90b34f7c89a.pdf",
@@ -72,7 +72,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/e1239c109067453cb6cf3e16bfefc89e1767087230332/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师高校系列赛机器人制作规范手册V1.2.0（20251230）_f3b168cf3df1.pdf",
@@ -94,7 +94,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/0d7cee7fbbb04e55ab5539e0110fcb7c1766654238232/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师高校系列赛机器人制作规范手册V1.1.0（20251225）_5db41c50c820.pdf",
@@ -116,7 +116,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/57e95b804bd0428da573a67932c7f1831761039232691/RoboMaster 2026 机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师高校系列赛机器人制作规范手册V1.0.0（20251021）_6ed0048ad741.pdf",
@@ -138,7 +138,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.5.0（20260519）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/86e7456923fd4df98631a2a0348ef1af1779183252498/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.5.0（20260519）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.5.0（20260519）_2e245c71f4cf.pdf",
@@ -160,7 +160,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.4.2（20260430）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/220d7aa9b5cf44a3961a70fd7478399a1777519796096/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.4.2（20260430）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.4.2（20260430）_837edea4fd6d.pdf",
@@ -182,7 +182,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.4.1（20260417）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/48f214b5e23a48c1a8b3871843a5fa221776412113694/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.4.1（20260417）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.4.1（20260417）_b0266dd85538.pdf",
@@ -204,7 +204,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.4.0（20260320）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/38afa6d7914345f7bb5d496692fd429b1773977681621/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.4.0（20260320）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.4.0（20260320）_fadf6096d486.pdf",
@@ -226,7 +226,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.3.0（20260209）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/c85923a9d793448288b5071f88a289721770635192667/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.3.0（20260209）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.3.0（20260209）_f36ccb556617.pdf",
@@ -248,7 +248,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.2.0（20251230）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/96d4042cd8cc4a5aad10c31c9b028e5b1767087205729/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.2.0（20251230）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.2.0（20251230）_e1e27102c795.pdf",
@@ -270,7 +270,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.1.0（20251225）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bdf1bc7d3c2c4aaea86846fa05603dec1766654221432/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.1.0（20251225）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.1.0（20251225）_5458973a63d5.pdf",
@@ -292,7 +292,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.0.0（20251021）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/5219296920da4fbfbf3eeac77977d2321761039213930/RoboMaster 2026 机甲大师超级对抗赛比赛规则手册V1.0.0（20251021）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛比赛规则手册V1.0.0（20251021）_17ac87f8c67e.pdf",
@@ -314,7 +314,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛参赛手册（南部赛区）V2.0.0.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/16df3136858641f6ac900dcbb3c8443a1777280810178/RoboMaster 2026 机甲大师超级对抗赛参赛手册（南部赛区）V2.0.0.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛参赛手册（南部赛区）V2.0.0_bf98e0002aaf.pdf",
@@ -336,7 +336,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛参赛手册（北部赛区）V2.0.0.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/eabc5229b45f404c8280262918cb00ca1777532326166/RoboMaster 2026 机甲大师超级对抗赛参赛手册（北部赛区）V2.0.0.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛参赛手册（北部赛区）V2.0.0_5b6acceb3fd5.pdf",
@@ -358,7 +358,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛参赛手册（东部赛区）V2.0.0.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/c6601265aae840559ad4ca7bb2c7cb0d1777532319174/RoboMaster 2026 机甲大师超级对抗赛参赛手册（东部赛区）V2.0.0.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛参赛手册（东部赛区）V2.0.0_bd00c5f9b806.pdf",
@@ -380,7 +380,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251225）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/3fcc5b752b7a435b9323892f57c574141766654205303/RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251225）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛参赛手册V1.1.0（20251225）_444836b2203b.pdf",
@@ -402,7 +402,7 @@
     },
     {
       "title": "RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/a0e96a98e6a846fcb8fa8309733e8f3a1761018043235/RoboMaster 2026 机甲大师超级对抗赛参赛手册V1.1.0（20251021）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_机甲大师超级对抗赛参赛手册V1.1.0（20251021）_615d7fa0e3a9.pdf",
@@ -424,7 +424,7 @@
     },
     {
       "title": "RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/81cd185109d64c329ec7717c1584ab2a1776752726810/RoboMaster 2026 University Series Robot Specification Manual V1.4.1（20260421）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Series_Robot_Specification_Manual_V1.4.1（20260421）_bbf9b5c7a2ae.pdf",
@@ -446,7 +446,7 @@
     },
     {
       "title": "RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/cd7e23495de144c6896308c2d03813d11774266958298/RoboMaster 2026 University Series Robot Specification Manual V1.4.0（20260323） .pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Series_Robot_Specification_Manual_V1.4.0（20260323）_77b9cc8c6856.pdf",
@@ -468,7 +468,7 @@
     },
     {
       "title": "RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/1f5311fdcab74273ba596a9446fbbe331770969401569/RoboMaster 2026 University Series Robot Specification Manual V1.3.0(20260213).pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Series_Robot_Specification_Manual_V1.3.0(20260213)_e28d02ec0e1e.pdf",
@@ -490,7 +490,7 @@
     },
     {
       "title": "RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/40df7539f8fc431f83bb749ab8172bf81767779361679/RoboMaster 2026 University Series Robot Specification Manual V1.2.0（20260107）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Series_Robot_Specification_Manual_V1.2.0（20260107）_756ad473e6a2.pdf",
@@ -512,7 +512,7 @@
     },
     {
       "title": "RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/044bd71580de4d6aa586735f4d42e6a61761650956411/RoboMaster 2026 University Series Robot Specification Manual V1.0.0（20251028）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Series_Robot_Specification_Manual_V1.0.0（20251028）_1d3c5579cd0a.pdf",
@@ -534,7 +534,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/c9e072de769a44bb9a60e1cf6f1214a71779183286124/RoboMaster 2026 University Championship Rule Manual V1.5.0（20260519）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Rule_Manual_V1.5.0（20260519）_2368ab26b8f5.pdf",
@@ -556,7 +556,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/1f59fe9c9d154752a5e456e1f7139d4c1777519819115/RoboMaster 2026 University Championship Rule Manual V1.4.2（20260430）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Rule_Manual_V1.4.2（20260430）_a693e5d9fec1.pdf",
@@ -578,7 +578,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/8ae5be57358643e8ad1861848cd56c481776412189143/RoboMaster 2026 University Championship Rule Manual V1.4.1（20260417）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Rule_Manual_V1.4.1（20260417）_f196b2033134.pdf",
@@ -600,7 +600,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/6b7e680aba75431182a8ba7045c262951774230994387/RoboMaster 2026 University Championship Rule Manual V1.4.0（20260323）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Rule_Manual_V1.4.0（20260323）_a4c77c5e05d7.pdf",
@@ -622,7 +622,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/bca662c2b43f40b88754f6a8e6254b841770969477350/RoboMaster 2026 University Championship Rule Manual V1.3.0（20260213）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Rule_Manual_V1.3.0（20260213）_77461b0d33d7.pdf",
@@ -644,7 +644,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/afa8d58d7d2b43efb72809a43ede11571767779263329/RoboMaster 2026 University Championship Rule Manual V1.2.0（20260107）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Rule_Manual_V1.2.0（20260107）_64b3e01df9a9.pdf",
@@ -666,7 +666,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/b6cff695e30948369f97ae2819e4216e1761650934839/RoboMaster 2026 University Championship Rule Manual V1.0.0（20251028）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Rule_Manual_V1.0.0（20251028）_772b9e062c23.pdf",
@@ -688,7 +688,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/4c515209610645d09689d1e8518d8be31766656573731/RoboMaster 2026 University Championship Participant Manual V1.1.0（20251225）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Participant_Manual_V1.1.0（20251225）_d716e301924c.pdf",
@@ -710,7 +710,7 @@
     },
     {
       "title": "RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
-      "type": "规则",
+      "type": "核心规则",
       "date": "2026-05-19",
       "url": "https://hz-rm-bbs-web-prod.oss-cn-hangzhou.aliyuncs.com/e69069028b1041538874dae2b62888911761018059333/RoboMaster 2026 University Championship Participant Manual V1.1.0（20251021）.pdf",
       "preview_url": "/static/robomaster_docs/official_monitor/rmuc/RoboMaster_2026_University_Championship_Participant_Manual_V1.1.0（20251021）_ad1cc564b7fe.pdf",

@@ -5,7 +5,7 @@
     "description": "ROBOTAC 官网实时抓取的通知、规则与章程。",
     "official_url": "https://www.robotac.cn/h-col-104.html",
     "updated_at": "2026-06-10",
-    "synced_at": "2026-06-16 02:59:59",
+    "synced_at": "2026-06-22 02:59:59",
     "update_note": "当前页面数据由服务端定期从 ROBOTAC 官网抓取，并带缓存兜底。",
     "docs": [
       {
@@ -104,7 +104,7 @@
     "description": "ROBOTAC 官网实时抓取的赛事介绍与办赛动态。",
     "official_url": "https://www.robotac.cn/",
     "updated_at": "2026-04-13",
-    "synced_at": "2026-06-16 02:59:59",
+    "synced_at": "2026-06-22 02:59:59",
     "update_note": "当前页面数据由服务端定期从 ROBOTAC 官网抓取，并带缓存兜底。",
     "docs": [
       {
