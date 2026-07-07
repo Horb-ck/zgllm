@@ -1566,10 +1566,10 @@ def study_situation():
     role = session.get('role')
     if role == 'teacher':
         return render_template('dashboard/teacher_learning_analysis.html',embed_url=chat,
-                              username=session.get('username', '用户'),sis_id = session.get('sis_id'))
+                              username=session.get('username', '用户'), role=role, sis_id = session.get('sis_id'))
     else:
         return render_template('dashboard/student_learning_analysis.html',embed_url=chat,
-                              username=session.get('username', '用户'),sis_id = session.get('sis_id'))
+                              username=session.get('username', '用户'), role=role, sis_id = session.get('sis_id'))
     
 
 #获取某课程下“既未完成也未学习”的学生名单->基础功能    + （站内提醒功能 + 学生提问/答疑功能）->这两个涉及后端数据库，现在需要做吗
@@ -1894,3 +1894,4 @@ except Exception as e:
 
 if __name__ == '__main__': 
     app.run(debug=False, use_reloader=True, host='0.0.0.0', port=APP_PORT) 
+
