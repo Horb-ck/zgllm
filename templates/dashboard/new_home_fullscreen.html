@@ -11,7 +11,7 @@
             <div class="spark-hero-copy">
                 <h1>明月科创教育大模型</h1>
                 <p class="spark-copy-lines">
-                    <span>依托重庆大学卓越工程师学院“AI+机电”的智能底座，面向明月班科创教育与项目制教学场景，</span>
+                    <span>依托重庆大学国家卓越工程师学院“AI+机电”的智能底座，面向明月班科创教育与项目制教学场景，</span>
                     <span>构建集知识图谱、智能问答、个性化推荐、战队智能体与学情分析于一体的智能教育平台，</span>
                     <span>将分散知识体系化、隐性经验可复用，为每位学生提供贯穿教学全流程的个性化学习支持。</span>
                 </p>
@@ -24,8 +24,82 @@
             </div>
 
             <div class="spark-hero-visual ai-knowledge-visual" id="knowledgeMapVisual">
-                <div class="knowledge-map-desktop" id="knowledgeMapDesktop" aria-label="AI 加机电知识架构图"></div>
-                <div class="knowledge-map-mobile" id="knowledgeMapMobile" aria-label="AI 加机电知识架构列表"></div>
+                <div class="xkrh-hero-diagram">
+                    <svg viewBox="0 0 800 800" role="img" aria-label="AI+机电 学科融合示意图">
+                        <defs>
+                            <filter id="xkrhSoftShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#3f176d" flood-opacity=".25"/>
+                            </filter>
+                            <filter id="xkrhNodeShadow" x="-40%" y="-40%" width="180%" height="180%">
+                                <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#6f35aa" flood-opacity=".18"/>
+                            </filter>
+                            <path id="xkrhArc0" d="M400 79 A321 321 0 0 1 627 173"/>
+                            <path id="xkrhArc1" d="M653 198 A321 321 0 0 1 721 400"/>
+                            <path id="xkrhArc2" d="M721 400 A321 321 0 0 1 627 627"/>
+                            <path id="xkrhArc3" d="M600 650 A321 321 0 0 1 400 721"/>
+                            <path id="xkrhArc4" d="M400 721 A321 321 0 0 1 173 627"/>
+                            <path id="xkrhArc5" d="M147 602 A321 321 0 0 1 79 400"/>
+                            <path id="xkrhArc6" d="M79 400 A321 321 0 0 1 173 173"/>
+                            <path id="xkrhArc7" d="M198 147 A321 321 0 0 1 400 79"/>
+                        </defs>
+
+                        <ellipse cx="400" cy="785" rx="330" ry="60" class="xkrh-ground"/>
+
+                        <circle cx="400" cy="400" r="335" class="xkrh-outer"/>
+                        <circle cx="400" cy="400" r="255" class="xkrh-orbit"/>
+
+                        <g>
+                            <line x1="400" y1="55" x2="400" y2="98" class="xkrh-tick"/>
+                            <line x1="400" y1="702" x2="400" y2="745" class="xkrh-tick"/>
+                            <line x1="55" y1="400" x2="98" y2="400" class="xkrh-tick"/>
+                            <line x1="702" y1="400" x2="745" y2="400" class="xkrh-tick"/>
+                            <line x1="156" y1="156" x2="186" y2="186" class="xkrh-tick"/>
+                            <line x1="614" y1="614" x2="644" y2="644" class="xkrh-tick"/>
+                            <line x1="614" y1="186" x2="644" y2="156" class="xkrh-tick"/>
+                            <line x1="156" y1="644" x2="186" y2="614" class="xkrh-tick"/>
+                        </g>
+
+                        <circle cx="400" cy="400" r="240" class="xkrh-core"/>
+                        <line x1="400" y1="160" x2="400" y2="640" class="xkrh-line"/>
+                        <line x1="160" y1="400" x2="640" y2="400" class="xkrh-line"/>
+
+                        <circle cx="400" cy="400" r="88" class="xkrh-center-aura"/>
+                        <circle cx="400" cy="400" r="76" class="xkrh-center-disc"/>
+                        <circle cx="400" cy="400" r="78" class="xkrh-center-ring"/>
+                        <text x="400" y="412" class="xkrh-center-text" text-anchor="middle">AI+机电</text>
+
+                        <text x="270" y="300" class="xkrh-main-text" text-anchor="middle"><tspan x="270">人工</tspan><tspan x="270" dy="38">智能</tspan></text>
+                        <text x="530" y="300" class="xkrh-main-text" text-anchor="middle"><tspan x="530">制造</tspan><tspan x="530" dy="38">技术</tspan></text>
+                        <text x="270" y="505" class="xkrh-main-text" text-anchor="middle"><tspan x="270">电机</tspan><tspan x="270" dy="38">电控</tspan></text>
+                        <text x="530" y="505" class="xkrh-main-text" text-anchor="middle"><tspan x="530">智能</tspan><tspan x="530" dy="38">芯片</tspan></text>
+
+                        <g>
+                            <circle cx="400" cy="128" r="54" class="xkrh-node"/>
+                            <text x="400" y="119" class="xkrh-node-text" text-anchor="middle"><tspan x="400">边缘</tspan><tspan x="400" dy="31">智能</tspan></text>
+
+                            <circle cx="595" cy="205" r="54" class="xkrh-node"/>
+                            <text x="595" y="196" class="xkrh-node-text" text-anchor="middle"><tspan x="595">智能</tspan><tspan x="595" dy="31">装备</tspan></text>
+
+                            <circle cx="672" cy="400" r="54" class="xkrh-node"/>
+                            <text x="672" y="391" class="xkrh-node-text" text-anchor="middle"><tspan x="672">新能源</tspan><tspan x="672" dy="31">动力</tspan></text>
+
+                            <circle cx="595" cy="595" r="54" class="xkrh-node"/>
+                            <text x="595" y="586" class="xkrh-node-text" text-anchor="middle"><tspan x="595">具身</tspan><tspan x="595" dy="31">智能</tspan></text>
+
+                            <circle cx="400" cy="672" r="54" class="xkrh-node"/>
+                            <text x="400" y="663" class="xkrh-node-text" text-anchor="middle"><tspan x="400">数据</tspan><tspan x="400" dy="31">智能</tspan></text>
+
+                            <circle cx="205" cy="595" r="54" class="xkrh-node"/>
+                            <text x="205" y="586" class="xkrh-node-text" text-anchor="middle"><tspan x="205">信息</tspan><tspan x="205" dy="31">安全</tspan></text>
+
+                            <circle cx="128" cy="400" r="54" class="xkrh-node"/>
+                            <text x="128" y="391" class="xkrh-node-text" text-anchor="middle"><tspan x="128">自动</tspan><tspan x="128" dy="31">驾驶</tspan></text>
+
+                            <circle cx="205" cy="205" r="54" class="xkrh-node"/>
+                            <text x="205" y="196" class="xkrh-node-text" text-anchor="middle"><tspan x="205">无人机</tspan><tspan x="205" dy="31">技术</tspan></text>
+                        </g>
+                    </svg>
+                </div>
             </div>
         </section>
 
@@ -178,7 +252,7 @@
         <section class="spark-section spark-data-section" aria-label="平台关键数据">
             <div class="spark-section-heading">
                 <!-- <span class="spark-kicker">平台概览</span> -->
-                <h2>使用数据</h2>
+                <h2>平台概览</h2>
                 <p class="spark-copy-lines">从对话活跃度、用户规模、课程资源与竞赛支持等维度，呈现平台当前建设与使用情况。</p>
             </div>
 
@@ -195,12 +269,12 @@
                     <span>汇聚正在使用平台开展学习与教学的用户规模</span>
                 </article>
                 <article class="strip-item">
-                    <span class="strip-label">课程资源数</span>
+                    <span class="strip-label">课程数量</span>
                     <strong class="strip-value">{{ homepage_stats.total_course_resources }}</strong>
                     <span>沉淀课程内容、案例资料与教学入口的资源总览</span>
                 </article>
                 <article class="strip-item">
-                    <span class="strip-label">支持竞赛数</span>
+                    <span class="strip-label">竞赛数量</span>
                     <strong class="strip-value">{{ homepage_stats.total_competitions }}</strong>
                     <span>覆盖多类竞赛场景，帮助团队高效备赛与训练</span>
                 </article>
@@ -287,7 +361,7 @@
 }
 
 .spark-hero-copy p {
-    max-width: 800px;
+    max-width: 840px;
     margin: 20px 0 0;
     font-size: 19px;
     line-height: 1.85;
@@ -337,6 +411,9 @@
     background: transparent;
     box-shadow: none;
     overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ai-knowledge-visual::before,
@@ -345,6 +422,7 @@
     position: absolute;
     pointer-events: none;
     border-radius: 50%;
+    display: none;
 }
 
 .ai-knowledge-visual::before {
@@ -368,191 +446,100 @@
     filter: blur(10px);
 }
 
-.knowledge-map-desktop,
-.knowledge-map-mobile {
+.xkrh-hero-diagram {
+    --xkrh-purple: #6f35aa;
+    --xkrh-purple-light: #cbb4e6;
     position: relative;
-    min-height: 500px;
+    z-index: 1;
+    width: min(100%, 580px);
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
 }
 
-.knowledge-map-mobile {
-    display: none;
-}
-
-.knowledge-map-layer,
-.knowledge-map-rings,
-.knowledge-map-links,
-.knowledge-map-tooltip-layer {
-    position: absolute;
-    inset: 0;
-}
-
-.knowledge-map-rings,
-.knowledge-map-links,
-.knowledge-map-tooltip-layer {
-    pointer-events: none;
-}
-
-.knowledge-map-rings::before,
-.knowledge-map-rings::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.knowledge-map-rings::before {
-    width: 56%;
-    height: 56%;
-    border: 1px solid rgba(132, 152, 214, 0.16);
-}
-
-.knowledge-map-rings::after {
-    width: 82%;
-    height: 82%;
-    border: 1px dashed rgba(132, 152, 214, 0.18);
-}
-
-.knowledge-map-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(132, 152, 214, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(132, 152, 214, 0.05) 1px, transparent 1px);
-    background-size: 36px 36px;
-    mask-image: radial-gradient(circle at center, rgba(0,0,0,0.9) 42%, rgba(0,0,0,0) 88%);
-    pointer-events: none;
-}
-
-.knowledge-map-link {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: var(--length);
-    height: 1px;
-    background: linear-gradient(90deg, rgba(120, 138, 214, 0.28), rgba(120, 138, 214, 0.04));
-    transform-origin: left center;
-    transform: rotate(var(--angle));
-}
-
-.knowledge-center-node,
-.knowledge-category {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-}
-
-.knowledge-center-node {
-    width: 190px;
-    height: 190px;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    text-align: center;
-    color: #fff;
-    background:
-        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.28), transparent 34%),
-        linear-gradient(145deg, #6b7fff, #7388ff 38%, #59c9f7 100%);
-    box-shadow: 0 24px 52px rgba(102, 118, 224, 0.26);
-    z-index: 4;
-}
-
-.knowledge-center-node strong {
-    display: block;
-    font-size: 32px;
-    line-height: 1.08;
-    letter-spacing: -0.04em;
-}
-
-.knowledge-center-node span {
-    display: block;
-    margin-top: 8px;
-    font-size: 13px;
-    opacity: 0.88;
-    letter-spacing: 0.06em;
-}
-
-.knowledge-category {
-    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y)));
-}
-
-.knowledge-category {
-    z-index: 3;
-}
-
-.knowledge-category-button {
-    min-height: 58px;
-    padding: 0 22px;
-    border-radius: 999px;
-    border: 1px solid rgba(132, 152, 214, 0.2);
-    background: rgba(255, 255, 255, 0.88);
-    box-shadow: 0 16px 36px rgba(79, 97, 156, 0.1);
-    color: var(--text);
-    font: inherit;
-    font-size: 17px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
-    backdrop-filter: blur(10px);
-}
-
-.knowledge-category-button:hover,
-.knowledge-category-button:focus-visible {
-    transform: scale(1.04);
-    border-color: rgba(106, 120, 255, 0.34);
-    box-shadow: 0 20px 42px rgba(107, 127, 255, 0.18);
-    color: var(--primary-deep);
-    outline: none;
-}
-
-.knowledge-mobile-shell {
-    display: grid;
-    gap: 14px;
-    padding: 22px;
-}
-
-.knowledge-mobile-center {
-    padding: 20px 22px;
-    border-radius: 28px;
-    color: #fff;
-    background: linear-gradient(145deg, #6b7fff, #59c9f7);
-    box-shadow: 0 18px 40px rgba(105, 124, 230, 0.2);
-}
-
-.knowledge-mobile-center strong {
-    font-size: 24px;
-    letter-spacing: -0.04em;
-}
-
-.knowledge-mobile-center span {
-    display: block;
-    margin-top: 8px;
-    font-size: 13px;
-    opacity: 0.9;
-}
-
-.knowledge-mobile-item {
-    border: 1px solid rgba(132, 152, 214, 0.16);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.84);
-    overflow: hidden;
-}
-
-.knowledge-mobile-trigger {
+.xkrh-hero-diagram svg {
     width: 100%;
-    min-height: 56px;
-    padding: 0 18px;
-    border: none;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: var(--text);
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
+    height: 100%;
+    display: block;
+    overflow: visible;
+}
+
+.xkrh-main-text {
+    font-weight: 800;
+    fill: #ffffff;
+    font-size: 34px;
+    letter-spacing: 1px;
+}
+
+.xkrh-center-text {
+    font-weight: 800;
+    fill: var(--xkrh-purple);
+    font-size: 34px;
+    letter-spacing: 1px;
+}
+
+.xkrh-node-text {
+    font-weight: 800;
+    fill: var(--xkrh-purple);
+    font-size: 25px;
+    letter-spacing: 1px;
+}
+
+.xkrh-line {
+    stroke: #ffffff;
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+.xkrh-tick {
+    stroke: #b7a5cc;
+    stroke-width: 2;
+    stroke-dasharray: 8 5;
+}
+
+.xkrh-outer {
+    fill: #ffffff;
+    stroke: var(--xkrh-purple);
+    stroke-width: 4;
+}
+
+.xkrh-orbit {
+    fill: none;
+    stroke: var(--xkrh-purple-light);
+    stroke-width: 3;
+}
+
+.xkrh-core {
+    fill: var(--xkrh-purple);
+    filter: url(#xkrhSoftShadow);
+}
+
+.xkrh-node {
+    fill: #ffffff;
+    stroke: var(--xkrh-purple);
+    stroke-width: 4;
+    filter: url(#xkrhNodeShadow);
+}
+
+.xkrh-ground {
+    fill: #eee6f8;
+    opacity: 0.8;
+}
+
+.xkrh-center-aura {
+    fill: #54248d;
+    opacity: 0.55;
+}
+
+.xkrh-center-disc {
+    fill: #ffffff;
+    stroke: #f0eff8;
+    stroke-width: 8;
+}
+
+.xkrh-center-ring {
+    fill: none;
+    stroke: #315697;
+    stroke-width: 2;
 }
 
 .spark-data-section {
@@ -907,13 +894,8 @@
         min-height: 380px;
     }
 
-    .knowledge-map-desktop {
-        display: none;
-    }
-
-    .knowledge-map-mobile {
-        display: block;
-        min-height: auto;
+    .xkrh-hero-diagram {
+        width: min(100%, 420px);
     }
 
     .spark-embed-frame-chat iframe,
@@ -927,37 +909,8 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const knowledgeMap = {
-        center: 'AI + 机电',
-        categories: [
-            {
-                id: 'engineering',
-                name: '工程原理'
-            },
-            {
-                id: 'robotics',
-                name: '机器人基础'
-            },
-            {
-                id: 'control',
-                name: '控制原理'
-            },
-            {
-                id: 'large-model',
-                name: '大模型应用'
-            },
-            {
-                id: 'product-design',
-                name: '产品设计'
-            }
-        ]
-    };
-
     const tabs = document.querySelectorAll('.spark-tab');
     const cards = document.querySelectorAll('.spark-feature');
-    const desktopRoot = document.getElementById('knowledgeMapDesktop');
-    const mobileRoot = document.getElementById('knowledgeMapMobile');
-    const compactMedia = window.matchMedia('(max-width: 720px)');
     tabs.forEach((tab) => {
         tab.addEventListener('click', function () {
             const targetId = this.getAttribute('data-feature-target');
@@ -972,100 +925,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
-
-    function getPolarPosition(index, total, radius, angleOffset) {
-        const angle = (Math.PI * 2 * index) / total + angleOffset;
-        return {
-            angle,
-            x: Math.cos(angle) * radius,
-            y: Math.sin(angle) * radius
-        };
-    }
-
-    function buildDesktopMap() {
-        if (!desktopRoot) return;
-        desktopRoot.innerHTML = '';
-
-        const grid = document.createElement('div');
-        grid.className = 'knowledge-map-grid';
-
-        const rings = document.createElement('div');
-        rings.className = 'knowledge-map-rings';
-
-        const links = document.createElement('div');
-        links.className = 'knowledge-map-links';
-
-        const categoryLayer = document.createElement('div');
-        categoryLayer.className = 'knowledge-map-layer';
-
-        const center = document.createElement('div');
-        center.className = 'knowledge-center-node';
-        center.innerHTML = '<div><strong>' + knowledgeMap.center + '</strong><span>课程知识架构</span></div>';
-
-        desktopRoot.append(grid, rings, links, categoryLayer, center);
-
-        const categoryRadius = 188;
-        const angleOffset = -Math.PI / 2;
-
-        knowledgeMap.categories.forEach((category, index) => {
-            const position = getPolarPosition(index, knowledgeMap.categories.length, categoryRadius, angleOffset);
-
-            const line = document.createElement('div');
-            line.className = 'knowledge-map-link';
-            line.style.setProperty('--length', categoryRadius + 'px');
-            line.style.setProperty('--angle', position.angle + 'rad');
-            links.appendChild(line);
-
-            const node = document.createElement('div');
-            node.className = 'knowledge-category';
-            node.dataset.categoryId = category.id;
-            node.style.setProperty('--x', position.x + 'px');
-            node.style.setProperty('--y', position.y + 'px');
-
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'knowledge-category-button';
-            button.textContent = category.name;
-
-            node.appendChild(button);
-            categoryLayer.appendChild(node);
-        });
-    }
-
-    function buildMobileMap() {
-        if (!mobileRoot) return;
-        mobileRoot.innerHTML = '';
-
-        const shell = document.createElement('div');
-        shell.className = 'knowledge-mobile-shell';
-        shell.innerHTML = '<div class="knowledge-mobile-center"><strong>' + knowledgeMap.center + '</strong><span>按模块查看课程知识主干与应用场景</span></div>';
-
-        knowledgeMap.categories.forEach((category) => {
-            const item = document.createElement('div');
-            item.className = 'knowledge-mobile-item';
-            item.innerHTML = '<div class="knowledge-mobile-trigger"><span>' + category.name + '</span></div>';
-            shell.appendChild(item);
-        });
-
-        mobileRoot.appendChild(shell);
-    }
-
-    function renderKnowledgeMap() {
-        if (compactMedia.matches) {
-            if (desktopRoot) desktopRoot.innerHTML = '';
-            buildMobileMap();
-        } else {
-            if (mobileRoot) mobileRoot.innerHTML = '';
-            buildDesktopMap();
-        }
-    }
-
-    renderKnowledgeMap();
-    if (typeof compactMedia.addEventListener === 'function') {
-        compactMedia.addEventListener('change', renderKnowledgeMap);
-    } else if (typeof compactMedia.addListener === 'function') {
-        compactMedia.addListener(renderKnowledgeMap);
-    }
 });
 </script>
 {% endblock %}

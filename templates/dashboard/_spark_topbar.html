@@ -335,12 +335,41 @@
 document.addEventListener('DOMContentLoaded', function () {
     const topbar = document.querySelector('.spark-topbar');
     const flashBox = document.querySelector('.spark-flashes');
+    const scrollTargets = Array.from(new Set([
+        window,
+        document,
+        document.scrollingElement,
+        document.documentElement,
+        document.body,
+        document.querySelector('.spark-dashboard-page'),
+        document.querySelector('.spark-dashboard-main'),
+        document.querySelector('.dashboard-container'),
+        document.querySelector('.main-content')
+    ].filter(Boolean)));
+
+    function getScrollTop(target) {
+        if (target === window) {
+            return window.scrollY || window.pageYOffset || 0;
+        }
+        if (target === document) {
+            const scrollingElement = document.scrollingElement || document.documentElement || document.body;
+            return scrollingElement.scrollTop || 0;
+        }
+        return target.scrollTop || 0;
+    }
+
     function syncTopbarState() {
         if (!topbar) return;
-        topbar.classList.toggle('is-scrolled', window.scrollY > 8);
+        const isScrolled = scrollTargets.some(function (target) {
+            return getScrollTop(target) > 8;
+        });
+        topbar.classList.toggle('is-scrolled', isScrolled);
     }
+
     syncTopbarState();
-    window.addEventListener('scroll', syncTopbarState, { passive: true });
+    scrollTargets.forEach(function (target) {
+        target.addEventListener('scroll', syncTopbarState, { passive: true });
+    });
 
     if (flashBox) {
         window.setTimeout(function () {
@@ -348,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
             window.setTimeout(function () {
                 flashBox.remove();
             }, 320);
-        }, 10000);
+        }, 3000);
     }
 });
 </script>
